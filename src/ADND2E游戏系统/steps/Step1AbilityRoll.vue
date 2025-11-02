@@ -42,7 +42,7 @@
         <div class="ability-info">
           <div class="ability-value">
             <span class="value-label">值:</span>
-            <span class="value-number">{{ getAbilityValue(ability.key) ?? '--' }}</span>
+            <span :id="`${ability.key}-value`" class="value-number">{{ getAbilityValue(ability.key) ?? '--' }}</span>
           </div>
           <div class="ability-bonuses">
             {{ getKeyBonuses(ability.key) }}
