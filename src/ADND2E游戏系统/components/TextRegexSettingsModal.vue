@@ -472,7 +472,7 @@ function handleImportRules(event: Event) {
       }
 
       console.log('[TextRegexSettings] 正则规则导入成功:', importedRules);
-      
+
       // 自动保存导入的规则
       if (saveSettings()) {
         console.log('[TextRegexSettings] 正则规则已自动保存到角色变量');

@@ -1,74 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>最小测试</title>
-</head>
-<body>
-  <div id="app">
-    <h1>{{ message }}</h1>
-    <button @click="count++">点击次数: {{ count }}</button>
-  </div>
-  
-  <script type="module">
-    // 测试是否能加载
-    console.log('[TEST] 开始加载测试...');
-    
-    // 动态导入 Vue 和 Pinia
-    const scriptVue = document.createElement('script');
-    scriptVue.src = 'https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js';
-    scriptVue.onload = () => {
-      console.log('[TEST] Vue 加载完成');
-      loadPinia();
-    };
-    scriptVue.onerror = () => {
-      console.error('[TEST] Vue 加载失败');
-    };
-    document.head.appendChild(scriptVue);
-    
-    function loadPinia() {
-      const scriptPinia = document.createElement('script');
-      scriptPinia.src = 'https://cdn.jsdelivr.net/npm/pinia@3.0.3/dist/pinia.iife.prod.js';
-      scriptPinia.onload = () => {
-        console.log('[TEST] Pinia 加载完成');
-        initApp();
-      };
-      scriptPinia.onerror = () => {
-        console.error('[TEST] Pinia 加载失败');
-      };
-      document.head.appendChild(scriptPinia);
-    }
-    
-    function initApp() {
-      console.log('[TEST] 初始化应用...');
-      console.log('[TEST] Vue:', typeof Vue);
-      console.log('[TEST] Pinia:', typeof Pinia);
-      
-      if (typeof Vue === 'undefined' || typeof Pinia === 'undefined') {
-        console.error('[TEST] Vue 或 Pinia 未定义');
-        document.getElementById('app').innerHTML = '<h1 style="color:red">加载失败：Vue 或 Pinia 未定义</h1>';
-        return;
-      }
-      
-      const { createApp, ref } = Vue;
-      const { createPinia } = Pinia;
-      
-      const app = createApp({
-        setup() {
-          const message = ref('测试成功！');
-          const count = ref(0);
-          return { message, count };
-        }
-      });
-      
-      const pinia = createPinia();
-      app.use(pinia);
-      app.mount('#app');
-      
-      console.log('[TEST] 应用挂载成功');
-    }
-  </script>
-</body>
-</html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>最小测试</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>{{ message }}</h1>
+      <button @click="count++">点击次数: {{ count }}</button>
+    </div>
 
+    <script type="module">
+      // 测试是否能加载
+      console.log('[TEST] 开始加载测试...');
+
+      // 动态导入 Vue 和 Pinia
+      const scriptVue = document.createElement('script');
+      scriptVue.src = 'https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js';
+      scriptVue.onload = () => {
+        console.log('[TEST] Vue 加载完成');
+        loadPinia();
+      };
+      scriptVue.onerror = () => {
+        console.error('[TEST] Vue 加载失败');
+      };
+      document.head.appendChild(scriptVue);
+
+      function loadPinia() {
+        const scriptPinia = document.createElement('script');
+        scriptPinia.src = 'https://cdn.jsdelivr.net/npm/pinia@3.0.3/dist/pinia.iife.prod.js';
+        scriptPinia.onload = () => {
+          console.log('[TEST] Pinia 加载完成');
+          initApp();
+        };
+        scriptPinia.onerror = () => {
+          console.error('[TEST] Pinia 加载失败');
+        };
+        document.head.appendChild(scriptPinia);
+      }
+
+      function initApp() {
+        console.log('[TEST] 初始化应用...');
+        console.log('[TEST] Vue:', typeof Vue);
+        console.log('[TEST] Pinia:', typeof Pinia);
+
+        if (typeof Vue === 'undefined' || typeof Pinia === 'undefined') {
+          console.error('[TEST] Vue 或 Pinia 未定义');
+          document.getElementById('app').innerHTML = '<h1 style="color:red">加载失败：Vue 或 Pinia 未定义</h1>';
+          return;
+        }
+
+        const { createApp, ref } = Vue;
+        const { createPinia } = Pinia;
+
+        const app = createApp({
+          setup() {
+            const message = ref('测试成功！');
+            const count = ref(0);
+            return { message, count };
+          },
+        });
+
+        const pinia = createPinia();
+        app.use(pinia);
+        app.mount('#app');
+
+        console.log('[TEST] 应用挂载成功');
+      }
+    </script>
+  </body>
+</html>
