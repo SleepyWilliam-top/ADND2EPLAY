@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>独立测试 ADND2E</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1a1a2e;
+      color: white;
+    }
+    #status {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 8px;
+      font-family: monospace;
+      z-index: 10000;
+    }
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">
+    <div>状态: <span id="status-text">加载中...</span></div>
+    <div>控制台: <span id="console-text">等待中</span></div>
+  </div>
+  <iframe id="game-iframe" src="dist/ADND2E游戏系统/index.html"></iframe>
+
+  <script>
+    const statusText = document.getElementById('status-text');
+    const consoleText = document.getElementById('console-text');
+    const iframe = document.getElementById('game-iframe');
+
+    // 监听 iframe 加载
+    iframe.addEventListener('load', () => {
+      statusText.textContent = '已加载';
+      
+      // 检查 iframe 内容
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const app = iframeDoc.getElementById('app');
+        
+        if (app) {
+          consoleText.textContent = 'app 元素存在，内容: ' + (app.innerHTML ? '有内容' : '空');
+          
+          // 每秒检查一次
+          setInterval(() => {
+            consoleText.textContent = 'app 内容: ' + (app.innerHTML ? '有' : '空') + 
+                                     ', 子元素: ' + app.children.length;
+          }, 1000);
+        } else {
+          consoleText.textContent = '错误: 找不到 app 元素';
+        }
+      } catch (e) {
+        consoleText.textContent = '错误: ' + e.message;
+      }
+    });
+
+    iframe.addEventListener('error', (e) => {
+      statusText.textContent = '加载失败';
+      consoleText.textContent = e.message;
+    });
+
+    // 捕获 iframe 内的错误
+    window.addEventListener('message', (event) => {
+      console.log('收到消息:', event.data);
+    });
+  </script>
+</body>
+</html>
+
+

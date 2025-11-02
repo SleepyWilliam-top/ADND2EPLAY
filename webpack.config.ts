@@ -108,7 +108,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
 
   return (_env, argv) => ({
     experiments: {
-      outputModule: true,
+      outputModule: entry.html === undefined, // 仅在脚本项目中使用模块输出
     },
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     watchOptions: {
@@ -134,9 +134,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
-      library: {
-        type: 'module',
-      },
+      library: entry.html === undefined
+        ? {
+            type: 'module',
+          }
+        : undefined, // 前端界面使用普通输出格式
     },
     module: {
       rules: [
@@ -328,8 +330,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(__dirname, entry.html),
             filename: path.parse(entry.html).base,
-            scriptLoading: 'module',
+            scriptLoading: 'blocking',
             cache: false,
+            inject: 'body', // 将脚本注入到 body 底部
+            minify: false, // 完全禁用 HTML 压缩，避免 srcdoc 解析问题
           }),
           new HtmlInlineScriptWebpackPlugin(),
           new MiniCssExtractPlugin(),
@@ -385,16 +389,33 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     optimization: {
       minimize: true,
       minimizer: [
-        argv.mode === 'production'
+        argv.mode === 'production' && entry.html === undefined // 仅对脚本项目压缩
           ? new TerserPlugin({
-              terserOptions: { format: { quote_style: 1 }, mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z'] } },
+              terserOptions: {
+                format: { 
+                  quote_style: 3,
+                  ascii_only: false,
+                },
+                mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z', 'Vue', 'PIXI', 'gsap', 'jquery'] },
+                compress: {
+                  drop_console: false,
+                  drop_debugger: false,
+                },
+              },
             })
           : new TerserPlugin({
               extractComments: false,
               terserOptions: {
-                format: { beautify: true, indent_level: 2 },
+                format: { 
+                  beautify: true, 
+                  indent_level: 2, 
+                  comments: true,
+                  quote_style: 3,
+                },
                 compress: false,
                 mangle: false,
+                keep_classnames: true,
+                keep_fnames: true,
               },
             }),
       ],
@@ -444,6 +465,30 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (argv.mode !== 'production' && ['vue', 'pixi'].some(key => request.includes(key))) {
         return callback();
       }
+      
+      // 前端界面项目：使用 externals（从酒馆环境或自己的 CDN 加载）
+      if (entry.html !== undefined) {
+        // 酒馆环境提供的全局变量（这些不需要在 HTML 中引入）
+        const tavernGlobals = {
+          jquery: '$',
+          lodash: '_',
+          toastr: 'toastr',
+        };
+        if (request in tavernGlobals) {
+          return callback(null, 'var ' + tavernGlobals[request as keyof typeof tavernGlobals]);
+        }
+        
+        // 需要打包进 bundle 的库（体积小或必须打包的）
+        const bundled = ['klona', '@vueuse/core', '@vueuse/shared', 'dexie', 'dedent'];
+        if (bundled.some(key => request === key || request.startsWith(key + '/'))) {
+          return callback();
+        }
+        
+        // 默认打包进 bundle（包括 Vue、Pinia 等，因为 CDN 在 srcdoc 中不可靠）
+        return callback();
+      }
+      
+      // 脚本项目：使用原有的 externals 配置
       const global = {
         jquery: '$',
         lodash: '_',
@@ -454,9 +499,17 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
+        pinia: 'Pinia',
+        gsap: 'gsap',
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
+      }
+      
+      // 将某些库打包到文件中而不是使用 CDN
+      const bundled = ['klona', '@vueuse/core', '@vueuse/shared', 'dexie', 'dedent'];
+      if (bundled.some(key => request === key || request.startsWith(key + '/'))) {
+        return callback();
       }
       const cdn = {
         sass: 'https://jspm.dev/sass',
