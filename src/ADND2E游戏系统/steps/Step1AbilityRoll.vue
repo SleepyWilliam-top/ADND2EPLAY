@@ -270,16 +270,8 @@ function setAbility(key: AbilityKey, value: number) {
 // 掷骰
 function rollAbility(key: AbilityKey, type: '3d6' | '4d6k3') {
   const result = type === '3d6' ? roll3d6() : roll4d6k3();
-
-  // 添加动画效果
-  const oldValue = characterStore.characterData.abilities[key] || 0;
-  gsap.from(`#${key}-value`, {
-    duration: 0.5,
-    innerText: oldValue,
-    snap: { innerText: 1 },
-    ease: 'power2.out',
-  });
-
+  
+  // 直接更新数据，不使用动画
   characterStore.characterData.abilities[key] = result;
   toastr.success(`${abilitiesList.find(a => a.key === key)?.name}: ${result}`);
 }
