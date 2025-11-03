@@ -4,7 +4,7 @@
       <!-- 标题栏 -->
       <div class="modal-header">
         <div class="header-content">
-          <h2>📖 法术书</h2>
+          <h2><i class="fa-solid fa-book"></i> 法术书</h2>
           <p class="class-info">{{ classInfo }}</p>
         </div>
         <button class="close-btn" @click="handleClose">✕</button>
@@ -56,7 +56,7 @@
             <!-- 已学法术列表（按等级分组） -->
             <div class="learned-spells">
               <div v-if="spellbookByLevel && Object.keys(spellbookByLevel).length === 0" class="empty-state">
-                <div class="empty-icon">📖</div>
+                <div class="empty-icon"><i class="fa-solid fa-book"></i></div>
                 <p>法术书是空的</p>
                 <p class="hint">点击"学习新法术"按钮开始学习</p>
               </div>
@@ -100,7 +100,7 @@
             <!-- 顶部操作栏 -->
             <div class="action-bar">
               <button class="primary-btn" @click="saveMemorizedSpells">
-                <span>💾</span>
+                <span><i class="fa-solid fa-floppy-disk"></i></span>
                 保存
               </button>
             </div>
@@ -554,7 +554,7 @@ function saveMemorizedSpells() {
 }
 
 .spellbook-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 1000px;
@@ -585,7 +585,7 @@ function saveMemorizedSpells() {
 
   .header-content {
     h2 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 24px;
       font-weight: bold;
       margin: 0 0 5px 0;
@@ -630,7 +630,7 @@ function saveMemorizedSpells() {
     padding: 10px 20px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
@@ -727,7 +727,7 @@ function saveMemorizedSpells() {
   .danger-btn {
     padding: 10px 20px;
     border: 2px solid #000;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -774,7 +774,7 @@ function saveMemorizedSpells() {
       background-color: #9370db;
       color: #fff;
       border: 2px solid #000;
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-weight: bold;
 
       .level {
@@ -835,7 +835,7 @@ function saveMemorizedSpells() {
       background-color: #4682b4;
       color: #fff;
       border: 2px solid #000;
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-weight: bold;
 
       .level {
@@ -933,7 +933,7 @@ function saveMemorizedSpells() {
   }
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 16px;
     margin: 10px 0;
     color: #666;
@@ -961,7 +961,7 @@ function saveMemorizedSpells() {
 }
 
 .dialog {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 800px;
@@ -978,7 +978,7 @@ function saveMemorizedSpells() {
     align-items: center;
 
     h3 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 20px;
       margin: 0;
     }

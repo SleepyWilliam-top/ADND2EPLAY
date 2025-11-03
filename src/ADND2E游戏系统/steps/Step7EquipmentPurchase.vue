@@ -4,7 +4,7 @@
     <div v-if="showDiceDialog" class="dice-dialog-overlay" @click="showDiceDialog = false">
       <div class="dice-dialog" @click.stop>
         <div class="dice-dialog-header">
-          <h2 class="dice-dialog-title">🎲 掷起始资金骰</h2>
+          <h2 class="dice-dialog-title"><i class="fa-solid fa-dice-d20"></i> 掷起始资金骰</h2>
         </div>
         <div class="dice-dialog-body">
           <p class="dice-instruction">
@@ -522,7 +522,7 @@ function handleNext() {
   }
 
   &-title {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 26px;
     font-weight: bold;
     margin: 0;
@@ -544,7 +544,7 @@ function handleNext() {
 }
 
 .dice-instruction {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   line-height: 1.6;
   margin: 0 0 25px 0;
@@ -567,7 +567,7 @@ function handleNext() {
 }
 
 .roll-prompt {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   color: #666;
   font-style: italic;
@@ -588,7 +588,7 @@ function handleNext() {
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 18px;
 }
 
@@ -614,7 +614,7 @@ function handleNext() {
   padding: 15px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 20px;
 }
 
@@ -623,7 +623,7 @@ function handleNext() {
 }
 
 .money-value {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 28px;
   font-weight: bold;
   color: #0a0;
@@ -635,7 +635,7 @@ function handleNext() {
   padding: 14px 35px;
   border: 3px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
@@ -711,7 +711,7 @@ function handleNext() {
 }
 
 .info-label {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 15px;
   color: #666;
   margin-bottom: 8px;
@@ -720,7 +720,7 @@ function handleNext() {
 }
 
 .info-value {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 26px;
   font-weight: bold;
   color: #000;
@@ -760,7 +760,7 @@ function handleNext() {
 }
 
 .panel-title {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 19px;
   font-weight: bold;
   margin: 0 0 20px 0;
@@ -798,7 +798,7 @@ function handleNext() {
 }
 
 .category-name {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 15px;
 }
 
@@ -836,7 +836,7 @@ function handleNext() {
   width: 100%;
   padding: 8px 12px;
   border: 2px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
 
   &:focus {
@@ -856,7 +856,7 @@ function handleNext() {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 8px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 
   thead {
     background-color: #f5f5f5;
@@ -919,7 +919,7 @@ function handleNext() {
 
   .price-col,
   .weight-col {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     white-space: nowrap;
   }
 
@@ -946,7 +946,7 @@ function handleNext() {
   padding: 5px;
   border: 2px solid #000;
   text-align: center;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
 
   &:focus {
     outline: none;
@@ -958,7 +958,7 @@ function handleNext() {
   padding: 6px 16px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
@@ -988,7 +988,7 @@ function handleNext() {
   padding: 8px 16px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   cursor: pointer;
   transition: all 0.2s;
 
@@ -1004,7 +1004,7 @@ function handleNext() {
 }
 
 .page-info {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
 }
 
@@ -1040,7 +1040,7 @@ function handleNext() {
 }
 
 .empty-text {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   color: #999;
   font-style: italic;
@@ -1068,7 +1068,7 @@ function handleNext() {
 }
 
 .cart-item-name {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-weight: bold;
   font-size: 15px;
 }
@@ -1092,7 +1092,7 @@ function handleNext() {
 }
 
 .cart-item-details {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   color: #666;
 }
@@ -1134,7 +1134,7 @@ function handleNext() {
   padding: 3px;
   border: 2px solid #000;
   text-align: center;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 12px;
 
   &:focus {
@@ -1161,13 +1161,13 @@ function handleNext() {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
 }
 
 .summary-value {
   font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
 }
 
 .clear-cart-button {
@@ -1177,7 +1177,7 @@ function handleNext() {
   border: 2px solid #c00;
   background-color: #fff;
   color: #c00;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
@@ -1206,7 +1206,7 @@ function handleNext() {
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   letter-spacing: 1px;
 
   &:hover:not(:disabled) {

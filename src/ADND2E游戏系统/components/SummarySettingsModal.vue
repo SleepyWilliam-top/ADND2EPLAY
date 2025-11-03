@@ -319,13 +319,63 @@ function saveSegmentedMemory() {
 }
 
 function viewSmallSummaries() {
-  // TODO: 实现查看小总结
-  toastr.info('查看小总结功能开发中...');
+  try {
+    // 从 gameStore 读取消息，而不是从 summaries 数组
+    const messagesWithSmallSummary = gameStore.messages
+      .filter(m => m.role === 'assistant' && m.smallSummary)
+      .map((m, index) => ({
+        index: index + 1,
+        timestamp: new Date(m.timestamp).toLocaleString('zh-CN'),
+        content: m.smallSummary,
+      }));
+
+    if (messagesWithSmallSummary.length === 0) {
+      toastr.info('暂无小总结记录\n提示：小总结由AI在每次回复时自动生成');
+      return;
+    }
+
+    // 构建显示内容
+    const content = messagesWithSmallSummary
+      .map(s => `【第${s.index}条】${s.timestamp}\n${s.content}`)
+      .join('\n\n---\n\n');
+
+    // 输出到控制台
+    console.log('=== 小总结列表（分段记忆）===\n', content);
+    toastr.success(`已有 ${messagesWithSmallSummary.length} 条小总结记录（已输出到控制台）`);
+  } catch (error) {
+    console.error('[SummarySettings] 查看小总结失败:', error);
+    toastr.error('查看小总结失败');
+  }
 }
 
 function viewLargeSummaries() {
-  // TODO: 实现查看大总结
-  toastr.info('查看大总结功能开发中...');
+  try {
+    // 从 gameStore 读取消息
+    const messagesWithLargeSummary = gameStore.messages
+      .filter(m => m.role === 'assistant' && m.largeSummary)
+      .map((m, index) => ({
+        index: index + 1,
+        timestamp: new Date(m.timestamp).toLocaleString('zh-CN'),
+        content: m.largeSummary,
+      }));
+
+    if (messagesWithLargeSummary.length === 0) {
+      toastr.info('暂无大总结记录\n提示：大总结由AI在每次回复时自动生成');
+      return;
+    }
+
+    // 构建显示内容
+    const content = messagesWithLargeSummary
+      .map(s => `【第${s.index}条】${s.timestamp}\n${s.content}`)
+      .join('\n\n---\n\n');
+
+    // 输出到控制台
+    console.log('=== 大总结列表（分段记忆）===\n', content);
+    toastr.success(`已有 ${messagesWithLargeSummary.length} 条大总结记录（已输出到控制台）`);
+  } catch (error) {
+    console.error('[SummarySettings] 查看大总结失败:', error);
+    toastr.error('查看大总结失败');
+  }
 }
 
 // 手动总结
@@ -491,7 +541,7 @@ async function generateSummary() {
   }
 }
 
-function saveManualSummary() {
+async function saveManualSummary() {
   if (!manualSummaryContent.value) {
     toastr.warning('总结内容为空');
     return;
@@ -513,15 +563,195 @@ function saveManualSummary() {
       range: `${manualSummaryRange.value.start}-${manualSummaryRange.value.end}`,
       content: manualSummaryContent.value,
       timestamp: Date.now(),
+      type: 'manual', // 标记为手动总结（分段正文）
     });
 
     replaceVariables(vars, { type: 'character' });
 
     toastr.success('总结已保存');
     showManualSummary.value = false;
+
+    // 检查是否需要自动同步到世界书
+    await autoSyncToWorldbook();
   } catch (error) {
     toastr.error('保存总结失败');
     console.error('[SummarySettings] 保存总结失败:', error);
+  }
+}
+
+// 自动同步到世界书
+async function autoSyncToWorldbook() {
+  try {
+    // 从角色卡变量读取世界书管理器的设置
+    const vars = getVariables({ type: 'character' });
+    const worldbookSettings = vars?.adnd2e?.worldbookManager;
+
+    if (!worldbookSettings?.autoSync) {
+      console.log('[SummarySettings] 自动同步未启用');
+      return;
+    }
+
+    if (!worldbookSettings.worldbookName) {
+      console.log('[SummarySettings] 未配置世界书名称');
+      return;
+    }
+
+    console.log('[SummarySettings] 开始自动同步到世界书:', worldbookSettings.worldbookName);
+
+    // 调用世界书管理器的同步逻辑（复制一份简化版）
+    const syncSettings = worldbookSettings;
+    const entrySettings = worldbookSettings.entrySettings || {};
+
+    const allSummaries = (vars.adnd2e?.summaries || []) as Array<{
+      range: string;
+      content: string;
+      timestamp?: number;
+      type?: 'manual' | 'auto' | 'small' | 'large';
+    }>;
+
+    const FIXED_ENTRY_NAMES = {
+      small: '小总结',
+      large: '大总结',
+      content: '分段正文',
+    };
+
+    const entriesToUpdate: { name: string; content: string; extra: any }[] = [];
+
+    // 同步小总结
+    if (syncSettings.syncSmallSummaries) {
+      const smallSummaries = allSummaries.filter(s => s.type === 'small');
+      if (smallSummaries.length > 0) {
+        const content = smallSummaries
+          .map((s, idx) => {
+            const timestamp = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN') : '';
+            return `【${idx + 1}】楼层 ${s.range}${timestamp ? ` (${timestamp})` : ''}\n${s.content}`;
+          })
+          .join('\n\n---\n\n');
+
+        entriesToUpdate.push({
+          name: FIXED_ENTRY_NAMES.small,
+          content,
+          extra: {
+            source: 'summary',
+            summary_type: 'small',
+            count: smallSummaries.length,
+            synced_at: new Date().toISOString(),
+          },
+        });
+      }
+    }
+
+    // 同步大总结
+    if (syncSettings.syncLargeSummaries) {
+      const largeSummaries = allSummaries.filter(s => s.type === 'large');
+      if (largeSummaries.length > 0) {
+        const content = largeSummaries
+          .map((s, idx) => {
+            const timestamp = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN') : '';
+            return `【${idx + 1}】楼层 ${s.range}${timestamp ? ` (${timestamp})` : ''}\n${s.content}`;
+          })
+          .join('\n\n---\n\n');
+
+        entriesToUpdate.push({
+          name: FIXED_ENTRY_NAMES.large,
+          content,
+          extra: {
+            source: 'summary',
+            summary_type: 'large',
+            count: largeSummaries.length,
+            synced_at: new Date().toISOString(),
+          },
+        });
+      }
+    }
+
+    // 同步分段正文
+    if (syncSettings.syncSegmentedContent) {
+      const segmentedContent = allSummaries.filter(s => s.type === 'manual' || s.type === 'auto');
+      if (segmentedContent.length > 0) {
+        const content = segmentedContent
+          .map((s, idx) => {
+            const timestamp = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN') : '';
+            const typeLabel = s.type === 'manual' ? '【手动】' : '【自动】';
+            return `${typeLabel}【${idx + 1}】楼层 ${s.range}${timestamp ? ` (${timestamp})` : ''}\n${s.content}`;
+          })
+          .join('\n\n---\n\n');
+
+        entriesToUpdate.push({
+          name: FIXED_ENTRY_NAMES.content,
+          content,
+          extra: {
+            source: 'summary',
+            summary_type: 'content',
+            count: segmentedContent.length,
+            synced_at: new Date().toISOString(),
+          },
+        });
+      }
+    }
+
+    if (entriesToUpdate.length === 0) {
+      console.log('[SummarySettings] 没有需要同步的数据');
+      return;
+    }
+
+    // 同步到世界书
+    await updateWorldbookWith(worldbookSettings.worldbookName, worldbook => {
+      const updatedWorldbook = [...worldbook];
+
+      for (const entryData of entriesToUpdate) {
+        const existingIndex = updatedWorldbook.findIndex(e => e.name === entryData.name);
+
+        if (existingIndex >= 0) {
+          updatedWorldbook[existingIndex] = {
+            ...updatedWorldbook[existingIndex],
+            content: entryData.content,
+            extra: {
+              ...updatedWorldbook[existingIndex].extra,
+              ...entryData.extra,
+            },
+          };
+        } else {
+          updatedWorldbook.push({
+            name: entryData.name,
+            content: entryData.content,
+            enabled: true,
+            strategy: {
+              type: 'constant' as const,
+              keys: [],
+              keys_secondary: { logic: 'and_any' as const, keys: [] },
+              scan_depth: entrySettings.scanDepth || 4,
+            },
+            position: {
+              type: (entrySettings.position || 'after_character_definition') as any,
+              role: 'system' as const,
+              depth: 0,
+              order: 0,
+            },
+            probability: 100,
+            recursion: {
+              prevent_incoming: false,
+              prevent_outgoing: false,
+              delay_until: null,
+            },
+            effect: {
+              sticky: null,
+              cooldown: null,
+              delay: null,
+            },
+            extra: entryData.extra,
+          } as any);
+        }
+      }
+
+      return updatedWorldbook;
+    });
+
+    toastr.success('总结已自动同步到世界书');
+    console.log('[SummarySettings] 自动同步完成');
+  } catch (error) {
+    console.error('[SummarySettings] 自动同步失败:', error);
+    toastr.warning('自动同步到世界书失败');
   }
 }
 </script>
@@ -543,7 +773,7 @@ function saveManualSummary() {
 }
 
 .settings-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 700px;
@@ -566,7 +796,7 @@ function saveManualSummary() {
   }
 
   h4 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 22px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -618,7 +848,7 @@ function saveManualSummary() {
   margin-bottom: 15px;
 
   h5 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -630,7 +860,7 @@ function saveManualSummary() {
 
   textarea {
     width: 100%;
-    font-family: 'Courier New', monospace;
+    font-family: '临海体', serif;
     font-size: 13px;
     padding: 10px;
     border: 2px solid #000;
@@ -643,7 +873,7 @@ function saveManualSummary() {
   }
 
   label {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     font-weight: bold;
     display: block;
@@ -654,7 +884,7 @@ function saveManualSummary() {
   input[type='password'],
   input[type='number'] {
     width: 100%;
-    font-family: 'Courier New', monospace;
+    font-family: '临海体', serif;
     font-size: 13px;
     padding: 8px 10px;
     border: 2px solid #000;
@@ -713,7 +943,7 @@ function saveManualSummary() {
   }
 
   span {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-weight: bold;
   }
@@ -743,7 +973,7 @@ function saveManualSummary() {
 .major-action-button {
   flex: 1;
   min-width: 150px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 13px;
   font-weight: bold;
   letter-spacing: 1px;

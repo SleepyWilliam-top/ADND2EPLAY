@@ -1,8 +1,8 @@
 <template>
   <div class="floating-container">
     <!-- 悬浮按钮 -->
-    <button class="floating-button" @click="togglePanel" :title="isOpen ? '关闭设置' : '打开设置'">
-      <span class="icon" :class="{ rotating: isOpen }">⚙</span>
+    <button class="floating-button" :title="isOpen ? '关闭设置' : '打开设置'" @click="togglePanel">
+      <span class="icon" :class="{ rotating: isOpen }"><i class="fa-solid fa-gear"></i></span>
     </button>
 
     <!-- 设置面板 -->
@@ -36,8 +36,8 @@
               <button
                 v-if="customRaces.length > 0"
                 class="clear-all-button"
-                @click="confirmClearAllRaces"
                 title="清除所有自定义种族"
+                @click="confirmClearAllRaces"
               >
                 清空
               </button>
@@ -56,7 +56,7 @@
                     <span class="race-english">{{ race.englishName }}</span>
                   </div>
                 </div>
-                <button class="delete-race-button" @click="confirmDeleteRace(race)" title="删除此种族">×</button>
+                <button class="delete-race-button" title="删除此种族" @click="confirmDeleteRace(race)">×</button>
               </div>
             </div>
 
@@ -77,8 +77,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import type { Race } from './utils/raceData';
 import { clearAllData } from './composables/usePersistence';
+import type { Race } from './utils/raceData';
 
 const isOpen = ref(false);
 const cacheSize = ref('0 KB');
@@ -170,7 +170,7 @@ async function clearCache() {
     console.log('[FloatingButton] 角色卡变量已清除');
 
     toastr.success('游戏存档已完全清除（IndexedDB + 角色卡变量）');
-    
+
     // 3. 刷新缓存管理器（学习 lucklyjkop 的 openCacheManager）
     refreshCacheManager();
 
@@ -330,7 +330,7 @@ async function clearAllRaces() {
   background-color: #f5f5f5;
 
   h3 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 18px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -395,7 +395,7 @@ async function clearAllRaces() {
 }
 
 .section-title {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 1px;
@@ -441,7 +441,7 @@ async function clearAllRaces() {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
-  font-family: 'Courier New', monospace;
+  font-family: '临海体', serif;
 }
 
 .cache-label {

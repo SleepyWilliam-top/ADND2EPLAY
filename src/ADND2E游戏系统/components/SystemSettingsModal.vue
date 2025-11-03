@@ -66,7 +66,7 @@ function openGameplaySettings() {
 }
 
 .settings-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 500px;
@@ -91,7 +91,7 @@ function openGameplaySettings() {
   }
 
   h4 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -136,7 +136,7 @@ function openGameplaySettings() {
 
 .major-action-button {
   width: 100%;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   letter-spacing: 1px;

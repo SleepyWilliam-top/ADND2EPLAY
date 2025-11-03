@@ -46,7 +46,7 @@
         <div class="detail-body">
           <!-- 战斗属性 -->
           <div class="detail-section">
-            <h4><i class="fas fa-sword"></i> 战斗属性</h4>
+            <h4><i class="fas fa-khanda"></i> 战斗属性</h4>
             <div class="stats-grid">
               <div class="stat-item">
                 <span class="stat-label">AC:</span>
@@ -363,7 +363,7 @@ async function confirmRemove() {
   background-color: #fff;
   border: 3px solid #000;
   margin-bottom: 20px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   position: relative;
 
   &::before {
@@ -507,7 +507,7 @@ async function confirmRemove() {
 .npc-basic-stats {
   display: flex;
   gap: 10px;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
 
@@ -552,7 +552,7 @@ async function confirmRemove() {
 }
 
 .npc-detail-content {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   max-width: 700px;
   max-height: 90vh;
@@ -647,7 +647,7 @@ async function confirmRemove() {
   padding: 8px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
 
   .stat-label {
     font-weight: bold;
@@ -761,7 +761,7 @@ async function confirmRemove() {
   border: 2px solid #000;
   background-color: #fff;
   cursor: pointer;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   transition: all 0.2s;

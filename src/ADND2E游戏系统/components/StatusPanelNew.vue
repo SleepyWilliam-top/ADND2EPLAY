@@ -29,11 +29,13 @@
         </div>
         <div class="info-row">
           <span class="label">种族</span>
-          <span class="value">{{ characterRace }}</span>
+          <span v-if="isDeityCharacter" class="value deity-na">不适用（神祇）</span>
+          <span v-else class="value">{{ characterRace }}</span>
         </div>
         <div class="info-row">
           <span class="label">职业</span>
-          <span class="value">{{ characterClass }}</span>
+          <span v-if="isDeityCharacter" class="value deity-na">不适用（神祇）</span>
+          <span v-else class="value">{{ characterClass }}</span>
         </div>
         <div class="info-row">
           <span class="label">阵营</span>
@@ -41,11 +43,13 @@
         </div>
         <div class="info-row">
           <span class="label">等级</span>
-          <span class="value">{{ characterLevel }}</span>
+          <span v-if="isDeityCharacter" class="value deity-na">不适用（神祇）</span>
+          <span v-else class="value">{{ characterLevel }}</span>
         </div>
         <div class="info-row">
           <span class="label">经验值</span>
-          <span class="value">{{ characterExperience }}</span>
+          <span v-if="isDeityCharacter" class="value deity-na">不适用（神祇）</span>
+          <span v-else class="value">{{ characterExperience }}</span>
         </div>
         <div class="info-row">
           <span class="label">金币</span>
@@ -144,11 +148,21 @@
 
       <!-- 属性标签 -->
       <div v-show="activeTab === 'attributes'" class="tab-pane attributes-pane">
+        <!-- 🔧 神祇本体属性不适用提示 -->
+        <div v-if="isDeityCharacter" class="deity-attributes-notice">
+          <div class="notice-icon">⚠️</div>
+          <div class="notice-text">
+            <strong>神祇本体无凡人属性</strong>
+            <p>神祇本体不受凡人属性值和调整值的限制。只有神祇的化身才拥有可量化的属性。</p>
+          </div>
+        </div>
+
         <!-- 力量 -->
         <div class="ability-section" :class="{ collapsed: collapsedSections.str }">
           <div class="ability-header" @click="toggleSection('str')">
             <span class="ability-name">力量 (STR)</span>
-            <span class="ability-score">{{ strength }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ strength }}</span>
             <span class="collapse-icon">{{ collapsedSections.str ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.str" class="ability-modifiers">
@@ -183,7 +197,8 @@
         <div class="ability-section" :class="{ collapsed: collapsedSections.dex }">
           <div class="ability-header" @click="toggleSection('dex')">
             <span class="ability-name">敏捷 (DEX)</span>
-            <span class="ability-score">{{ dexterity }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ dexterity }}</span>
             <span class="collapse-icon">{{ collapsedSections.dex ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.dex" class="ability-modifiers">
@@ -206,7 +221,8 @@
         <div class="ability-section" :class="{ collapsed: collapsedSections.con }">
           <div class="ability-header" @click="toggleSection('con')">
             <span class="ability-name">体质 (CON)</span>
-            <span class="ability-score">{{ constitution }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ constitution }}</span>
             <span class="collapse-icon">{{ collapsedSections.con ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.con" class="ability-modifiers">
@@ -237,7 +253,8 @@
         <div class="ability-section" :class="{ collapsed: collapsedSections.int }">
           <div class="ability-header" @click="toggleSection('int')">
             <span class="ability-name">智力 (INT)</span>
-            <span class="ability-score">{{ intelligence }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ intelligence }}</span>
             <span class="collapse-icon">{{ collapsedSections.int ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.int" class="ability-modifiers">
@@ -268,7 +285,8 @@
         <div class="ability-section" :class="{ collapsed: collapsedSections.wis }">
           <div class="ability-header" @click="toggleSection('wis')">
             <span class="ability-name">灵知 (WIS)</span>
-            <span class="ability-score">{{ wisdom }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ wisdom }}</span>
             <span class="collapse-icon">{{ collapsedSections.wis ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.wis" class="ability-modifiers">
@@ -295,7 +313,8 @@
         <div class="ability-section" :class="{ collapsed: collapsedSections.cha }">
           <div class="ability-header" @click="toggleSection('cha')">
             <span class="ability-name">魅力 (CHA)</span>
-            <span class="ability-score">{{ charisma }}</span>
+            <span v-if="isDeityCharacter" class="ability-score deity-na">不适用</span>
+            <span v-else class="ability-score">{{ charisma }}</span>
             <span class="collapse-icon">{{ collapsedSections.cha ? '▼' : '▲' }}</span>
           </div>
           <div v-show="!collapsedSections.cha" class="ability-modifiers">
@@ -364,7 +383,7 @@
           <span v-else class="value">{{ attacksPerRound }}</span>
         </div>
 
-        <!-- 🔧 神祇本体不显示武器和豁免检定信息 -->
+        <!-- 🔧 神祇本体不显示武器信息 -->
         <template v-if="!isDeityCharacter">
           <!-- 武器信息 -->
           <div class="collapsible-section" :class="{ collapsed: collapsedSections.equippedWeapons }">
@@ -448,62 +467,62 @@
               <div v-else class="empty-text">未装备武器</div>
             </div>
           </div>
-
-          <!-- 豁免检定 - 凡人 -->
-          <div
-            v-if="!isDeityCharacter"
-            class="collapsible-section"
-            :class="{ collapsed: collapsedSections.savingThrows }"
-          >
-            <div class="section-title clickable" @click="toggleSection('savingThrows')">
-              豁免检定
-              <span class="collapse-icon">{{ collapsedSections.savingThrows ? '▼' : '▲' }}</span>
-            </div>
-            <div v-show="!collapsedSections.savingThrows" class="saving-throws-grid">
-              <div v-if="char.savingThrows" class="saving-throw-item">
-                <div class="st-label">麻痹/毒素/死亡魔法</div>
-                <div class="st-value">{{ char.savingThrows.paralyzation }}</div>
-              </div>
-              <div v-if="char.savingThrows" class="saving-throw-item">
-                <div class="st-label">权杖/法杖/魔杖</div>
-                <div class="st-value">{{ char.savingThrows.rod }}</div>
-              </div>
-              <div v-if="char.savingThrows" class="saving-throw-item">
-                <div class="st-label">石化/变形</div>
-                <div class="st-value">{{ char.savingThrows.petrification }}</div>
-              </div>
-              <div v-if="char.savingThrows" class="saving-throw-item">
-                <div class="st-label">喷吐武器</div>
-                <div class="st-value">{{ char.savingThrows.breath }}</div>
-              </div>
-              <div v-if="char.savingThrows" class="saving-throw-item">
-                <div class="st-label">法术</div>
-                <div class="st-value">{{ char.savingThrows.spell }}</div>
-              </div>
-              <div v-if="!char.savingThrows" class="empty-text">无豁免检定数据</div>
-            </div>
-          </div>
-
-          <!-- 豁免检定 - 神祇 -->
-          <div
-            v-if="isDeityCharacter && shouldShowDeitySavingThrows"
-            class="collapsible-section"
-            :class="{ collapsed: collapsedSections.savingThrows }"
-          >
-            <div class="section-title clickable" @click="toggleSection('savingThrows')">
-              豁免检定（神祇能力）
-              <span class="collapse-icon">{{ collapsedSections.savingThrows ? '▼' : '▲' }}</span>
-            </div>
-            <div v-show="!collapsedSections.savingThrows">
-              <div class="deity-st-notice">💡 {{ deitySavingThrowsDescription }}</div>
-              <div class="deity-st-value-display">
-                <div class="st-unified-label">所有类型豁免检定</div>
-                <div class="st-unified-value">{{ deitySavingThrowsValue }}</div>
-              </div>
-              <div class="deity-st-failure-note"><strong>失败条件：</strong>{{ deitySavingThrowsFailure }}</div>
-            </div>
-          </div>
         </template>
+
+        <!-- 🔧 豁免检定 - 凡人（放在武器区域外） -->
+        <div
+          v-if="!isDeityCharacter"
+          class="collapsible-section"
+          :class="{ collapsed: collapsedSections.savingThrows }"
+        >
+          <div class="section-title clickable" @click="toggleSection('savingThrows')">
+            豁免检定
+            <span class="collapse-icon">{{ collapsedSections.savingThrows ? '▼' : '▲' }}</span>
+          </div>
+          <div v-show="!collapsedSections.savingThrows" class="saving-throws-grid">
+            <div v-if="char.savingThrows" class="saving-throw-item">
+              <div class="st-label">麻痹/毒素/死亡魔法</div>
+              <div class="st-value">{{ char.savingThrows.paralyzation }}</div>
+            </div>
+            <div v-if="char.savingThrows" class="saving-throw-item">
+              <div class="st-label">权杖/法杖/魔杖</div>
+              <div class="st-value">{{ char.savingThrows.rod }}</div>
+            </div>
+            <div v-if="char.savingThrows" class="saving-throw-item">
+              <div class="st-label">石化/变形</div>
+              <div class="st-value">{{ char.savingThrows.petrification }}</div>
+            </div>
+            <div v-if="char.savingThrows" class="saving-throw-item">
+              <div class="st-label">喷吐武器</div>
+              <div class="st-value">{{ char.savingThrows.breath }}</div>
+            </div>
+            <div v-if="char.savingThrows" class="saving-throw-item">
+              <div class="st-label">法术</div>
+              <div class="st-value">{{ char.savingThrows.spell }}</div>
+            </div>
+            <div v-if="!char.savingThrows" class="empty-text">无豁免检定数据</div>
+          </div>
+        </div>
+
+        <!-- 🔧 豁免检定 - 神祇（放在武器区域外，确保在战斗标签中显示） -->
+        <div
+          v-if="isDeityCharacter && shouldShowDeitySavingThrows"
+          class="collapsible-section"
+          :class="{ collapsed: collapsedSections.savingThrows }"
+        >
+          <div class="section-title clickable" @click="toggleSection('savingThrows')">
+            豁免检定（神祇能力）
+            <span class="collapse-icon">{{ collapsedSections.savingThrows ? '▼' : '▲' }}</span>
+          </div>
+          <div v-show="!collapsedSections.savingThrows">
+            <div class="deity-st-notice">💡 {{ deitySavingThrowsDescription }}</div>
+            <div class="deity-st-value-display">
+              <div class="st-unified-label">所有类型豁免检定</div>
+              <div class="st-unified-value">{{ deitySavingThrowsValue }}</div>
+            </div>
+            <div class="deity-st-failure-note"><strong>失败条件：</strong>{{ deitySavingThrowsFailure }}</div>
+          </div>
+        </div>
       </div>
 
       <!-- 技能标签 -->
@@ -1160,6 +1179,14 @@ function loadCharacterData() {
   const newCharData = JSON.parse(JSON.stringify(charVars?.adnd2e?.character || {}));
   char.value = newCharData;
 
+  // 🔧 调试：检查神祇数据
+  console.log('[StatusPanel] 🔍 神祇数据调试:', {
+    'char.isDeity': newCharData?.isDeity,
+    'char.deity': newCharData?.deity,
+    'gameState.character.isDeity': charVars?.adnd2e?.gameState?.character?.isDeity,
+    'gameState.character.deity': charVars?.adnd2e?.gameState?.character?.deity,
+  });
+
   // 🔧 修复：同步更新 gameState store，确保状态栏显示最新数据
   // 从角色卡变量中加载最新的 gameState 数据（如果存在）
   if (charVars?.adnd2e?.gameState) {
@@ -1170,6 +1197,8 @@ function loadCharacterData() {
       npcCount: charVars.adnd2e.gameState.npcs?.length || 0,
       level: charVars.adnd2e.gameState.character?.level,
       xp: charVars.adnd2e.gameState.character?.xp,
+      isDeity: charVars.adnd2e.gameState.character?.isDeity,
+      deity: charVars.adnd2e.gameState.character?.deity,
     });
   } else {
     console.warn('[StatusPanel] 角色卡变量中没有 gameState 数据！这可能导致状态栏显示初始数据');
@@ -1339,23 +1368,33 @@ const currentGold = computed(() => {
 const isDeityCharacter = computed(() => {
   // 依赖 charUpdateKey 以确保响应式更新
   const _updateKey = charUpdateKey.value;
+  const _forceRefreshKey = forceRefreshKey.value;
 
   // 方式1: 检查角色卡数据的 isDeity 标志（明确标记）
   const isDeityFlag = char.value?.isDeity;
 
-  if (isDeityFlag) {
-    console.log('[StatusPanel] 角色卡明确标记为神祇 (isDeity=true)，更新键:', _updateKey);
-    return true;
-  }
-
   // 方式2: 检查游戏状态中是否有神祇数据且有明确的神格等级
   const deity = gameState.gameState?.character?.deity;
-  if (deity && deity.divineRank) {
-    console.log('[StatusPanel] 游戏状态中存在神祇数据（divineRank:', deity.divineRank, '），更新键:', _updateKey);
+
+  console.log('[StatusPanel] 🔍 isDeityCharacter 计算:', {
+    'char.isDeity': isDeityFlag,
+    'gameState.deity': deity,
+    'gameState.deity?.divineRank': deity?.divineRank,
+    _updateKey,
+    _forceRefreshKey,
+  });
+
+  if (isDeityFlag) {
+    console.log('[StatusPanel] ✅ 角色卡明确标记为神祇 (isDeity=true)');
     return true;
   }
 
-  console.log('[StatusPanel] 角色不是神祇，char.isDeity:', char.value?.isDeity, 'deity:', deity, '更新键:', _updateKey);
+  if (deity && deity.divineRank) {
+    console.log('[StatusPanel] ✅ 游戏状态中存在神祇数据（divineRank:', deity.divineRank, '）');
+    return true;
+  }
+
+  console.log('[StatusPanel] ❌ 角色不是神祇');
   return false;
 });
 
@@ -1425,9 +1464,9 @@ const sensingRangeText = computed(() => {
   return ranges[deityData.value.divineRank] || '';
 });
 
-// 🔧 新增：判断是否应该显示神祇豁免检定（高等神力除外）
 // 🔧 判断是否显示神祇豁免检定（所有神祇都显示，包括高等神力的"自动通过"）
 const shouldShowDeitySavingThrows = computed(() => {
+  // 只要有神祇数据就显示豁免检定（包括高等神力）
   return !!deityData.value;
 });
 
@@ -1569,35 +1608,47 @@ const intMods = computed(() => getIntelligenceModifiers(intelligence.value));
 const wisMods = computed(() => getWisdomModifiers(wisdom.value));
 const chaMods = computed(() => getCharismaModifiers(charisma.value));
 
-// 翻译武器熟练
-const translatedWeaponProfs = computed(() =>
-  (char.value.weaponProficiencies || []).map((id: string) => {
+// 翻译武器熟练（🔧 实时读取，技能数据不变但需要响应式更新键）
+const translatedWeaponProfs = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
+  return (char.value.weaponProficiencies || []).map((id: string) => {
     const weapon = getWeaponById(id);
     return weapon?.name || id;
-  }),
-);
+  });
+});
 
-const translatedWeaponSpecs = computed(() =>
-  (char.value.weaponSpecializations || []).map((id: string) => {
+const translatedWeaponSpecs = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
+  return (char.value.weaponSpecializations || []).map((id: string) => {
     const weapon = getWeaponById(id);
     return weapon?.name || id;
-  }),
-);
+  });
+});
 
-// 翻译非武器熟练
-const translatedNonweaponProfs = computed(() =>
-  (char.value.nonweaponProficiencies || []).map((prof: any) => {
+// 翻译非武器熟练（🔧 实时读取）
+const translatedNonweaponProfs = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
+  return (char.value.nonweaponProficiencies || []).map((prof: any) => {
     const profData = getProficiencyById(prof.id);
     return {
       id: prof.id,
       名称: profData?.name || prof.id,
       槽位: prof.slots,
     };
-  }),
-);
+  });
+});
 
-// 构建种族能力列表
+// 构建种族能力列表（🔧 实时读取）
 const racialAbilities = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
   const abilities: Array<{ 名称: string; 描述: string }> = [];
   const sr = subrace.value;
   const r = race.value;
@@ -1610,8 +1661,11 @@ const racialAbilities = computed(() => {
   return abilities;
 });
 
-// 构建职业能力列表
+// 构建职业能力列表（🔧 实时读取）
 const classAbilities = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
   const abilities: Array<{ 名称: string; 描述: string }> = [];
   const ci = classInfo.value;
   if (ci) {
@@ -1662,6 +1716,9 @@ const AMMUNITION_COMPATIBILITY: Record<string, string[]> = {
 
 // 获取装备的武器列表
 const equippedWeapons = computed(() => {
+  // 🔧 依赖更新键确保响应式
+  void charUpdateKey.value;
+  
   const purchasedEquipment = char.value.purchasedEquipment || [];
   const weapons: Array<{
     id: string;
@@ -1956,7 +2013,7 @@ onBeforeUnmount(() => {
   border-right: 4px solid #000;
   display: flex;
   flex-direction: column;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   color: #000;
   box-shadow: inset 0 0 0 2px #666;
 
@@ -2059,7 +2116,7 @@ onBeforeUnmount(() => {
     color: #000;
     font-weight: bold;
     font-size: 14px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
 
     &.highlight {
       color: #d4af37;
@@ -2177,6 +2234,46 @@ onBeforeUnmount(() => {
     }
   }
 
+  // 🔧 新增：神祇属性不适用提示
+  .deity-attributes-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 2px solid #2196f3;
+    border-radius: 6px;
+
+    .notice-icon {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .notice-text {
+      flex: 1;
+
+      strong {
+        display: block;
+        font-size: 13px;
+        color: #0d47a1;
+        margin-bottom: 6px;
+      }
+
+      p {
+        font-size: 11px;
+        color: #1565c0;
+        line-height: 1.5;
+        margin: 4px 0;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
   // 🔧 新增："不适用"值的样式
   .deity-na {
     color: #999 !important;
@@ -2250,7 +2347,7 @@ onBeforeUnmount(() => {
       font-size: 16px;
       font-weight: bold;
       color: #8b4513;
-      font-family: 'Courier New', monospace;
+      font-family: "临海体", serif;
     }
   }
 }
@@ -2287,7 +2384,7 @@ onBeforeUnmount(() => {
     font-size: 24px;
     color: #d4af37;
     font-weight: bold;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   }
 }
@@ -2465,7 +2562,7 @@ onBeforeUnmount(() => {
         font-size: 11px;
         color: #999;
         font-style: italic;
-        font-family: 'Georgia', serif;
+        font-family: "临海体", serif;
       }
 
       .info-icon {
@@ -2546,7 +2643,7 @@ onBeforeUnmount(() => {
 }
 
 .ability-name {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 13px;
   font-weight: bold;
   text-transform: uppercase;
@@ -2554,7 +2651,7 @@ onBeforeUnmount(() => {
 }
 
 .ability-score {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 24px;
   font-weight: bold;
   min-width: 40px;
@@ -2573,7 +2670,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   padding: 4px 6px;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 11px;
   border-bottom: 1px dashed #ddd;
 
@@ -2656,7 +2753,7 @@ onBeforeUnmount(() => {
     border: 2px solid #000;
     border-left: 4px solid #000;
     font-size: 13px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     position: relative;
 
     &.clickable-skill {
@@ -2803,7 +2900,7 @@ onBeforeUnmount(() => {
   }
 
   .weapon-name {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 14px;
     font-weight: bold;
     text-transform: uppercase;
@@ -2812,7 +2909,7 @@ onBeforeUnmount(() => {
   }
 
   .weapon-quantity {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 12px;
     font-weight: bold;
     background-color: #fff;
@@ -2841,7 +2938,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 4px 6px;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 11px;
   border-bottom: 1px dashed #ddd;
   gap: 8px;
@@ -2931,7 +3028,7 @@ onBeforeUnmount(() => {
     border-bottom: 2px solid #000;
 
     .skill-name {
-      font-family: 'Courier New', monospace;
+      font-family: "临海体", serif;
       font-size: 13px;
       font-weight: bold;
       text-transform: uppercase;
@@ -2940,7 +3037,7 @@ onBeforeUnmount(() => {
     }
 
     .skill-value {
-      font-family: 'Courier New', monospace;
+      font-family: "临海体", serif;
       font-size: 16px;
       font-weight: bold;
       color: #000;
@@ -2958,7 +3055,7 @@ onBeforeUnmount(() => {
   }
 
   .skill-breakdown {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 10px;
     color: #666;
     font-style: italic;
@@ -3039,7 +3136,7 @@ onBeforeUnmount(() => {
   h2 {
     margin: 0;
     font-size: 18px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -3082,14 +3179,14 @@ onBeforeUnmount(() => {
   .prof-label {
     font-weight: bold;
     font-size: 13px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     min-width: 100px;
     color: #000;
   }
 
   .prof-value {
     font-size: 13px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     color: #333;
   }
 }
@@ -3116,7 +3213,7 @@ onBeforeUnmount(() => {
   h3 {
     margin: 0 0 12px 0;
     font-size: 14px;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #000;
@@ -3130,7 +3227,7 @@ onBeforeUnmount(() => {
     line-height: 1.6;
     color: #333;
     white-space: pre-wrap;
-    font-family: 'Arial', sans-serif;
+    font-family: "临海体", serif;
   }
 }
 
@@ -3168,7 +3265,7 @@ onBeforeUnmount(() => {
     h3 {
       margin: 0 0 15px 0;
       font-size: 16px;
-      font-family: 'Courier New', monospace;
+      font-family: "临海体", serif;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #000;
@@ -3181,7 +3278,7 @@ onBeforeUnmount(() => {
       line-height: 1.7;
       color: #333;
       margin: 10px 0;
-      font-family: 'Arial', sans-serif;
+      font-family: "临海体", serif;
     }
 
     ul {
@@ -3190,7 +3287,7 @@ onBeforeUnmount(() => {
       font-size: 13px;
       line-height: 1.7;
       color: #333;
-      font-family: 'Arial', sans-serif;
+      font-family: "临海体", serif;
 
       li {
         margin: 8px 0;
@@ -3215,7 +3312,7 @@ onBeforeUnmount(() => {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 12px;
 
     thead {
@@ -3377,7 +3474,7 @@ onBeforeUnmount(() => {
       h3 {
         margin: 0 0 15px 0;
         font-size: 15px;
-        font-family: 'Courier New', monospace;
+        font-family: "临海体", serif;
         text-transform: uppercase;
         letter-spacing: 1px;
         color: #000;

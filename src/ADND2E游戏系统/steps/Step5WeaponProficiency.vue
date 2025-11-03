@@ -2,7 +2,7 @@
   <div class="step5-weapon-proficiency">
     <!-- 顶部信息面板 -->
     <div class="info-panel">
-      <h2>⚔️ 武器熟练选择</h2>
+      <h2><i class="fa-solid fa-khanda"></i> 武器熟练选择</h2>
       <div class="info-grid">
         <div class="info-item">
           <span class="label">职业：</span>
@@ -38,7 +38,7 @@
 
     <!-- 专精说明（仅战士） -->
     <div v-if="canSpecialize" class="specialization-info">
-      <h3>⭐ 武器专精（仅战士可用）</h3>
+      <h3><i class="fa-solid fa-star"></i> 武器专精（仅战士可用）</h3>
       <div class="spec-details">
         <p><strong>专精效果：</strong></p>
         <ul>
@@ -84,7 +84,7 @@
       >
         <div class="weapon-header">
           <div class="weapon-name">
-            <span class="icon">{{ getWeaponIcon(weapon.category) }}</span>
+            <span class="icon" v-html="getWeaponIcon(weapon.category)"></span>
             <span class="name">{{ weapon.name }}</span>
             <span class="english">{{ weapon.englishName }}</span>
           </div>
@@ -312,22 +312,22 @@ function canAffordSpecialization(weaponId: string): boolean {
 // 获取武器图标
 function getWeaponIcon(category: string): string {
   const icons: Record<string, string> = {
-    弓: '🏹',
-    弩: '🎯',
-    剑: '⚔️',
-    斧: '🪓',
-    匕首: '🗡️',
-    连枷: '🔨',
-    钉头锤: '⚒️',
-    锤: '🔨',
-    矛: '🔱',
-    长柄武器: '⚡',
-    叉矛: '🔱',
-    简易武器: '🏑',
-    投掷武器: '💨',
-    特殊武器: '✨',
+    弓: '<i class="fa-solid fa-bullseye"></i>',
+    弩: '<i class="fa-solid fa-circle-dot"></i>',
+    剑: '<i class="fa-solid fa-khanda"></i>',
+    斧: '<i class="fa-solid fa-hammer"></i>',
+    匕首: '<i class="fa-solid fa-knife"></i>',
+    连枷: '<i class="fa-solid fa-hammer"></i>',
+    钉头锤: '<i class="fa-solid fa-hammer"></i>',
+    锤: '<i class="fa-solid fa-hammer"></i>',
+    矛: '<i class="fa-solid fa-staff-snake"></i>',
+    长柄武器: '<i class="fa-solid fa-hammer"></i>',
+    叉矛: '<i class="fa-solid fa-staff-snake"></i>',
+    简易武器: '<i class="fa-solid fa-hand-fist"></i>',
+    投掷武器: '<i class="fa-solid fa-baseball"></i>',
+    特殊武器: '<i class="fa-solid fa-sparkles"></i>',
   };
-  return icons[category] || '⚔️';
+  return icons[category] || '<i class="fa-solid fa-khanda"></i>';
 }
 
 // 获取相关武器文本
@@ -383,7 +383,9 @@ function goNext() {
   }
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family:
+      'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans CN', 'Noto Sans CJK SC',
+      'SimSun', '宋体', 'SimHei', '黑体', sans-serif;
     font-size: 28px;
     font-weight: bold;
     text-align: center;

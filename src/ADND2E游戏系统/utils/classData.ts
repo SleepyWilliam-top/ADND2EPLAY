@@ -63,7 +63,7 @@ export const classes: Class[] = [
     name: '战士',
     englishName: 'Fighter',
     category: 'warrior',
-    icon: '⚔️',
+    icon: '<i class="fa-solid fa-khanda"></i>',
     description:
       '战士的首要属性是力量。战士是精通武器的勇士，如果足够聪明，那么他还可以是战术家和战略家。传说中有许多著名的战士：赫拉克勒斯、珀尔修斯、海华沙、贝奥武夫、齐格弗里德、库·丘林、小约翰、特里斯坦以及辛巴达。战士可以属于任何阵营：善良或邪恶，守序或混乱，甚至是中立的。',
     image: 'https://p.sda1.dev/28/c7493dd079c308f7cd4d1e68306da308/fighter.jpg',
@@ -139,7 +139,7 @@ export const classes: Class[] = [
     name: '圣武士',
     englishName: 'Paladin',
     category: 'warrior',
-    icon: '🛡️',
+    icon: '<i class="fa-solid fa-shield"></i>',
     description:
       '圣武士是高贵而英勇的勇士，象征着这个世上的一切正义与真理。他必须在任何时候都坚持着崇高的理想。罗兰与查理大帝的十二近侍、兰斯洛特爵士、高文爵士与加拉哈德爵士皆是该职业的个中典范。只有人类有机会成为圣武士。圣武士必须是守序善良阵营，且必须始终保持守序善良。',
     image: 'https://p.sda1.dev/28/b37f27bc5dd29bfef6c20344ecbd5c2f/paladin.jpg',
@@ -283,7 +283,7 @@ export const classes: Class[] = [
     name: '游侠',
     englishName: 'Ranger',
     category: 'warrior',
-    icon: '🏹',
+    icon: '<i class="fa-solid fa-bullseye"></i>',
     description:
       '游侠是倚仗着剑与灵知生存的猎手与护林员。罗宾汉、俄里翁、巨人杀手杰克都是历史和传说中的游侠典范。游侠的能力让他们在追踪、森林知识和刺探方面格外出色。游侠必须是善良阵营，但可以是守序、中立或混乱善良。',
     image: 'https://p.sda1.dev/28/edc0052529018e47db8a099aa251cbb2/ranger.jpg',
@@ -406,7 +406,7 @@ export const classes: Class[] = [
     name: '巫师',
     englishName: 'Mage',
     category: 'wizard',
-    icon: '🔮',
+    icon: '<i class="fa-solid fa-wand-magic-sparkles"></i>',
     description:
       '巫师是法师中最为多才多艺的一种，他们选择不专精于某个特定的魔法学派。这既是一种优势同时也是劣势。广泛的法术选择让巫师能够处理许多不同的情况。法师致力于成为魔法能量的掌控者，他们塑造这些魔法能量并将其作为法术施展出来。',
     image: 'https://p.sda1.dev/28/04dd86265924234e354b95ded54db6a7/Wizard.jpg',
@@ -534,7 +534,7 @@ export const classes: Class[] = [
     name: '牧师',
     englishName: 'Cleric',
     category: 'priest',
-    icon: '✝️',
+    icon: '<i class="fa-solid fa-cross"></i>',
     description:
       '牧师是最为常见的祭司。他可以是任何神系信仰的信徒。牧师通常是善良的，但并不局限于善良阵营；他们这个阶级可以接纳任何阵营。牧师这个职业类似于中世纪的某些宗教骑士团：条顿骑士团、圣殿骑士团和医护骑士团。',
     image: 'https://p.sda1.dev/28/e74e763c01d6def3834ab80470696533/Cleric.jpg',
@@ -657,7 +657,7 @@ export const classes: Class[] = [
     name: '德鲁伊',
     englishName: 'Druid',
     category: 'priest',
-    icon: '🌿',
+    icon: '<i class="fa-solid fa-seedling"></i>',
     image: 'https://p.sda1.dev/28/e1326fce9fb43b1787b32e0978424c54/Druid.jpg',
     imageCredit: 'X.com Taran Fiddler @TFiddlerArt',
     description:

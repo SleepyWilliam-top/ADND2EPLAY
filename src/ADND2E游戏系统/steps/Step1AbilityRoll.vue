@@ -8,8 +8,8 @@
         class="mode-button"
         :class="{ active: currentMode === mode.value }"
         @click="switchMode(mode.value)"
+        v-html="mode.label"
       >
-        {{ mode.label }}
       </button>
       <div v-if="currentMode === 'point-buy'" class="points-display">
         <span class="points-label">剩余点数:</span>
@@ -110,11 +110,11 @@
       </div>
       <div class="action-center" v-if="currentMode === 'roll'">
         <button class="action-button" @click="rollAll('3d6')">
-          <span class="button-icon">🎲</span>
+          <span class="button-icon"><i class="fa-solid fa-dice-d20"></i></span>
           全部投掷(3d6)
         </button>
         <button class="action-button" @click="rollAll('4d6k3')">
-          <span class="button-icon">🎲</span>
+          <span class="button-icon"><i class="fa-solid fa-dice-d20"></i></span>
           全部投掷(4d6k3)
         </button>
       </div>
@@ -159,7 +159,7 @@ const expandedAbility = ref<AbilityKey | null>(null);
 const pointPool = ref(80);
 
 const modes = [
-  { label: '掷骰分配', value: 'roll' as Mode },
+  { label: '掷 <i class="fa-solid fa-dice-d20"></i> 分配', value: 'roll' as Mode },
   { label: '点数池分配', value: 'point-buy' as Mode },
 ];
 
@@ -644,7 +644,7 @@ function generateCharismaTable(): string {
   padding: 10px 20px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -665,7 +665,7 @@ function generateCharismaTable(): string {
   align-items: center;
   gap: 10px;
   margin-left: auto;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -691,7 +691,7 @@ function generateCharismaTable(): string {
     padding: 5px 10px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 14px;
     cursor: pointer;
   }
@@ -739,7 +739,7 @@ function generateCharismaTable(): string {
   gap: 15px;
 
   h3 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 20px;
     font-weight: bold;
     margin: 0;
@@ -750,7 +750,7 @@ function generateCharismaTable(): string {
   }
 
   .ability-abbr {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 16px;
     font-weight: bold;
     color: #666;
@@ -764,7 +764,7 @@ function generateCharismaTable(): string {
   padding: 6px 12px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -794,7 +794,7 @@ function generateCharismaTable(): string {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 
   .value-label {
     font-size: 16px;
@@ -804,7 +804,7 @@ function generateCharismaTable(): string {
   .value-number {
     font-size: 32px;
     font-weight: bold;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     color: #000;
     min-width: 50px;
     text-align: center;
@@ -812,7 +812,7 @@ function generateCharismaTable(): string {
 }
 
 .ability-bonuses {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 13px;
   color: #333;
   flex: 1;
@@ -843,7 +843,7 @@ function generateCharismaTable(): string {
   padding: 0;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 24px;
   font-weight: bold;
   cursor: pointer;
@@ -898,7 +898,7 @@ function generateCharismaTable(): string {
   padding: 12px 20px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -920,7 +920,7 @@ function generateCharismaTable(): string {
   flex: 1;
   padding: 12px;
   border: 2px solid #000;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 20px;
   font-weight: bold;
   text-align: center;
@@ -940,7 +940,7 @@ function generateCharismaTable(): string {
 }
 
 .details-description {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   line-height: 1.8;
   color: #333;
@@ -959,7 +959,7 @@ function generateCharismaTable(): string {
 :deep(.ability-table) {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 12px;
   background-color: #fff;
 
@@ -1045,7 +1045,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #666;
   color: #666;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1075,7 +1075,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #000;
   color: #000;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1105,7 +1105,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #d9534f;
   color: #d9534f;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1135,7 +1135,7 @@ function generateCharismaTable(): string {
   background-color: #000;
   border: 3px solid #000;
   color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   font-weight: bold;
   text-transform: uppercase;

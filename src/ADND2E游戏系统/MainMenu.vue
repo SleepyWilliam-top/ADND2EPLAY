@@ -13,7 +13,7 @@
         <div class="menu-card" @click="showCreateModal">
           <div class="card-border">
             <div class="card-header">
-              <span class="card-icon">⚔</span>
+              <span class="card-icon"><i class="fa-solid fa-dice-d20"></i></span>
               <h3>创建角色</h3>
             </div>
             <div class="card-description">
@@ -29,7 +29,7 @@
         <div class="menu-card" :class="{ disabled: !hasSavedGame }" @click="hasSavedGame && showContinueModal()">
           <div class="card-border">
             <div class="card-header">
-              <span class="card-icon">📜</span>
+              <span class="card-icon"><i class="fa-solid fa-scroll"></i></span>
               <h3>继续游戏</h3>
             </div>
             <div class="card-description">
@@ -59,7 +59,7 @@
             <button class="modal-close" @click="closeCreateModal">×</button>
           </div>
           <div class="modal-content">
-            <div class="modal-icon">⚔</div>
+            <div class="modal-icon"><i class="fa-solid fa-dice-d20"></i></div>
             <p class="modal-description">
               你即将踏上一段全新的冒险旅程。<br />
               在这个世界中，你将扮演一位勇敢的冒险者，<br />
@@ -79,7 +79,7 @@
             <div class="action-card confirm-card" @click="confirmCreateCharacter">
               <div class="action-card-content">
                 <span class="action-label">开始创建</span>
-                <span class="action-icon">⚔</span>
+                <span class="action-icon"><i class="fa-solid fa-dice-d20"></i></span>
               </div>
             </div>
           </div>
@@ -96,7 +96,7 @@
             <button class="modal-close" @click="closeContinueModal">×</button>
           </div>
           <div class="modal-content">
-            <div class="modal-icon">📜</div>
+            <div class="modal-icon"><i class="fa-solid fa-scroll"></i></div>
             <p class="modal-description">欢迎回来，冒险者！</p>
             <div class="save-info">
               <div class="info-row">
@@ -123,7 +123,7 @@
             <div class="action-card confirm-card" @click="confirmContinueGame">
               <div class="action-card-content">
                 <span class="action-label">继续冒险</span>
-                <span class="action-icon">📜</span>
+                <span class="action-icon"><i class="fa-solid fa-scroll"></i></span>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@
             <button class="modal-close" @click="closeAboutModal">×</button>
           </div>
           <div class="modal-content">
-            <div class="modal-icon">🎲</div>
+            <div class="modal-icon"><i class="fa-solid fa-dice-d20"></i></div>
             <h4 class="about-title">ADND 2E 游戏系统</h4>
             <p class="modal-description">
               欢迎来到 Advanced Dungeons & Dragons 2nd Edition！<br />
@@ -165,8 +165,9 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onActivated, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { clearAllData } from './composables/usePersistence';
 
 const router = useRouter();
 const hasSavedGame = ref(false);
@@ -199,6 +200,11 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   // 清理事件监听器
   window.removeEventListener('adnd2e-save-cleared', handleSaveCleared);
+});
+
+// 当从游戏返回主菜单时，重新检查存档状态
+onActivated(async () => {
+  await checkSavedGame();
 });
 
 async function checkSavedGame() {
@@ -296,10 +302,31 @@ function closeCreateModal() {
 }
 
 // 确认创建角色
-function confirmCreateCharacter() {
+async function confirmCreateCharacter() {
   closeCreateModal();
-  toastr.success('正在进入角色创建...');
-  router.push('/character-creation');
+  toastr.info('正在清理旧数据...');
+  
+  try {
+    // 🔧 修复：创建新角色前清除所有 IndexedDB 缓存
+    await clearAllData();
+    console.log('[MainMenu] 已清除所有 IndexedDB 缓存');
+    
+    // 清除角色卡变量中的旧数据
+    replaceVariables(
+      {
+        adnd2e: undefined, // 完全清空
+      },
+      { type: 'character' },
+    );
+    console.log('[MainMenu] 已清除角色卡变量');
+    
+    toastr.success('正在进入角色创建...');
+    router.push('/character-creation');
+  } catch (error) {
+    console.error('[MainMenu] 清理数据失败:', error);
+    toastr.warning('数据清理失败，但仍可继续创建');
+    router.push('/character-creation');
+  }
 }
 
 // 显示继续游戏模态框
@@ -439,7 +466,7 @@ function copyQQGroup() {
 }
 
 .main-title {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 36px;
   font-weight: 900;
   letter-spacing: 4px;
@@ -601,7 +628,7 @@ function copyQQGroup() {
   border-bottom: 2px solid #000;
 
   h3 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -627,7 +654,7 @@ function copyQQGroup() {
   justify-content: center;
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     line-height: 1.6;
     color: #666;
@@ -652,7 +679,7 @@ function copyQQGroup() {
   border-top: 2px solid #000;
 
   .action-hint {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-weight: bold;
     text-transform: uppercase;
@@ -680,7 +707,7 @@ function copyQQGroup() {
   position: relative;
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-style: italic;
     color: #999;
@@ -810,7 +837,7 @@ function copyQQGroup() {
   background-color: #f5f5f5;
 
   h3 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -886,7 +913,7 @@ function copyQQGroup() {
 }
 
 .modal-description {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   line-height: 1.8;
   color: #333;
@@ -930,7 +957,7 @@ function copyQQGroup() {
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #ccc;
-  font-family: 'Courier New', monospace;
+  font-family: '临海体', serif;
 
   &:last-child {
     border-bottom: none;
@@ -996,7 +1023,7 @@ function copyQQGroup() {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 1px;
@@ -1067,7 +1094,7 @@ function copyQQGroup() {
   padding: 15px 40px;
   font-size: 16px;
   font-weight: bold;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   text-transform: uppercase;
   letter-spacing: 2px;
   cursor: pointer;
@@ -1113,7 +1140,7 @@ function copyQQGroup() {
 
 // 关于页面专属样式
 .about-title {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 20px;
   font-weight: bold;
   letter-spacing: 2px;
@@ -1140,7 +1167,7 @@ function copyQQGroup() {
 }
 
 .group-label {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   font-weight: bold;
   color: #333;
@@ -1165,7 +1192,7 @@ function copyQQGroup() {
   }
 
   .number {
-    font-family: 'Courier New', monospace;
+    font-family: '临海体', serif;
     font-size: 28px;
     font-weight: bold;
     color: #000;
@@ -1194,7 +1221,7 @@ function copyQQGroup() {
     padding: 8px 16px;
     font-size: 14px;
     font-weight: bold;
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     cursor: pointer;
     transition: all 0.2s ease;
 

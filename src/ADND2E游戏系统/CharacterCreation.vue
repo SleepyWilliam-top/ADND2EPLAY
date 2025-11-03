@@ -88,8 +88,7 @@ function handleBackToMenu() {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background-color: #f5f5f5;
-  background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+  background-color: #fff;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -126,7 +125,7 @@ function handleBackToMenu() {
   }
 
   h1 {
-    font-family: 'Times New Roman', serif;
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
     font-size: 32px;
     font-weight: bold;
     letter-spacing: 3px;
@@ -208,7 +207,7 @@ function handleBackToMenu() {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Times New Roman', serif;
+  font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
   font-size: 18px;
   font-weight: bold;
   color: #999;
@@ -223,7 +222,7 @@ function handleBackToMenu() {
 }
 
 .step-label {
-  font-family: 'Times New Roman', serif;
+  font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
   font-size: 14px;
   color: #999;
   text-align: center;
@@ -261,7 +260,9 @@ function handleBackToMenu() {
     color: #fff;
 
     &::after {
-      content: '✓';
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
       font-size: 20px;
     }
   }
@@ -296,7 +297,7 @@ function handleBackToMenu() {
   text-align: center;
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
     font-size: 20px;
     color: #999;
     margin-bottom: 30px;
@@ -308,7 +309,7 @@ function handleBackToMenu() {
   margin: 0 auto;
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 20px;
@@ -334,7 +335,7 @@ function handleBackToMenu() {
     gap: 8px;
     padding: 12px 28px;
     font-size: 16px;
-    font-family: 'Times New Roman', serif;
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
     font-weight: bold;
     border: 3px solid #000;
     cursor: pointer;

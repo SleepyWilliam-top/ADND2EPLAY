@@ -89,7 +89,7 @@ export interface NpcInventoryItem {
  *
  *    示例：
  *    <[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>
- *    <托姆·铜须：AC -2；MV 12；HD 15；hp 120；THAC0 5；#AT 2；Dmg 1d6+3；SA 幸运诅咒；SD 魔法抗力70%；SW 无；SP 每日任意1-5级祭司/法师法术各6个；MR 70%；SZ S；Int 18；AL 混乱中立；ML 19；XP --；MagicItem 幸运骰子>
+ *    <托姆·铜须：AC -2；MV 12；HD 15；hp 120；THAC0 5；#AT 2；Dmg 1d6+3；SA 幸运诅咒；SD 魔法抗力70%；SW 无；SP 每日任意1-5级祭司/法师法术各6个；MR 70%；SZ S；Int 18；AL 混乱中立；ML 19；XP --；MagicItem 幸运骰子；状态 健康；外貌 矮小的矮人，留着火红的胡子；性格 狡黠且爱恶作剧；与角色关系 盟友>
  *
  *    字段说明：
  *    - AC: 护甲等级（Armor Class），数值越低越好，10为无甲，可为负数
@@ -110,6 +110,10 @@ export interface NpcInventoryItem {
  *    - ML: 士气（Morale），2-20，普通人10，精英12-14
  *    - XP: 经验值（Experience Points），击败该生物获得的经验，可用"--"表示不适用
  *    - MagicItem: 魔法物品（可选），如"长剑+1"
+ *    - 状态: NPC当前状态（可选），如"健康"、"受伤"、"中毒"
+ *    - 外貌: NPC外貌描述（可选），如"高大的人类骑士，身着银色铠甲"
+ *    - 性格: NPC性格描述（可选），如"正直勇敢"、"狡诈多疑"
+ *    - 与角色关系: 与玩家角色的关系（可选），如"朋友"、"敌人"、"盟友"
  *
  * 2. **XML 格式**：
  *    <npc name="卫兵队长" ac="5" mv="12" hd="1" hp="5" thac0="18" at="1" dmg="1d8" sz="M" int="8-10" al="LG" ml="12" xp="15">
@@ -118,6 +122,8 @@ export interface NpcInventoryItem {
  *
  * 3. **管道分隔格式**：
  *    <npc>卫兵队长|AC:5|MV:12|HD:1|HP:5|THAC0:18|#AT:1|Dmg:1d8|SZ:M|Int:8-10|AL:LG|ML:12|XP:15</npc>
+ *
+ * 🔧 注意：当AI输出包含NPC数据时，游戏界面将自动隐藏
  */
 
 /**
@@ -298,7 +304,7 @@ export function useNpcAutoDetection() {
    *
    * 示例：
    * <[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>
-   * <托姆·铜须：AC -2；MV 12；HD 15；hp 120；THAC0 5；#AT 2；Dmg 1d6+3；...>
+   * <托姆·铜须：AC -2；MV 12；HD 15；hp 120；THAC0 5；#AT 2；Dmg 1d6+3；状态 健康；外貌 矮人，红色胡子；性格 友善；与角色关系 朋友>
    */
   function parseStandardAdnd2eFormat(text: string): NPC[] {
     const npcs: NPC[] = [];
@@ -306,7 +312,7 @@ export function useNpcAutoDetection() {
     // 匹配完整的 ADND2E NPC 格式（带尖括号）
     // 支持中英文分号和空格
     // 支持有无方括号两种格式：<[名称]：...> 或 <名称：...>
-    // 使用 RegExp 构造函数避免转义问题
+    // 🆕 新增：支持状态、外貌、性格、与角色关系字段
     const npcPattern = new RegExp(
       '<(?:\\[([^\\[\\]]+?)\\]|([^<>:：]+?))[:：]\\s*' + // 改进：支持有无方括号
         '(?:AC\\s+([^；;<>]+?))?[；;]?\\s*' +
@@ -326,7 +332,11 @@ export function useNpcAutoDetection() {
         '(?:AL\\s+([^；;<>]+?))?[；;]?\\s*' +
         '(?:ML\\s+([^；;<>]+?))?[；;]?\\s*' +
         '(?:XP\\s+([^；;<>]+?))?[；;]?\\s*' +
-        '(?:MagicItem\\s+([^；;<>]+?))?\\s*>',
+        '(?:MagicItem\\s+([^；;<>]+?))?[；;]?\\s*' +
+        '(?:状态\\s+([^；;<>]+?))?[；;]?\\s*' + // 🆕 新增字段
+        '(?:外貌\\s+([^；;<>]+?))?[；;]?\\s*' + // 🆕 新增字段
+        '(?:性格\\s+([^；;<>]+?))?[；;]?\\s*' + // 🆕 新增字段
+        '(?:与角色关系\\s+([^；;<>]+?))?\\s*>', // 🆕 新增字段
       'gi',
     );
 
@@ -355,6 +365,10 @@ export function useNpcAutoDetection() {
         ml,
         xp,
         magicItem,
+        status, // 🆕 新增字段
+        appearance, // 🆕 新增字段
+        personality, // 🆕 新增字段
+        relationship, // 🆕 新增字段
       ] = match;
       const name = nameWithBracket || nameWithoutBracket;
 
@@ -384,6 +398,10 @@ export function useNpcAutoDetection() {
         ml: ml?.trim() || '10',
         xp: xp?.trim() || '15',
         magicItems: magicItem?.trim(),
+        status: status?.trim(), // 🆕 保存状态字段
+        appearance: appearance?.trim(), // 🆕 保存外貌字段
+        personality: personality?.trim(), // 🆕 保存性格字段
+        relationshipDescription: relationship?.trim(), // 🆕 保存与角色关系字段
         favorite: false,
         lastSeen: Date.now(),
         firstSeen: Date.now(),
@@ -619,101 +637,45 @@ export function useNpcAutoDetection() {
   }
 
   /**
-   * 🔧 新增：检测 NPC 是否在文本中被提及
-   * @param npcName NPC 名称
-   * @param text 要检测的文本
-   * @returns 是否被提及
-   */
-  function isNpcMentionedInText(npcName: string, text: string): boolean {
-    // 检查是否包含 NPC 名称（支持各种中文表达）
-    if (text.includes(npcName)) {
-      return true;
-    }
-
-    // 检查常见的提及模式
-    const mentionPatterns = [
-      `${npcName}说`,
-      `${npcName}道`,
-      `${npcName}问`,
-      `${npcName}答`,
-      `${npcName}笑`,
-      `${npcName}看`,
-      `${npcName}对`,
-    ];
-
-    return mentionPatterns.some(pattern => text.includes(pattern));
-  }
-
-  /**
-   * 🔧 新增：智能清理不在场的 NPC
-   * 学习自 lucklyjkop：根据最近剧情自动判断 NPC 是否还在场景中
+   * 🔧 智能清理不在场的 NPC
    *
-   * 检测逻辑：
-   * 1. 检查最近 N 条 AI 消息
-   * 2. 如果 NPC 在这些消息中没有被提及，且有"离开"等关键词，则移除
-   * 3. 如果 NPC 连续多条消息都没被提及，也可能移除
+   * 清理逻辑：
+   * 1. 收集最近所有消息中出现的 NPC 标签（通过解析标签获得）
+   * 2. 将当前 NPC 列表与最近出现的 NPC 对比
+   * 3. 如果某个 NPC 不在最近的标签列表中，说明它已经不在正文中了，应该被移除
    * 4. 特别关心的 NPC 永远不会被自动移除
    *
-   * @param recentMessagesCount 检查最近几条消息（默认 5 条）
+   * @param recentMessagesCount 检查最近几条消息（默认 10 条）
    */
-  function autoCleanupAbsentNpcs(recentMessagesCount: number = 5) {
-    // 获取最近的 AI 消息
-    const recentAiMessages = gameStore.messages.filter(m => m.role === 'assistant').slice(-recentMessagesCount);
+  function autoCleanupAbsentNpcs(recentMessagesCount: number = 10) {
+    // 获取最近的所有消息（包括用户和AI消息）
+    const recentMessages = gameStore.messages.slice(-recentMessagesCount);
 
-    if (recentAiMessages.length === 0) {
+    if (recentMessages.length === 0) {
       console.log('[NPC Auto] 没有足够的消息用于判断 NPC 在场状态');
       return;
     }
 
-    const recentContents = recentAiMessages.map(m => m.content);
-    const combinedText = recentContents.join('\n');
-    const toRemove: string[] = [];
+    // 收集最近消息中所有出现的 NPC 名称（通过解析标签）
+    const recentNpcNames = new Set<string>();
+    recentMessages.forEach(msg => {
+      if (msg.role === 'assistant' && msg.content) {
+        const npcsInMessage = parseNpcTags(msg.content);
+        npcsInMessage.forEach(npc => recentNpcNames.add(npc.name));
+      }
+    });
 
-    // 遍历所有非特别关心的 NPC
+    // 找出不在最近消息中的 NPC
+    const toRemove: string[] = [];
     npcList.value.forEach(npc => {
       if (npc.favorite) {
         return; // 跳过特别关心的 NPC（不会自动移除）
       }
 
-      // 检查 NPC 是否在最近的剧情中被提及
-      const mentioned = isNpcMentionedInText(npc.name, combinedText);
-
-      if (!mentioned) {
-        // 检查是否有明确的"离开"提示
-        const leftKeywords = [
-          '离开',
-          '走了',
-          '离去',
-          '告辞',
-          '离别',
-          '道别',
-          '远去',
-          '告别',
-          '退下',
-          '离场',
-          '退场',
-          '消失',
-          '不见',
-          '走远',
-        ];
-
-        const hasLeftIndication = leftKeywords.some(
-          keyword => combinedText.includes(npc.name) && combinedText.includes(keyword),
-        );
-
-        if (hasLeftIndication) {
-          // 明确提到离开，立即移除
-          toRemove.push(npc.name);
-          console.log(`[NPC Auto] 检测到 ${npc.name} 离场：文本提及离开`);
-        } else {
-          // 没有明确提到离开，检查是否长时间未提及
-          const daysSinceLastSeen = (Date.now() - npc.lastSeen) / (1000 * 60 * 60 * 24);
-          if (daysSinceLastSeen > 1) {
-            // 超过 1 天未提及
-            toRemove.push(npc.name);
-            console.log(`[NPC Auto] 检测到 ${npc.name} 离场：超过 1 天未提及`);
-          }
-        }
+      // 如果这个 NPC 不在最近的标签列表中，说明它的标签已经不在正文中了
+      if (!recentNpcNames.has(npc.name)) {
+        toRemove.push(npc.name);
+        console.log(`[NPC Auto] 检测到 ${npc.name} 的标签已不在最近正文中`);
       }
     });
 
@@ -722,8 +684,8 @@ export function useNpcAutoDetection() {
       npcList.value = npcList.value.filter(npc => !toRemove.includes(npc.name));
       saveNpcList();
 
-      console.log('[NPC Auto] 自动移除不在场的 NPC:', toRemove);
-      toastr.info(`${toRemove.join('、')} 已离场`, '角色管理');
+      console.log('[NPC Auto] 自动移除标签已不存在的 NPC:', toRemove);
+      toastr.info(`${toRemove.join('、')} 的标签已不在正文中，已自动清除`, 'NPC 管理');
     }
   }
 
@@ -878,17 +840,19 @@ export function useNpcAutoDetection() {
   function initialize() {
     loadNpcList();
 
+    // 🔧 性能优化：使用 watchEffect 代替 deep watch，只监听消息数组长度
     // 方式1：监听前端消息日志变化（作为备用）
     watch(
-      () => gameStore.messages,
-      newMessages => {
-        // 只处理最新的 AI 消息
-        const lastMessage = newMessages[newMessages.length - 1];
-        if (lastMessage && lastMessage.role === 'assistant') {
-          processAiMessage(lastMessage.content);
+      () => gameStore.messages.length,
+      (newLength, oldLength) => {
+        // 只在新增消息时处理（不处理删除）
+        if (newLength > oldLength) {
+          const lastMessage = gameStore.messages[gameStore.messages.length - 1];
+          if (lastMessage && lastMessage.role === 'assistant') {
+            processAiMessage(lastMessage.content);
+          }
         }
       },
-      { deep: true },
     );
 
     // 方式2：监听酒馆生成完成事件（主要检测方式，更及时）

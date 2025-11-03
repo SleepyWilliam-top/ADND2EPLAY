@@ -85,6 +85,7 @@ export function parseAiResponse(response: string): ParseResult {
  * - 自动识别NPC（带描述的角色名）
  * - 自动识别新能力描述
  * - 自动提取关键信息到游戏状态
+ * - 自动解析任务（新任务、任务完成/失败等）
  */
 function parseIntelligentText(text: string): GameCommand[] {
   const commands: GameCommand[] = [];
@@ -92,6 +93,10 @@ function parseIntelligentText(text: string): GameCommand[] {
   // 0.3 🔧 新增：解析施法（检测AI输出中的施法描述）
   const spellCommands = parseSpellCastingFromText(text);
   commands.push(...spellCommands);
+
+  // 0.4 🔧 新增：解析任务变化（参考 lucklyjkop.html 的任务系统）
+  const questCommands = parseQuestsFromText(text);
+  commands.push(...questCommands);
 
   // 0.5 解析额外能力（特殊能力等）
   const abilityCommands = parseAbilitiesFromText(text);
@@ -628,6 +633,155 @@ function parseSpellCastingFromText(text: string): GameCommand[] {
         data: { spellName },
       });
       console.log('[智能解析] 检测到施法:', spellName);
+    }
+  }
+
+  return commands;
+}
+
+/**
+ * 🔧 新增：从文本中解析任务变化（参考 lucklyjkop.html 的实现）
+ * 
+ * 支持的任务操作：
+ * 1. 新任务：检测"接受任务"、"获得任务"、"任务：XXX"等模式
+ * 2. 任务完成：检测"完成任务"、"任务完成"等模式
+ * 3. 任务失败：检测"任务失败"、"失败了任务"等模式
+ * 4. 任务进度更新：检测"任务进度"、"XXX任务的进度"等模式
+ * 
+ * 与 lucklyjkop.html 的差异：
+ * - lucklyjkop.html 使用 currentState['6'] 存储任务（表格数据库）
+ * - ADND2E 使用角色卡变量的 adnd2e.quests 数组存储任务
+ */
+function parseQuestsFromText(text: string): GameCommand[] {
+  const commands: GameCommand[] = [];
+
+  // 1. 检测新任务
+  const newQuestPatterns = [
+    // 「任务：XXX」或【任务：XXX】格式
+    /[「『【《"](任务|委托|Quest)[：:]\s*([^」』】》"]{2,50})[」』】》"]/gi,
+    // "接受了XXX任务"、"获得了XXX任务"
+    /(?:接受|获得|承接|领取)(?:了)?[「『"]?([^「』"]{2,30})[」』"]?任务/gi,
+    // "XXX委托你XXX"、"XXX要求你XXX"
+    /([^。！？\n]{2,15})(?:委托|要求|请求|希望)(?:你|我|角色)([^。！？\n]{5,50})/gi,
+  ];
+
+  const detectedQuests = new Set<string>(); // 避免重复
+
+  for (const pattern of newQuestPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      let questTitle = '';
+      let questDescription = '';
+
+      if (match[0].includes('任务') || match[0].includes('Quest')) {
+        // 格式1：「任务：标题」描述
+        questTitle = match[2]?.trim() || '';
+        questDescription = questTitle; // 默认描述与标题相同
+      } else if (match[0].includes('接受') || match[0].includes('获得')) {
+        // 格式2：接受了XXX任务
+        questTitle = match[1]?.trim() || '';
+        questDescription = questTitle;
+      } else {
+        // 格式3：XXX委托你XXX
+        const npcName = match[1]?.trim() || '';
+        const taskDesc = match[2]?.trim() || '';
+        questTitle = `${npcName}的委托`;
+        questDescription = taskDesc;
+      }
+
+      // 过滤无效任务
+      if (
+        !questTitle ||
+        questTitle.length < 2 ||
+        questTitle.length > 50 ||
+        detectedQuests.has(questTitle) ||
+        /^[\d\s]+$/.test(questTitle) // 排除纯数字
+      ) {
+        continue;
+      }
+
+      detectedQuests.add(questTitle);
+      commands.push({
+        type: 'add_quest',
+        data: {
+          title: questTitle,
+          description: questDescription,
+          status: 'active',
+        },
+      });
+      console.log('[智能解析] 检测到新任务:', questTitle);
+    }
+  }
+
+  // 2. 检测任务完成
+  const completedQuestPatterns = [
+    /(?:完成|达成|完结|结束)(?:了)?[「『"]?([^「』"]{2,30})[」』"]?任务/gi,
+    /[「『"]?([^「』"]{2,30})[」』"]?任务(?:已)?完成/gi,
+    /任务[「『"]?([^「』"]{2,30})[」』"]?(?:已)?(?:完成|达成)/gi,
+  ];
+
+  for (const pattern of completedQuestPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      const questTitle = match[1]?.trim();
+      if (questTitle && questTitle.length >= 2 && questTitle.length <= 50) {
+        commands.push({
+          type: 'update_quest',
+          data: {
+            title: questTitle,
+            status: 'completed',
+          },
+        });
+        console.log('[智能解析] 检测到任务完成:', questTitle);
+      }
+    }
+  }
+
+  // 3. 检测任务失败
+  const failedQuestPatterns = [
+    /(?:失败|放弃|未能完成)(?:了)?[「『"]?([^「』"]{2,30})[」』"]?任务/gi,
+    /[「『"]?([^「』"]{2,30})[」』"]?任务(?:已)?失败/gi,
+    /任务[「『"]?([^「』"]{2,30})[」』"]?(?:已)?失败/gi,
+  ];
+
+  for (const pattern of failedQuestPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      const questTitle = match[1]?.trim();
+      if (questTitle && questTitle.length >= 2 && questTitle.length <= 50) {
+        commands.push({
+          type: 'update_quest',
+          data: {
+            title: questTitle,
+            status: 'failed',
+          },
+        });
+        console.log('[智能解析] 检测到任务失败:', questTitle);
+      }
+    }
+  }
+
+  // 4. 检测任务进度更新
+  const progressPatterns = [
+    /[「『"]?([^「』"]{2,30})[」』"]?任务的?进度[：:]?\s*([^。！？\n]{2,100})/gi,
+    /任务[「『"]?([^「』"]{2,30})[」』"]?的?进度[：:]?\s*([^。！？\n]{2,100})/gi,
+  ];
+
+  for (const pattern of progressPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      const questTitle = match[1]?.trim();
+      const progress = match[2]?.trim();
+      if (questTitle && progress && questTitle.length >= 2 && questTitle.length <= 50) {
+        commands.push({
+          type: 'update_quest',
+          data: {
+            title: questTitle,
+            progress: progress,
+          },
+        });
+        console.log('[智能解析] 检测到任务进度更新:', questTitle, progress);
+      }
     }
   }
 

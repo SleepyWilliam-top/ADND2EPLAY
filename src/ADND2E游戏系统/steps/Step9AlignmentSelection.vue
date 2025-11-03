@@ -49,8 +49,8 @@
             <div class="alignment-icon">{{ alignment.icon }}</div>
             <div class="alignment-name">{{ alignment.name }}</div>
             <div class="alignment-english">{{ alignment.englishName }}</div>
-            <div v-if="selectedAlignment === alignment.id" class="selected-indicator">✓</div>
-            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator">✗</div>
+            <div v-if="selectedAlignment === alignment.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
           </div>
 
           <!-- 第二行：中立 -->
@@ -67,8 +67,8 @@
             <div class="alignment-icon">{{ alignment.icon }}</div>
             <div class="alignment-name">{{ alignment.name }}</div>
             <div class="alignment-english">{{ alignment.englishName }}</div>
-            <div v-if="selectedAlignment === alignment.id" class="selected-indicator">✓</div>
-            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator">✗</div>
+            <div v-if="selectedAlignment === alignment.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
           </div>
 
           <!-- 第三行：邪恶 -->
@@ -85,8 +85,8 @@
             <div class="alignment-icon">{{ alignment.icon }}</div>
             <div class="alignment-name">{{ alignment.name }}</div>
             <div class="alignment-english">{{ alignment.englishName }}</div>
-            <div v-if="selectedAlignment === alignment.id" class="selected-indicator">✓</div>
-            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator">✗</div>
+            <div v-if="selectedAlignment === alignment.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+            <div v-else-if="!canSelectAlignment(alignment.id)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
           </div>
         </div>
       </div>
@@ -253,7 +253,7 @@ function confirmSelection() {
   width: 100%;
   min-height: 600px;
   padding: 30px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 }
 
 .selection-header {
@@ -546,7 +546,7 @@ function confirmSelection() {
     gap: 8px;
     padding: 12px 32px;
     font-size: 16px;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-weight: bold;
     border: 3px solid #000;
     cursor: pointer;

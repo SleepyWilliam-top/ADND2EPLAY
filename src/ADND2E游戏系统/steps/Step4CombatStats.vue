@@ -11,14 +11,14 @@
       <!-- 生命值掷骰（跨列）-->
       <div class="hitpoints-section">
         <h4 class="section-title">
-          <span class="icon">❤️</span>
+          <span class="icon"><i class="fa-solid fa-heart"></i></span>
           <span>生命值 (Hit Points)</span>
         </h4>
         <div class="hitpoints-card">
           <div v-if="!hitPoints" class="roll-prompt">
             <p class="prompt-text">点击下方按钮掷骰生命值。生命值决定角色能承受多少伤害。</p>
             <button class="roll-button" @click="rollHitPoints">
-              <span class="dice-icon">🎲</span>
+              <span class="dice-icon"><i class="fa-solid fa-dice-d20"></i></span>
               <span>掷骰生命值 ({{ hitDiceType }})</span>
             </button>
           </div>
@@ -29,7 +29,7 @@
                 <span class="value">{{ hitPoints.max }}</span>
               </div>
               <button class="reroll-button" title="重新掷骰" @click="rollHitPoints">
-                <span class="dice-icon">🎲</span>
+                <span class="dice-icon"><i class="fa-solid fa-dice-d20"></i></span>
                 <span>重新掷骰</span>
               </button>
             </div>
@@ -103,7 +103,7 @@
         <!-- THAC0 -->
         <div class="thac0-section">
           <h4 class="section-title">
-            <span class="icon">⚔️</span>
+            <span class="icon"><i class="fa-solid fa-khanda"></i></span>
             <span>零级命中值 (THAC0)</span>
           </h4>
           <div class="thac0-card">
@@ -125,7 +125,7 @@
         <!-- 豁免检定 -->
         <div class="saving-throws-section">
           <h4 class="section-title">
-            <span class="icon">🛡️</span>
+            <span class="icon"><i class="fa-solid fa-shield"></i></span>
             <span>豁免检定值</span>
           </h4>
           <div class="saving-throws-card">
@@ -408,7 +408,7 @@ function goToNextStep() {
 <style lang="scss" scoped>
 .step4-combat-stats {
   width: 100%;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 }
 
 // 顶部区域

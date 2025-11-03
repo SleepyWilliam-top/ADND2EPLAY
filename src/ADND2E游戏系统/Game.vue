@@ -37,22 +37,37 @@
       <!-- 右侧设置面板 -->
       <SettingsPanel :class="{ visible: rightPanelVisible }" />
     </div>
+
+    <!-- 手动补充分段记忆弹窗 -->
+    <ManualSegmentedMemoryModal
+      :visible="gameStore.showManualSegmentedMemoryModal"
+      @close="gameStore.closeManualSegmentedMemoryModal"
+      @save="handleSaveSegmentedMemory"
+    />
+
+    <!-- 🔧 性能监控面板（可通过快捷键 Ctrl+Shift+P 开启/关闭） -->
+    <PerformancePanel :visible="showPerformancePanel" @close="showPerformancePanel = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import CharacterAvatarPanel from './components/CharacterAvatarPanel.vue';
+import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue';
 import MessageArea from './components/MessageArea.vue';
-import SettingsPanel from './components/SettingsPanel.vue';
-import { useGameStore } from './stores/gameStore';
 import { useNpcAutoDetection } from './composables/useNpcAutoDetection';
+import { useGameStore } from './stores/gameStore';
+
+// 🔧 性能优化：懒加载非关键组件（学习自 lucklyjkop）
+const CharacterAvatarPanel = defineAsyncComponent(() => import('./components/CharacterAvatarPanel.vue'));
+const SettingsPanel = defineAsyncComponent(() => import('./components/SettingsPanel.vue'));
+const ManualSegmentedMemoryModal = defineAsyncComponent(() => import('./components/ManualSegmentedMemoryModal.vue'));
+const PerformancePanel = defineAsyncComponent(() => import('./components/PerformancePanel.vue'));
 
 const gameStore = useGameStore();
 const npcDetection = useNpcAutoDetection();
 const isLoading = ref(true);
 const leftPanelVisible = ref(false);
 const rightPanelVisible = ref(false);
+const showPerformancePanel = ref(false);
 
 function toggleLeftPanel() {
   leftPanelVisible.value = !leftPanelVisible.value;
@@ -67,6 +82,11 @@ function toggleRightPanel() {
 function closeAllPanels() {
   leftPanelVisible.value = false;
   rightPanelVisible.value = false;
+}
+
+// 处理手动补充分段记忆
+function handleSaveSegmentedMemory({ smallSummary, largeSummary }: { smallSummary: string; largeSummary: string }) {
+  gameStore.supplementSegmentedMemory(smallSummary, largeSummary);
 }
 
 // 保存当前路由到角色卡变量（用于退出后重进时恢复）
@@ -99,6 +119,21 @@ onMounted(async () => {
     // 监听流式传输事件
     eventOn(iframe_events.STREAM_TOKEN_RECEIVED_FULLY, handleStreamTokenFully);
     eventOn(iframe_events.GENERATION_ENDED, handleGenerationEnded);
+
+    // 🔧 性能优化：监听快捷键 Ctrl+Shift+P 开启/关闭性能监控
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+        e.preventDefault();
+        showPerformancePanel.value = !showPerformancePanel.value;
+        console.log('[Game] 性能监控面板:', showPerformancePanel.value ? '开启' : '关闭');
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+
+    // 在卸载时移除监听器
+    onBeforeUnmount(() => {
+      window.removeEventListener('keydown', handleKeydown);
+    });
 
     isLoading.value = false;
     console.log('[Game] 游戏界面初始化完成');
@@ -144,7 +179,7 @@ function handleGenerationEnded(_text: string, id: string) {
   width: 100%;
   height: 100%;
   display: flex;
-  background-color: #f5f5dc;
+  background-color: #fff;
   overflow: hidden;
 }
 
@@ -154,7 +189,7 @@ function handleGenerationEnded(_text: string, id: string) {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #f5f5dc;
+  background-color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -180,7 +215,7 @@ function handleGenerationEnded(_text: string, id: string) {
   }
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -210,8 +245,7 @@ function handleGenerationEnded(_text: string, id: string) {
   width: 100%;
   height: 100%;
   min-height: 1200px;
-  background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 2px solid #000;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -226,9 +260,9 @@ function handleGenerationEnded(_text: string, id: string) {
   overflow: hidden;
 }
 
-// 移动端头部栏（默认隐藏）
+// 移动端头部栏（桌面端也显示）
 .mobile-header {
-  display: none;
+  display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
@@ -241,7 +275,7 @@ function handleGenerationEnded(_text: string, id: string) {
     width: 40px;
     height: 40px;
     border: 2px solid #000;
-    background-color: #f5f5dc;
+    background-color: #fff;
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -250,7 +284,7 @@ function handleGenerationEnded(_text: string, id: string) {
     transition: all 0.2s;
 
     &:hover {
-      background-color: #e8dfc4;
+      background-color: #f0f0f0;
     }
 
     &:active {
@@ -259,7 +293,7 @@ function handleGenerationEnded(_text: string, id: string) {
   }
 
   .mobile-title {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -291,10 +325,6 @@ function handleGenerationEnded(_text: string, id: string) {
   .game-panel {
     flex-direction: column;
     border: none;
-  }
-
-  .mobile-header {
-    display: flex;
   }
 
   .mobile-overlay {

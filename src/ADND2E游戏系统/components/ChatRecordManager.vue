@@ -775,7 +775,7 @@ watch([chapterSize, displayMode], () => {
 }
 
 .modal-card {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   max-width: 1200px;
   width: 95%;
@@ -811,7 +811,7 @@ watch([chapterSize, displayMode], () => {
   user-select: none;
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 22px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -830,7 +830,7 @@ watch([chapterSize, displayMode], () => {
     padding: 6px 8px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 13px;
     text-align: center;
 
@@ -841,7 +841,7 @@ watch([chapterSize, displayMode], () => {
   }
 
   .input-label {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 12px;
     color: #666;
   }
@@ -885,7 +885,7 @@ watch([chapterSize, displayMode], () => {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 13px;
     cursor: pointer;
 
@@ -929,7 +929,7 @@ watch([chapterSize, displayMode], () => {
   padding: 8px 12px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 13px;
   cursor: pointer;
 
@@ -944,7 +944,7 @@ watch([chapterSize, displayMode], () => {
   border: 2px solid #000;
   background-color: #fff;
   cursor: pointer;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -980,7 +980,7 @@ watch([chapterSize, displayMode], () => {
     border-bottom: 2px solid #000;
 
     h3 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 20px;
       font-weight: bold;
       margin: 0 0 8px 0;
@@ -988,7 +988,7 @@ watch([chapterSize, displayMode], () => {
     }
 
     .chapter-range {
-      font-family: 'Courier New', monospace;
+      font-family: "临海体", serif;
       font-size: 12px;
       color: #666;
       margin: 0;
@@ -1019,7 +1019,7 @@ watch([chapterSize, displayMode], () => {
     align-items: center;
     justify-content: center;
     gap: 15px;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
   }
 
   .divider-icon {
@@ -1037,7 +1037,7 @@ watch([chapterSize, displayMode], () => {
   .chapter-info {
     font-size: 12px;
     color: #666;
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
   }
 }
 
@@ -1101,7 +1101,7 @@ watch([chapterSize, displayMode], () => {
 }
 
 .message-role {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -1110,13 +1110,13 @@ watch([chapterSize, displayMode], () => {
 }
 
 .message-time {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 11px;
   color: #999;
 }
 
 .message-index {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 11px;
   color: #666;
 }
@@ -1179,7 +1179,7 @@ watch([chapterSize, displayMode], () => {
 }
 
 .message-content {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   line-height: 1.6;
   color: #333;
@@ -1199,7 +1199,7 @@ watch([chapterSize, displayMode], () => {
   }
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 16px;
     margin: 10px 0;
 
@@ -1225,7 +1225,7 @@ watch([chapterSize, displayMode], () => {
 .footer-stats {
   display: flex;
   gap: 20px;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 12px;
   color: #666;
 }
@@ -1240,7 +1240,7 @@ watch([chapterSize, displayMode], () => {
   border: 2px solid #000;
   background-color: #fff;
   cursor: pointer;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -1266,7 +1266,7 @@ watch([chapterSize, displayMode], () => {
 
 // 书签列表弹窗
 .bookmark-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   max-width: 500px;
   width: 90%;
@@ -1279,7 +1279,7 @@ watch([chapterSize, displayMode], () => {
     border-bottom: 2px solid #000;
 
     h3 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 18px;
       font-weight: bold;
       letter-spacing: 1px;
@@ -1319,7 +1319,7 @@ watch([chapterSize, displayMode], () => {
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 
   i {
     color: #ffd700;
@@ -1332,7 +1332,7 @@ watch([chapterSize, displayMode], () => {
   }
 
   .bookmark-time {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
     font-size: 11px;
     color: #999;
     margin-left: auto;
@@ -1359,7 +1359,7 @@ watch([chapterSize, displayMode], () => {
 
 // 编辑消息弹窗
 .edit-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   max-width: 800px;
   width: 90%;
@@ -1372,7 +1372,7 @@ watch([chapterSize, displayMode], () => {
     border-bottom: 2px solid #000;
 
     h3 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 18px;
       font-weight: bold;
       letter-spacing: 1px;
@@ -1413,7 +1413,7 @@ watch([chapterSize, displayMode], () => {
   gap: 10px;
 
   .form-label {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 14px;
     font-weight: bold;
     color: #333;
@@ -1425,7 +1425,7 @@ watch([chapterSize, displayMode], () => {
   padding: 12px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 13px;
   line-height: 1.6;
   resize: vertical;

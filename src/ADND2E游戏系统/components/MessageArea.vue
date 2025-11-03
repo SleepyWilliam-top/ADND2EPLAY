@@ -1,13 +1,15 @@
 <template>
   <div class="message-area">
-    <div class="messages-container" ref="messagesContainer">
+    <div ref="messagesContainer" class="messages-container">
+      <!-- 🔧 性能优化：使用 v-memo 缓存已渲染的消息 -->
       <div
         v-for="(message, index) in gameStore.messages"
-        :key="index"
+        :key="`msg-${index}-${message.timestamp}`"
+        v-memo="[message.content, message.role, message.name]"
         class="message"
         :class="`message-${message.role}`"
       >
-        <div v-if="message.name" class="message-name">{{ message.name }}</div>
+        <div v-if="message.name" v-once class="message-name">{{ message.name }}</div>
         <div class="message-content" v-html="formatMessage(message.content)"></div>
       </div>
 
@@ -28,7 +30,7 @@
         @keydown.enter.shift.prevent="userInput += '\n'"
       ></textarea>
       <div class="input-buttons">
-        <button v-if="!gameStore.isGenerating" class="send-button" @click="handleSend" :disabled="!userInput.trim()">
+        <button v-if="!gameStore.isGenerating" class="send-button" :disabled="!userInput.trim()" @click="handleSend">
           发送
         </button>
         <button v-else class="stop-button" @click="handleStop">停止</button>
@@ -38,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import { useThrottleFn } from '@vueuse/core';
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useGameStore } from '../stores/gameStore';
 import { formatMessageWithRegex } from '../utils/regexProcessor';
@@ -46,12 +49,38 @@ const gameStore = useGameStore();
 const userInput = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 
-// 自动滚动到底部
-async function scrollToBottom() {
+// 🔧 性能优化：使用节流优化滚动操作（避免频繁计算）
+const scrollToBottom = useThrottleFn(async () => {
   await nextTick();
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
+}, 100); // 100ms 节流
+
+// 🔧 性能优化：使用防抖优化消息格式化缓存
+const formatMessageCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 100; // 最多缓存100条消息的格式化结果
+
+function formatMessage(content: string): string {
+  // 检查缓存
+  if (formatMessageCache.has(content)) {
+    return formatMessageCache.get(content)!;
+  }
+
+  // 格式化并缓存
+  const formatted = formatMessageWithRegex(content);
+
+  // 限制缓存大小
+  if (formatMessageCache.size >= MAX_CACHE_SIZE) {
+    // 删除最旧的缓存项（FIFO）
+    const firstKey = formatMessageCache.keys().next().value;
+    if (firstKey !== undefined) {
+      formatMessageCache.delete(firstKey);
+    }
+  }
+
+  formatMessageCache.set(content, formatted);
+  return formatted;
 }
 
 // 监听消息变化，自动滚动（修复删除消息后空白问题）
@@ -67,7 +96,7 @@ watch(
       scrollToBottom();
     }
   },
-  { deep: true },
+  // 🔧 性能优化：移除 deep watch，仅监听数组长度变化
 );
 
 onMounted(() => {
@@ -88,11 +117,6 @@ async function handleSend() {
 function handleStop() {
   gameStore.stopGeneration();
 }
-
-// 格式化消息内容（应用正则规则 + 基础格式化）
-function formatMessage(content: string): string {
-  return formatMessageWithRegex(content);
-}
 </script>
 
 <style lang="scss" scoped>
@@ -100,7 +124,7 @@ function formatMessage(content: string): string {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5dc;
+  background-color: #fff;
   border-left: 2px solid #000;
   border-right: 2px solid #000;
   position: relative;
@@ -133,7 +157,7 @@ function formatMessage(content: string): string {
   padding: 20px 30px;
   border: 3px solid #000;
   position: relative;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 15px;
   line-height: 1.8;
   background-color: #fff;
@@ -237,7 +261,7 @@ function formatMessage(content: string): string {
   min-height: 80px;
   max-height: 200px;
   padding: 10px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   border: 2px solid #000;
   background-color: #fff;
@@ -262,7 +286,7 @@ function formatMessage(content: string): string {
 
 .send-button,
 .stop-button {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   text-transform: uppercase;

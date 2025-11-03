@@ -15,13 +15,13 @@
       <!-- 第一阶段：掷法术书数量 -->
       <div v-if="!spellbookRolled" class="spellbook-roll-phase phase-container">
         <div class="phase-content">
-          <h4>📖 法术书初始化</h4>
+          <h4><i class="fa-solid fa-book"></i> 法术书初始化</h4>
           <p class="instruction">
             作为一名初入门的法师，你需要确定你的法术书中有多少法术。<br />
             掷3d4来确定初始法术数量，侦测魔法和阅读魔法会自动加入。
           </p>
           <div class="dice-roll-area">
-            <button class="adnd-button primary large" @click="rollSpellbook">🎲 掷骰确定法术书大小</button>
+            <button class="adnd-button primary large" @click="rollSpellbook"><i class="fa-solid fa-dice-d20"></i> 掷骰确定法术书大小</button>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@
     <!-- 非施法职业提示 -->
     <div v-else-if="!isWizard && !isPriest" class="non-caster-notice phase-container">
       <div class="phase-content">
-        <h4>⚔️ 非施法职业</h4>
+        <h4><i class="fa-solid fa-khanda"></i> 非施法职业</h4>
         <p class="instruction">
           {{ currentClassName }}不具有施法能力，无需选择法术。<br />
           请点击"下一步"继续角色创建流程。
@@ -486,7 +486,7 @@ function confirmAndProceed() {
   width: 100%;
   min-height: 600px;
   padding: 30px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 }
 
 .selection-header {
@@ -766,7 +766,7 @@ function confirmAndProceed() {
     gap: 8px;
     padding: 12px 32px;
     font-size: 16px;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-weight: bold;
     border: 3px solid #000;
     cursor: pointer;

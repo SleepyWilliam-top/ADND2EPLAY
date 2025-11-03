@@ -33,8 +33,18 @@
         <h4 class="section-title">图鉴与资料</h4>
 
         <button class="action-button spell-button" @click="showSpellCompendium">
-          <span class="button-icon">📜</span>
+          <span class="button-icon"><i class="fa-solid fa-scroll"></i></span>
           <span>法术图鉴</span>
+        </button>
+
+        <button class="action-button worldbook-button" @click="showWorldbookManager">
+          <span class="button-icon"><i class="fa-solid fa-book-atlas"></i></span>
+          <span>世界书管理</span>
+        </button>
+
+        <button class="action-button image-button" @click="openImageLibrary">
+          <span class="button-icon">🖼️</span>
+          <span>图片图库</span>
         </button>
       </div>
 
@@ -46,7 +56,7 @@
         <h4 class="section-title">角色能力</h4>
 
         <button class="action-button spell-button" @click="showSpellbook">
-          <span class="button-icon">📖</span>
+          <span class="button-icon"><i class="fa-solid fa-book"></i></span>
           <span>法术书</span>
         </button>
       </div>
@@ -58,7 +68,7 @@
         <h4 class="section-title">系统设置</h4>
 
         <button class="action-button system-button" @click="showSystemSettings">
-          <span class="button-icon">⚙️</span>
+          <span class="button-icon"><i class="fa-solid fa-gear"></i></span>
           <span>系统设置</span>
         </button>
       </div>
@@ -71,7 +81,7 @@
         <h4 class="section-title">数据导出</h4>
 
         <button class="action-button export-button" @click="handleExportToFile">
-          <span class="button-icon">💾</span>
+          <span class="button-icon"><i class="fa-solid fa-floppy-disk"></i></span>
           <span>导出为文件</span>
         </button>
       </div>
@@ -109,21 +119,23 @@
 
           <!-- NPC列表 -->
           <div class="npc-simple-list">
-            <div v-if="sortedNpcList.length === 0" class="empty-state">
+            <div v-if="sortedNpcList.length === 0" v-once class="empty-state">
               <i class="fas fa-users"></i>
               <p>暂无在场NPC</p>
               <p class="hint">AI将根据剧情自动记录出现的NPC</p>
             </div>
 
+            <!-- 🔧 性能优化：使用 v-memo 缓存 NPC 列表项 -->
             <div
               v-for="npc in sortedNpcList"
-              :key="npc.id"
+              :key="`npc-${npc.id}`"
+              v-memo="[npc.name, npc.hp, npc.ac, npc.favorite, npc.relationship, npc.location]"
               class="npc-list-item"
               :class="{ 'favorite-npc': npc.favorite }"
               @click="selectNpcForDetail(npc)"
             >
               <div class="npc-list-avatar">
-                <img :src="npc.avatar || defaultNpcAvatar" :alt="npc.name" />
+                <img :src="npc.avatar || defaultNpcAvatar" :alt="npc.name" loading="lazy" />
               </div>
               <div class="npc-list-info">
                 <div class="npc-list-name" :class="getNpcNameClass(npc)">
@@ -184,8 +196,12 @@
     </div>
   </div>
 
-  <!-- 隐藏的文件输入 -->
-  <input ref="avatarInput" type="file" accept="image/*" style="display: none" @change="handleAvatarUpload" />
+  <!-- 图片图库弹窗 -->
+  <ImageLibraryModal
+    v-model="showImageLibraryModal"
+    :category="imageLibraryCategory"
+    @select="handleImageSelect"
+  />
 
   <!-- 法术图鉴弹窗 -->
   <SpellCompendium :visible="showSpellModal" @close="closeSpellCompendium" />
@@ -213,6 +229,9 @@
 
   <!-- 法术书弹窗 -->
   <SpellbookModal :visible="showSpellbookModal" @close="closeSpellbook" />
+
+  <!-- 世界书管理弹窗 -->
+  <WorldbookManager :visible="showWorldbookModal" @close="closeWorldbookManager" />
 </template>
 
 <script setup lang="ts">
@@ -223,6 +242,7 @@ import { useNpcAutoDetection } from '../composables/useNpcAutoDetection';
 import { useCharacterStore } from '../stores/characterStore';
 import { useGameStore } from '../stores/gameStore';
 import ChatRecordManager from './ChatRecordManager.vue';
+import ImageLibraryModal from './ImageLibraryModal.vue';
 import NpcDetailPanel from './NpcDetailPanel.vue';
 import QuestManagerPanel from './QuestManagerPanel.vue';
 import SpellCompendium from './SpellCompendium.vue';
@@ -230,6 +250,7 @@ import SpellbookModal from './SpellbookModal.vue';
 import SummarySettingsModal from './SummarySettingsModal.vue';
 import SystemSettingsModal from './SystemSettingsModal.vue';
 import TextRegexSettingsModal from './TextRegexSettingsModal.vue';
+import WorldbookManager from './WorldbookManager.vue';
 
 // 禁用属性自动继承，因为我们手动处理了 class
 defineOptions({
@@ -247,7 +268,9 @@ const showSystemSettingsModal = ref(false);
 const showTextRegexModal = ref(false);
 const showSummaryModal = ref(false);
 const showQuestModal = ref(false);
-const avatarInput = ref<HTMLInputElement | null>(null);
+const showWorldbookModal = ref(false);
+const showImageLibraryModal = ref(false);
+const imageLibraryCategory = ref<'character' | 'npc' | 'other'>('npc');
 const selectedNpc = ref<NPC | null>(null);
 
 const defaultNpcAvatar = 'https://p.sda1.dev/28/26ccf8affeadc8c3e471a7176924b79e/icon_bed_happy.png';
@@ -385,6 +408,12 @@ function openGameplaySettings() {
   toastr.info('游戏玩法设置功能开发中...');
 }
 
+// 打开图库（用于管理，不选择图片）
+function openImageLibrary() {
+  imageLibraryCategory.value = 'other';
+  showImageLibraryModal.value = true;
+}
+
 // 法术书功能
 function showSpellbook() {
   showSpellbookModal.value = true;
@@ -392,6 +421,15 @@ function showSpellbook() {
 
 function closeSpellbook() {
   showSpellbookModal.value = false;
+}
+
+// 世界书管理功能
+function showWorldbookManager() {
+  showWorldbookModal.value = true;
+}
+
+function closeWorldbookManager() {
+  showWorldbookModal.value = false;
 }
 
 // 选择 NPC 查看详情
@@ -418,44 +456,31 @@ function getAttitudeText(npc: NPC) {
   return map[npc.attitude || 'neutral'] || '中立';
 }
 
-// 处理更换头像
+// 处理更换头像 - 使用图库
 function handleChangeAvatar(npc: NPC) {
   selectedNpc.value = npc;
-  avatarInput.value?.click();
+  imageLibraryCategory.value = 'npc';
+  showImageLibraryModal.value = true;
 }
 
-function handleAvatarUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file || !selectedNpc.value) return;
+// 处理图库选择
+function handleImageSelect(imageData: string, imageId: string) {
+  if (!selectedNpc.value) return;
 
-  // 检查文件大小
-  if (file.size > 2 * 1024 * 1024) {
-    toastr.error('图片文件不能超过2MB');
-    target.value = '';
-    return;
-  }
+  // 更新NPC头像
+  const npc = npcAuto.getNpcById(selectedNpc.value.id);
+  if (npc) {
+    npc.avatar = imageData;
+    npcAuto.saveNpcList();
+    toastr.success('头像已更新');
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = e.target?.result as string;
-
-    // 更新NPC头像
-    const npc = npcAuto.getNpcById(selectedNpc.value!.id);
-    if (npc) {
-      npc.avatar = base64;
-      npcAuto.saveNpcList();
-      toastr.success('头像已更新');
-
-      // 更新选中的 NPC 引用
-      if (selectedNpc.value) {
-        selectedNpc.value.avatar = base64;
-      }
+    // 更新选中的 NPC 引用
+    if (selectedNpc.value) {
+      selectedNpc.value.avatar = imageData;
     }
-  };
 
-  reader.readAsDataURL(file);
-  target.value = '';
+    console.log('[SettingsPanel] NPC头像已从图库更新:', imageId);
+  }
 }
 
 // 切换特别关心状态
@@ -550,7 +575,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 }
 
 .panel-title {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 18px;
   font-weight: bold;
   letter-spacing: 1px;
@@ -571,7 +596,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 }
 
 .section-title {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 13px;
   font-weight: bold;
   text-transform: uppercase;
@@ -602,7 +627,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 
 .action-button {
   width: 100%;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -682,6 +707,14 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   }
 }
 
+.worldbook-button {
+  &:hover {
+    background-color: #20b2aa;
+    border-color: #20b2aa;
+    color: #fff;
+  }
+}
+
 .system-button {
   &:hover {
     background-color: #6c757d;
@@ -707,7 +740,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 }
 
 .npc-modal-fullscreen {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 1200px;
@@ -743,7 +776,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   user-select: none;
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 20px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -851,7 +884,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 }
 
 .npc-list-name {
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 5px;
@@ -944,7 +977,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   flex-direction: column;
   gap: 5px;
   text-align: right;
-  font-family: 'Courier New', monospace;
+  font-family: '临海体', serif;
   font-size: 12px;
   font-weight: bold;
 }
@@ -963,7 +996,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   }
 
   p {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     margin: 10px 0;
     color: #666;
@@ -1011,7 +1044,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 
   .hint-text {
     flex: 1;
-    font-family: 'Courier New', monospace;
+    font-family: '临海体', serif;
     font-size: 11px;
     line-height: 1.6;
     color: #333;
@@ -1034,7 +1067,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
 
 // 默认头像来源说明
 .avatar-credit {
-  font-family: 'Courier New', monospace;
+  font-family: '临海体', serif;
   font-size: 9px;
   color: #999;
   text-align: center;

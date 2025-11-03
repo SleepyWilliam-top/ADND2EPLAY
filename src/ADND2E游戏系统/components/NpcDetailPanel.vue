@@ -189,7 +189,7 @@
           <h3><i class="fas fa-shield"></i> 装备</h3>
           <div class="equipment-list">
             <div v-if="npc.equipment.weapon" class="equipment-item">
-              <i class="fas fa-sword"></i>
+              <i class="fas fa-khanda"></i>
               <strong>武器:</strong> {{ npc.equipment.weapon }}
             </div>
             <div v-if="npc.equipment.armor" class="equipment-item">
@@ -392,7 +392,7 @@ function formatDate(timestamp?: number): string {
   padding: 8px 16px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -481,7 +481,7 @@ function formatDate(timestamp?: number): string {
 }
 
 .npc-name {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 28px;
   font-weight: bold;
   margin: 0;
@@ -635,7 +635,7 @@ function formatDate(timestamp?: number): string {
   border: none;
   background-color: #f5f5f5;
   border-right: 1px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -674,7 +674,7 @@ function formatDate(timestamp?: number): string {
 
 .info-section {
   h3 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 18px;
     font-weight: bold;
     margin: 0 0 15px 0;
@@ -705,7 +705,7 @@ function formatDate(timestamp?: number): string {
   }
 
   .value {
-    font-family: 'Courier New', monospace;
+    font-family: "临海体", serif;
   }
 }
 
@@ -776,7 +776,7 @@ function formatDate(timestamp?: number): string {
   min-height: 150px;
   padding: 12px;
   border: 2px solid #000;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   resize: vertical;
   line-height: 1.6;
@@ -848,7 +848,7 @@ function formatDate(timestamp?: number): string {
   padding: 12px 16px;
   border: 2px solid #000;
   background-color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;

@@ -13,9 +13,11 @@ import {
 } from '../composables/usePersistence';
 import { getClassById } from '../utils/classData';
 import { parseAiResponse } from '../utils/commandParser';
+import { removeNpcTags } from '../utils/npcTagRemover';
 import { getPriestSpellById } from '../utils/priestSpellData';
 import { getProficiencyById } from '../utils/proficiencyData';
 import { getRaceById, getSubraceById } from '../utils/raceData';
+import { parseSegmentedMemory, removeSegmentedMemoryTags } from '../utils/segmentedMemoryParser';
 import { getWeaponById } from '../utils/weaponData';
 import { getWizardSpellById } from '../utils/wizardSpellData';
 import type { CharacterData } from './characterStore';
@@ -27,6 +29,8 @@ export interface GameMessage {
   name?: string;
   timestamp: number;
   stateSnapshot?: string; // 游戏状态快照（JSON 字符串），仅在 AI 输出后保存
+  smallSummary?: string; // 小总结（分段记忆）- 50~100字的详细记忆
+  largeSummary?: string; // 大总结（分段记忆）- 一句话的模糊记忆
 }
 
 export const useGameStore = defineStore('adnd2e-game', () => {
@@ -36,6 +40,8 @@ export const useGameStore = defineStore('adnd2e-game', () => {
   const streamingText = ref('');
   const settingsPanelCollapsed = ref(false);
   const statusPanelCollapsed = ref(false);
+  const showManualSegmentedMemoryModal = ref(false); // 是否显示手动补充分段记忆弹窗
+  const pendingMessageIndex = ref<number | null>(null); // 待补充分段记忆的消息索引
 
   // 格式化角色卡为文本
   function formatCharacterSheet(character: CharacterData): string {
@@ -524,12 +530,156 @@ export const useGameStore = defineStore('adnd2e-game', () => {
     }
   }
 
+  /**
+   * 根据分段记忆设置构建用于发送给 LLM 的消息列表
+   * @returns 处理后的消息列表
+   */
+  function buildContextMessages(): GameMessage[] {
+    try {
+      // 读取分段记忆设置
+      const charVars = getVariables({ type: 'character' });
+      const summarySettings = charVars?.adnd2e?.summarySettings;
+      const segmentedMemory = summarySettings?.segmentedMemory;
+
+      // 如果没有启用分段记忆，直接返回所有消息
+      if (!segmentedMemory?.enabled) {
+        console.log('[Game] 分段记忆未启用，返回所有消息');
+        return klona(messages.value);
+      }
+
+      const chatLayers = segmentedMemory.chatLayers || 10; // 最新 X 层发送完整内容
+      const largeSummaryStart = segmentedMemory.largeSummaryStart || 20; // 从倒数第 Y 层开始只发送大总结
+
+      console.log('[Game] 使用分段记忆设置:', {
+        chatLayers,
+        largeSummaryStart,
+        totalMessages: messages.value.length,
+      });
+
+      // 分离 AI 消息和用户消息
+      const aiMessages = messages.value.filter(m => m.role === 'assistant');
+      const allMessages = klona(messages.value);
+
+      // 如果 AI 消息数量不够，直接返回所有消息
+      if (aiMessages.length <= chatLayers) {
+        console.log('[Game] AI 消息数量不足，返回所有消息');
+        return allMessages;
+      }
+
+      // 构建上下文消息列表
+      const contextMessages: GameMessage[] = [];
+
+      // 找到所有消息中最近的 chatLayers * 2 条（包括用户消息和 AI 消息）
+      const recentMessages = allMessages.slice(-chatLayers * 2);
+
+      // 找到较旧的 AI 消息
+      const recentAICount = recentMessages.filter(m => m.role === 'assistant').length;
+      const olderAIMessages = aiMessages.slice(0, aiMessages.length - recentAICount);
+
+      // 处理较旧的 AI 消息
+      olderAIMessages.forEach(aiMsg => {
+        const reverseIndex = aiMessages.length - 1 - aiMessages.indexOf(aiMsg);
+
+        if (largeSummaryStart > 0 && reverseIndex >= largeSummaryStart) {
+          // 很旧的消息：只发送大总结
+          contextMessages.push({
+            ...aiMsg,
+            content: aiMsg.largeSummary || aiMsg.smallSummary || aiMsg.content,
+          });
+        } else {
+          // 较旧的消息：发送小总结
+          contextMessages.push({
+            ...aiMsg,
+            content: aiMsg.smallSummary || aiMsg.content,
+          });
+        }
+      });
+
+      // 添加最近的完整消息
+      contextMessages.push(...recentMessages);
+
+      // 按时间排序
+      contextMessages.sort((a, b) => a.timestamp - b.timestamp);
+
+      console.log('[Game] 分段记忆处理完成:', {
+        原始消息数: allMessages.length,
+        发送消息数: contextMessages.length,
+        使用大总结: olderAIMessages.filter((_, i) => {
+          const reverseIndex = aiMessages.length - 1 - aiMessages.indexOf(olderAIMessages[i]);
+          return largeSummaryStart > 0 && reverseIndex >= largeSummaryStart;
+        }).length,
+        使用小总结: olderAIMessages.filter((_, i) => {
+          const reverseIndex = aiMessages.length - 1 - aiMessages.indexOf(olderAIMessages[i]);
+          return !(largeSummaryStart > 0 && reverseIndex >= largeSummaryStart);
+        }).length,
+      });
+
+      return contextMessages;
+    } catch (error) {
+      console.error('[Game] 构建分段记忆上下文失败:', error);
+      // 出错时返回所有消息
+      return klona(messages.value);
+    }
+  }
+
   // 添加消息到前端日志
   function addMessageToLog(message: Omit<GameMessage, 'timestamp'>, saveSnapshot = false) {
     const newMessage: GameMessage = {
       ...message,
       timestamp: Date.now(),
     };
+
+    // 如果是 AI 消息，尝试解析分段记忆并移除标签
+    if (message.role === 'assistant' && message.content) {
+      let cleanContent = message.content;
+
+      // 1. 解析并移除分段记忆标签
+      const segmentedMemory = parseSegmentedMemory(cleanContent);
+
+      if (segmentedMemory) {
+        // 提取到分段记忆
+        newMessage.smallSummary = segmentedMemory.smallSummary;
+        newMessage.largeSummary = segmentedMemory.largeSummary;
+
+        // 移除内容中的分段记忆标记（在正文中不显示）
+        cleanContent = removeSegmentedMemoryTags(cleanContent);
+
+        console.log('[Game] 已提取分段记忆:', {
+          smallSummary: segmentedMemory.smallSummary.substring(0, 50) + '...',
+          largeSummary: segmentedMemory.largeSummary,
+        });
+      } else {
+        // 没有找到分段记忆
+        console.warn('[Game] AI 响应中未找到分段记忆标记');
+
+        // 设置为空字符串
+        newMessage.smallSummary = '';
+        newMessage.largeSummary = '';
+
+        // 检查是否启用了分段记忆
+        const charVars = getVariables({ type: 'character' });
+        const segmentedMemoryEnabled = charVars?.adnd2e?.summarySettings?.segmentedMemory?.enabled;
+
+        if (segmentedMemoryEnabled) {
+          // 如果启用了分段记忆，触发手动补充弹窗
+          toastr.warning('AI未生成分段记忆，请手动补充', '分段记忆异常');
+
+          // 2. 移除 NPC 标签（在正文中不显示，但 NPC 管理器已经解析保存了）
+          cleanContent = removeNpcTags(cleanContent);
+          newMessage.content = cleanContent;
+
+          // 先添加消息，然后标记需要补充
+          messages.value.push(newMessage);
+          pendingMessageIndex.value = messages.value.length - 1;
+          showManualSegmentedMemoryModal.value = true;
+          return; // 提前返回，避免重复添加消息
+        }
+      }
+
+      // 2. 移除 NPC 标签（在正文中不显示，但 NPC 管理器已经解析保存了）
+      cleanContent = removeNpcTags(cleanContent);
+      newMessage.content = cleanContent;
+    }
 
     // 如果需要保存快照（仅 AI 输出时），保存当前游戏状态
     if (saveSnapshot) {
@@ -778,6 +928,36 @@ export const useGameStore = defineStore('adnd2e-game', () => {
     await exportMessagesToFile();
   }
 
+  // 手动补充分段记忆
+  function supplementSegmentedMemory(smallSummary: string, largeSummary: string) {
+    if (pendingMessageIndex.value !== null && pendingMessageIndex.value < messages.value.length) {
+      const message = messages.value[pendingMessageIndex.value];
+      message.smallSummary = smallSummary;
+      message.largeSummary = largeSummary;
+
+      console.log('[Game] 已手动补充分段记忆:', {
+        index: pendingMessageIndex.value,
+        smallSummary: smallSummary.substring(0, 50) + '...',
+        largeSummary,
+      });
+
+      toastr.success('分段记忆已补充');
+
+      // 保存到 IndexedDB
+      saveProgress();
+    }
+
+    // 关闭弹窗
+    showManualSegmentedMemoryModal.value = false;
+    pendingMessageIndex.value = null;
+  }
+
+  // 关闭手动补充弹窗
+  function closeManualSegmentedMemoryModal() {
+    showManualSegmentedMemoryModal.value = false;
+    pendingMessageIndex.value = null;
+  }
+
   return {
     // 状态
     messages,
@@ -785,10 +965,13 @@ export const useGameStore = defineStore('adnd2e-game', () => {
     streamingText,
     settingsPanelCollapsed,
     statusPanelCollapsed,
+    showManualSegmentedMemoryModal, // 手动补充分段记忆弹窗状态
+    pendingMessageIndex, // 待补充消息索引
 
     // 方法
     initializeGame,
     addMessageToLog,
+    buildContextMessages, // 构建分段记忆上下文
     sendUserInput,
     stopGeneration,
     saveProgress,
@@ -798,5 +981,7 @@ export const useGameStore = defineStore('adnd2e-game', () => {
     createInitialCharacterMessage, // 创建第0层初始角色卡
     cleanup, // 清理函数
     exportToFile, // 导出为文件
+    supplementSegmentedMemory, // 手动补充分段记忆
+    closeManualSegmentedMemoryModal, // 关闭手动补充弹窗
   };
 });

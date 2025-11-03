@@ -112,7 +112,7 @@ function handleClick() {
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 
   &:hover:not(.disabled) {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -216,7 +216,7 @@ function handleClick() {
   }
 
   &::-webkit-scrollbar-track {
-    background: #f5f5dc;
+    background: #fff;
     border: 1px solid #ddd;
   }
 
@@ -277,7 +277,7 @@ function handleClick() {
     padding: 6px 16px;
     background-color: #fff;
     border: 2px solid #000;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;

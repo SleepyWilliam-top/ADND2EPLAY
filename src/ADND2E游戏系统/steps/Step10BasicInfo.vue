@@ -232,7 +232,7 @@ function confirmAndProceed() {
   width: 100%;
   min-height: 600px;
   padding: 30px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
 }
 
 .info-header {
@@ -307,7 +307,7 @@ function confirmAndProceed() {
   width: 100%;
   padding: 12px 16px;
   font-size: 16px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   border: 2px solid #000;
   background-color: #fff;
   transition: all 0.2s ease;
@@ -340,7 +340,7 @@ function confirmAndProceed() {
   width: 100%;
   padding: 12px 16px;
   font-size: 15px;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
   line-height: 1.6;
   border: 2px solid #000;
   background-color: #fff;
@@ -454,7 +454,7 @@ function confirmAndProceed() {
     gap: 8px;
     padding: 12px 32px;
     font-size: 16px;
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-weight: bold;
     border: 3px solid #000;
     cursor: pointer;

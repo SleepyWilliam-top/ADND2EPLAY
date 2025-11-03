@@ -130,7 +130,7 @@ function getComponents() {
 }
 
 .spell-detail-modal {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   width: 90%;
   max-width: 800px;
@@ -162,7 +162,7 @@ function getComponents() {
   z-index: 2;
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 22px;
     font-weight: bold;
     margin: 0;
@@ -215,7 +215,7 @@ function getComponents() {
     margin-bottom: 8px;
 
     .spell-name {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 24px;
       font-weight: bold;
       margin: 0;
@@ -280,7 +280,7 @@ function getComponents() {
 
 .spell-description {
   h4 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 18px;
     font-weight: bold;
     margin: 0 0 15px 0;
@@ -289,7 +289,7 @@ function getComponents() {
   }
 
   p {
-    font-family: Georgia, serif;
+    font-family: "临海体", serif;
     font-size: 15px;
     line-height: 1.8;
     color: #333;

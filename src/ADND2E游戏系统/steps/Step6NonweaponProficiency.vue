@@ -122,14 +122,6 @@
               <p>已投入槽位：{{ getSelectedSlots(selectedProf.id) }}</p>
               <p class="help-text">每额外投入1个槽位，检定获得+1奖励</p>
               <div class="action-buttons">
-                <button class="adnd-button secondary" @click="decreaseSlots(selectedProf.id)">减少1槽</button>
-                <button
-                  class="adnd-button secondary"
-                  :disabled="!canIncreaseSlots"
-                  @click="increaseSlots(selectedProf.id)"
-                >
-                  增加1槽
-                </button>
                 <button class="adnd-button danger" @click="removeProficiency(selectedProf.id)">移除</button>
               </div>
             </div>
@@ -344,36 +336,6 @@ function removeProficiency(profId: string) {
   }
 }
 
-// 增加槽位
-function increaseSlots(profId: string) {
-  if (!canIncreaseSlots.value) {
-    toastr.warning('没有剩余槽位');
-    return;
-  }
-
-  const found = characterStore.characterData.nonweaponProficiencies.find(p => p.id === profId);
-  if (found) {
-    found.slots += 1;
-    toastr.success('增加了1个槽位（检定+1）');
-  }
-}
-
-// 减少槽位
-function decreaseSlots(profId: string) {
-  const found = characterStore.characterData.nonweaponProficiencies.find(p => p.id === profId);
-  if (found) {
-    const prof = getProficiencyById(profId);
-    const minCost = prof ? getProficiencyCostForCharacter(prof) : 1;
-
-    if (found.slots > minCost) {
-      found.slots -= 1;
-      toastr.info('减少了1个槽位');
-    } else {
-      toastr.warning('已达到最低槽位要求');
-    }
-  }
-}
-
 // 获取属性名称
 function getAbilityName(ability: string): string {
   const names: Record<string, string> = {
@@ -451,7 +413,7 @@ function goNext() {
   }
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: '临海体', serif;
     font-size: 24px;
     font-weight: bold;
     text-align: center;
@@ -621,7 +583,7 @@ function goNext() {
     margin-bottom: 15px;
 
     h2 {
-      font-family: 'Times New Roman', serif;
+      font-family: '临海体', serif;
       font-size: 28px;
       font-weight: bold;
       margin: 0 0 5px 0;

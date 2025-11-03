@@ -19,6 +19,12 @@
 
         <!-- 快速信息 -->
         <div class="quick-info">
+          <!-- 🔧 神祇提示 -->
+          <div v-if="isDeityCharacter" class="deity-notice">
+            <span class="deity-icon">🌟</span>
+            <span class="deity-text">神祇本体（凡人数据不适用）</span>
+          </div>
+
           <div class="info-row">
             <span class="info-label">名字:</span>
             <span class="info-value">{{ characterName }}</span>
@@ -33,7 +39,8 @@
           </div>
           <div class="info-row highlight">
             <span class="info-label">HP:</span>
-            <span class="info-value">{{ currentHP }}/{{ maxHP }}</span>
+            <span v-if="isDeityCharacter" class="info-value">不适用</span>
+            <span v-else class="info-value">{{ currentHP }}/{{ maxHP }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">AC:</span>
@@ -100,8 +107,12 @@
       </div>
     </div>
 
-    <!-- 隐藏的文件输入 -->
-    <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleAvatarUpload" />
+    <!-- 图片图库弹窗 -->
+    <ImageLibraryModal
+      v-model="showImageLibraryModal"
+      category="character"
+      @select="handleImageSelect"
+    />
   </div>
 </template>
 
@@ -111,6 +122,7 @@ import { useGameStateStore } from '../stores/gameStateStore';
 import { getAlignmentById } from '../utils/alignmentData';
 import { getClassById } from '../utils/classData';
 import { getRaceById, getSubraceById } from '../utils/raceData';
+import ImageLibraryModal from './ImageLibraryModal.vue';
 import StatusPanel from './StatusPanelNew.vue';
 
 // 禁用属性自动继承，因为我们手动处理了 class
@@ -120,7 +132,7 @@ defineOptions({
 
 const gameStateStore = useGameStateStore();
 const showCharacterSheet = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
+const showImageLibraryModal = ref(false);
 const isMobile = ref(false);
 
 // 检测是否为移动端
@@ -141,19 +153,41 @@ onUnmounted(() => {
 // 使用 ref 以便在数据更新时能手动触发响应式更新
 const characterData = ref<any>(null);
 
+// 🔧 强制刷新键，用于触发所有计算属性重新计算
+const forceUpdateKey = ref(0);
+
 // 加载角色数据
 function loadCharacterData() {
   const charVars = getVariables({ type: 'character' });
   characterData.value = charVars?.adnd2e?.character || null;
-  console.log('[CharacterAvatar] 角色数据已更新');
+
+  // 🔧 强制触发所有计算属性更新
+  forceUpdateKey.value++;
+
+  console.log('[CharacterAvatar] 角色数据已更新，forceUpdateKey:', forceUpdateKey.value);
 }
 
 // 初始加载
 loadCharacterData();
 
+// 🔧 监听游戏数据更新事件（AI 输出命令后的实时更新）
+eventOn('adnd2e_game_data_updated', () => {
+  console.log('[CharacterAvatar] 游戏数据更新，刷新显示');
+  forceUpdateKey.value++;
+});
+
 // 监听角色数据更新事件
 eventOn('adnd2e_character_data_synced', () => {
+  console.log('[CharacterAvatar] 角色数据同步，重新加载');
   loadCharacterData();
+});
+
+// 🔧 监听 AI 生成结束事件
+eventOn(iframe_events.GENERATION_ENDED, () => {
+  console.log('[CharacterAvatar] AI 生成结束，刷新显示');
+  setTimeout(() => {
+    forceUpdateKey.value++;
+  }, 50);
 });
 
 // 监听消息接收事件，AI 可能在消息中更新了角色数据
@@ -162,6 +196,17 @@ eventOn(tavern_events.MESSAGE_RECEIVED, () => {
   setTimeout(() => {
     loadCharacterData();
   }, 100);
+});
+
+// 🔧 监听消息编辑和删除事件
+eventOn(tavern_events.MESSAGE_UPDATED, () => {
+  console.log('[CharacterAvatar] 消息编辑，刷新显示');
+  setTimeout(() => forceUpdateKey.value++, 50);
+});
+
+eventOn(tavern_events.MESSAGE_DELETED, () => {
+  console.log('[CharacterAvatar] 消息删除，刷新显示');
+  setTimeout(() => forceUpdateKey.value++, 50);
 });
 
 // 头像URL（使用 ref 而不是 computed，这样可以手动触发更新）
@@ -188,6 +233,26 @@ const characterName = computed(() => {
   return char.characterName || defaultName;
 });
 
+// 检测角色是否为神祇
+const isDeityCharacter = computed(() => {
+  // 🔧 依赖 forceUpdateKey 确保响应式更新
+  const _updateKey = forceUpdateKey.value;
+
+  // 方式1: 检查角色卡数据的 isDeity 标志
+  if (characterData.value?.isDeity) {
+    return true;
+  }
+
+  // 方式2: 检查游戏状态中是否有神祇数据
+  const deity = gameStateStore.gameState?.character?.deity;
+  if (deity && deity.divineRank) {
+    console.log('[CharacterAvatar] 检测到神祇数据，updateKey:', _updateKey);
+    return true;
+  }
+
+  return false;
+});
+
 // 显示种族（含亚种）
 const displayRace = computed(() => {
   const char = characterData.value;
@@ -204,26 +269,46 @@ const displayRace = computed(() => {
   return race.name;
 });
 
-// 显示职业/等级
+// 显示职业/等级（🔧 实时读取游戏状态）
 const displayClassLevel = computed(() => {
+  // 🔧 依赖 forceUpdateKey 确保响应式更新
+  void forceUpdateKey.value; // 触发响应式依赖
+
+  // 🔧 神祇本体不适用职业/等级
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
   const char = characterData.value;
   if (!char?.class) return '战士/1';
 
   const classData = getClassById(char.class);
   const className = classData?.name || char.class;
-  const level = char.level ?? 1;
+
+  // 🔧 优先从游戏状态读取等级（实时更新）
+  const level = gameStateStore.gameState?.character?.level ?? char.level ?? 1;
 
   return `${className}/${level}`;
 });
 
-// 护甲等级
+// 护甲等级（🔧 从角色卡数据读取，AC 不在 gameState 中）
 const armorClass = computed(() => {
+  // 🔧 神祇本体不适用 AC
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
   const char = characterData.value;
-  return char?.armorClass ?? 10;
+  return char?.armorClass?.total ?? char?.armorClass ?? 10;
 });
 
-// THAC0
+// THAC0（🔧 从角色卡数据读取，THAC0 不在 gameState 中）
 const thac0 = computed(() => {
+  // 🔧 神祇本体不适用 THAC0
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
   const char = characterData.value;
   return char?.thac0 ?? 20;
 });
@@ -237,10 +322,21 @@ const displayAlignment = computed(() => {
   return alignment?.shortName || char.alignment;
 });
 
-// 经验值
+// 经验值（🔧 实时读取游戏状态）
 const experiencePoints = computed(() => {
+  // 🔧 神祇本体不适用 XP
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
+  // 🔧 优先从游戏状态读取（实时更新）
+  const gameXP = gameStateStore.gameState?.character?.xp;
+  if (gameXP !== undefined) {
+    return gameXP;
+  }
+
   const char = characterData.value;
-  return char?.experiencePoints ?? 0;
+  return char?.experience ?? char?.experiencePoints ?? 0;
 });
 
 // 经验值调整
@@ -251,12 +347,42 @@ const xpModifier = computed(() => {
   return char?.xpModifier ?? 0;
 });
 
+// 当前HP（🔧 实时读取游戏状态）
 const currentHP = computed(() => {
+  // 🔧 依赖 forceUpdateKey 确保响应式更新
+  void forceUpdateKey.value; // 触发响应式依赖
+
+  // 🔧 神祇本体不适用 HP
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
+  // 🔧 优先从游戏状态读取（实时更新）
+  const gameHP = gameStateStore.gameState?.character?.hp?.current;
+  if (gameHP !== undefined) {
+    return gameHP;
+  }
+
   const char = characterData.value;
   return char?.hitPoints?.current ?? 10;
 });
 
+// 最大HP（🔧 实时读取游戏状态）
 const maxHP = computed(() => {
+  // 🔧 依赖 forceUpdateKey 确保响应式更新
+  void forceUpdateKey.value; // 触发响应式依赖
+
+  // 🔧 神祇本体不适用 HP
+  if (isDeityCharacter.value) {
+    return '不适用';
+  }
+
+  // 🔧 优先从游戏状态读取（实时更新）
+  const gameMaxHP = gameStateStore.gameState?.character?.hp?.max;
+  if (gameMaxHP !== undefined) {
+    return gameMaxHP;
+  }
+
   const char = characterData.value;
   return char?.hitPoints?.max ?? 10;
 });
@@ -302,68 +428,37 @@ function closeCharacterSheet() {
 }
 
 function openAvatarUpload() {
-  fileInput.value?.click();
+  showImageLibraryModal.value = true;
 }
 
-function handleAvatarUpload(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
+// 处理图库选择
+function handleImageSelect(imageData: string, imageId: string) {
+  console.log('[Avatar] 从图库选择头像:', imageId);
 
-  // 检查文件大小（限制为2MB）
-  if (file.size > 2 * 1024 * 1024) {
-    toastr.error('图片文件不能超过2MB');
-    target.value = '';
-    return;
-  }
-
-  // 检查文件类型
-  if (!file.type.startsWith('image/')) {
-    toastr.error('请选择图片文件');
-    target.value = '';
-    return;
-  }
-
-  // 读取文件并转换为 base64
-  const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = e.target?.result as string;
-    console.log('[Avatar] 读取文件成功，大小:', (base64.length / 1024).toFixed(2), 'KB');
-
-    // 保存到角色卡变量
-    const charVars = getVariables({ type: 'character' });
-    const newData = {
-      adnd2e: {
-        ...charVars?.adnd2e,
-        avatarUrl: base64,
-      },
-    };
-
-    console.log('[Avatar] 保存头像到角色卡变量');
-    replaceVariables(newData, { type: 'character' });
-
-    // 验证是否保存成功并立即更新显示
-    setTimeout(() => {
-      const savedVars = getVariables({ type: 'character' });
-      console.log('[Avatar] 验证保存结果:', savedVars?.adnd2e?.avatarUrl ? '成功' : '失败');
-      if (savedVars?.adnd2e?.avatarUrl === base64) {
-        toastr.success('头像已更换');
-        // 立即刷新头像显示
-        loadAvatar();
-      } else {
-        toastr.error('头像保存失败，请重试');
-      }
-    }, 100);
+  // 保存到角色卡变量
+  const charVars = getVariables({ type: 'character' });
+  const newData = {
+    adnd2e: {
+      ...charVars?.adnd2e,
+      avatarUrl: imageData,
+    },
   };
 
-  reader.onerror = () => {
-    toastr.error('读取图片失败');
-  };
+  console.log('[Avatar] 保存头像到角色卡变量');
+  replaceVariables(newData, { type: 'character' });
 
-  reader.readAsDataURL(file);
-
-  // 清空input，允许重复上传同一文件
-  target.value = '';
+  // 验证是否保存成功并立即更新显示
+  setTimeout(() => {
+    const savedVars = getVariables({ type: 'character' });
+    console.log('[Avatar] 验证保存结果:', savedVars?.adnd2e?.avatarUrl ? '成功' : '失败');
+    if (savedVars?.adnd2e?.avatarUrl === imageData) {
+      toastr.success('头像已更换');
+      // 立即刷新头像显示
+      loadAvatar();
+    } else {
+      toastr.error('头像保存失败，请重试');
+    }
+  }, 100);
 }
 </script>
 
@@ -375,7 +470,7 @@ function handleAvatarUpload(event: Event) {
 
 .avatar-panel {
   width: 280px;
-  background-color: #f5f5dc;
+  background-color: #fff;
   border-right: 4px solid #000;
   display: flex;
   flex-direction: column;
@@ -434,7 +529,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .panel-title {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   font-weight: bold;
   letter-spacing: 2px;
@@ -524,7 +619,7 @@ function handleAvatarUpload(event: Event) {
 
 .avatar-hint {
   color: #fff;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
@@ -533,7 +628,7 @@ function handleAvatarUpload(event: Event) {
 
 .character-name {
   margin-top: 12px;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   font-weight: bold;
   text-align: center;
@@ -544,7 +639,7 @@ function handleAvatarUpload(event: Event) {
   font-size: 10px;
   color: #999;
   text-align: center;
-  font-family: Arial, sans-serif;
+  font-family: "临海体", serif;
 }
 
 .quick-info {
@@ -555,7 +650,7 @@ function handleAvatarUpload(event: Event) {
   background-color: #fff;
   border: 3px solid #000;
   position: relative;
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
 
   &::before {
     content: '';
@@ -566,6 +661,45 @@ function handleAvatarUpload(event: Event) {
     bottom: 5px;
     border: 1px solid #666;
     pointer-events: none;
+  }
+}
+
+// 🔧 神祇提示样式
+.deity-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  border: 2px solid #daa520;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(218, 165, 32, 0.3);
+  position: relative;
+  z-index: 1;
+
+  .deity-icon {
+    font-size: 20px;
+    animation: deity-pulse 2s ease-in-out infinite;
+  }
+
+  .deity-text {
+    font-size: 13px;
+    font-weight: bold;
+    color: #8b4513;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+}
+
+@keyframes deity-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.2);
   }
 }
 
@@ -630,7 +764,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .info-label {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -640,7 +774,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .info-value {
-  font-family: 'Courier New', monospace;
+  font-family: "临海体", serif;
   font-size: 13px;
   font-weight: bold;
   color: #000;
@@ -655,7 +789,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .time-label {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -665,7 +799,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .time-value {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   font-weight: bold;
 }
@@ -686,7 +820,7 @@ function handleAvatarUpload(event: Event) {
 }
 
 .character-sheet-content {
-  background-color: #f5f5dc;
+  background-color: #fff;
   border: 4px solid #000;
   max-width: 900px;
   max-height: 90vh !important; // 确保有最大高度
@@ -718,7 +852,7 @@ function handleAvatarUpload(event: Event) {
   align-items: center;
 
   h2 {
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -839,21 +973,21 @@ function handleAvatarUpload(event: Event) {
 }
 
 .sheet-character-name {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 24px;
   font-weight: bold;
   margin: 0 0 8px 0;
 }
 
 .sheet-character-desc {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   color: #666;
   margin: 0;
 }
 
 .default-avatar-credit {
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   color: #999;
   margin: 8px 0 0 0;

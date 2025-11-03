@@ -6,12 +6,36 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <!-- Font Awesome 7.1.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.1.0/css/all.min.css" />
+    <!-- 临海体字体 - 已禁用，字体缺字太多 -->
+    <!-- <link rel="stylesheet" href="https://fontsapi.zeoseven.com/229/main/result.css" /> -->
     <style>
       * {
         -webkit-tap-highlight-color: transparent;
         -webkit-touch-callout: none;
+      }
+      
+      /* 使用系统字体，确保所有汉字都能正常显示 */
+      body {
+        font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Source Han Sans CN", "Noto Sans CJK SC", "SimSun", "宋体", "SimHei", "黑体", sans-serif;
+      }
+      
+      /* 确保 Font Awesome 图标使用正确的字体 */
+      i[class*="fa-"],
+      i.fa,
+      i.fas,
+      i.far,
+      i.fab,
+      i.fal,
+      i.fad,
+      .fa,
+      .fas,
+      .far,
+      .fab,
+      .fal,
+      .fad {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 5 Free", "Font Awesome 5 Pro" !important;
       }
 
       html,
@@ -24,6 +48,8 @@
         overflow: hidden;
         position: relative;
         touch-action: pan-y;
+        font-family: "临海体", "Microsoft YaHei", "微软雅黑", "SimSun", "宋体", sans-serif;
+        font-weight: normal;
       }
 
       #app {

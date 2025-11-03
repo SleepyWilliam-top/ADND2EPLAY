@@ -92,24 +92,20 @@ export async function requestPersistentStorage(): Promise<boolean> {
 
 /**
  * 获取当前存档名称
- * 格式: characterName_timestamp (基于角色名称和当前会话)
+ * 🔧 修复：使用固定的存档名，避免每次创建角色都生成新存档
+ * 现在使用角色卡ID作为唯一标识，而不是角色名称+ID组合
  */
 export function getCurrentArchiveName(): string {
   try {
-    // 从角色卡变量获取角色名称
-    const charVars = getVariables({ type: 'character' });
-    const characterName =
-      charVars?.adnd2e?.character?.characterName ||
-      (typeof SillyTavern !== 'undefined' && SillyTavern.name2) ||
-      'Unknown';
-
-    // 使用角色卡ID作为标识（更稳定）
-    const characterId = typeof SillyTavern !== 'undefined' && SillyTavern.characterId;
-
-    return `ADND2E_${characterName}_${characterId}`;
+    // 使用角色卡ID作为唯一标识（酒馆的角色卡ID）
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    
+    // 🔧 修复：使用固定格式，不包含角色名称
+    // 这样即使角色名称改变，也不会创建新的存档
+    return `ADND2E_${characterId}`;
   } catch (error) {
     console.error('[Persistence] 获取存档名称失败:', error);
-    return 'ADND2E_default_archive';
+    return 'ADND2E_default';
   }
 }
 
@@ -228,6 +224,9 @@ export async function loadFromCharacterVariables(): Promise<GameArchive['data'] 
 /**
  * 同步 IndexedDB 到角色卡变量（替代酒馆消息楼层）
  * 定期调用此函数以保持两者同步
+ *
+ * 🔧 注意：自动同步仅同步分段正文（messages），不同步总结相关的世界书条目
+ * 总结需要通过手动总结或自动总结功能单独同步到世界书
  */
 export async function syncIndexedDBToCharacterVariables(): Promise<void> {
   try {
@@ -239,8 +238,9 @@ export async function syncIndexedDBToCharacterVariables(): Promise<void> {
       return;
     }
 
+    // 只同步分段正文（messages）到角色卡变量，不同步总结到世界书
     await saveToCharacterVariables(archive.data);
-    console.log('[Persistence] 已同步 IndexedDB 到角色卡变量');
+    console.log('[Persistence] 已同步 IndexedDB 到角色卡变量（仅分段正文，不含总结条目）');
   } catch (error) {
     console.error('[Persistence] 同步失败:', error);
   }
@@ -254,7 +254,7 @@ export async function saveGameData(data: Partial<GameArchive['data']>): Promise<
     // 🔧 修复：从角色卡变量中读取最新的 character 数据，确保 IndexedDB 也保存了完整的 character
     const charVars = getVariables({ type: 'character' });
     const latestCharacter = charVars?.adnd2e?.character;
-    
+
     // 合并 character 数据（优先使用传入的，如果没有则从角色卡变量读取）
     const completeData = {
       ...data,
@@ -497,8 +497,62 @@ let autoSaveTimer: number | null = null;
 let saveDebounceTimer: number | null = null;
 let pendingSaveData: Partial<GameArchive['data']> | null = null;
 
+// 🔧 性能优化：批量写入队列（学习自 lucklyjkop）
+let batchWriteQueue: Array<Partial<GameArchive['data']>> = [];
+let batchWriteTimer: number | null = null;
+const BATCH_WRITE_INTERVAL = 2000; // 2秒批量写入一次
+const MAX_BATCH_SIZE = 10; // 最多累积10个写入请求
+
+/**
+ * 🔧 性能优化：批量写入到 IndexedDB
+ * 将多个写入请求合并为一次写入，减少 IndexedDB 操作次数
+ */
+async function flushBatchWrites(): Promise<void> {
+  if (batchWriteQueue.length === 0) return;
+
+  try {
+    // 合并所有待写入数据
+    const mergedData = batchWriteQueue.reduce((acc, data) => {
+      return { ...acc, ...data };
+    }, {});
+
+    await saveToIndexedDB(mergedData);
+    console.log(`[Persistence] 批量写入完成，合并了 ${batchWriteQueue.length} 个请求`);
+    batchWriteQueue = [];
+  } catch (error) {
+    console.error('[Persistence] 批量写入失败:', error);
+    throw error;
+  } finally {
+    if (batchWriteTimer !== null) {
+      clearTimeout(batchWriteTimer);
+      batchWriteTimer = null;
+    }
+  }
+}
+
+/**
+ * 🔧 性能优化：添加到批量写入队列
+ */
+function addToBatchQueue(data: Partial<GameArchive['data']>): void {
+  batchWriteQueue.push(data);
+
+  // 如果队列满了，立即写入
+  if (batchWriteQueue.length >= MAX_BATCH_SIZE) {
+    flushBatchWrites();
+    return;
+  }
+
+  // 否则等待定时器触发
+  if (batchWriteTimer === null) {
+    batchWriteTimer = window.setTimeout(() => {
+      flushBatchWrites();
+    }, BATCH_WRITE_INTERVAL);
+  }
+}
+
 /**
  * 防抖保存到 IndexedDB（性能优化：避免频繁写入）
+ * 🔧 已优化：使用批量写入机制
  */
 export function debouncedSaveToIndexedDB(data: Partial<GameArchive['data']>, debounceMs: number = 1000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -514,7 +568,8 @@ export function debouncedSaveToIndexedDB(data: Partial<GameArchive['data']>, deb
     saveDebounceTimer = window.setTimeout(async () => {
       try {
         if (pendingSaveData) {
-          await saveToIndexedDB(pendingSaveData);
+          // 🔧 使用批量写入队列而不是直接写入
+          addToBatchQueue(pendingSaveData);
           pendingSaveData = null;
           resolve();
         }
@@ -529,6 +584,7 @@ export function debouncedSaveToIndexedDB(data: Partial<GameArchive['data']>, deb
 
 /**
  * 立即保存（跳过防抖）
+ * 🔧 已优化：同时刷新批量写入队列
  */
 export async function flushPendingSave(): Promise<void> {
   if (saveDebounceTimer !== null) {
@@ -537,9 +593,13 @@ export async function flushPendingSave(): Promise<void> {
   }
 
   if (pendingSaveData) {
-    await saveToIndexedDB(pendingSaveData);
+    // 🔧 添加到批量队列而不是直接写入
+    addToBatchQueue(pendingSaveData);
     pendingSaveData = null;
   }
+
+  // 🔧 立即刷新批量写入队列
+  await flushBatchWrites();
 }
 
 /**
@@ -566,12 +626,19 @@ export function startAutoSync(intervalSeconds: number = 30): void {
 
 /**
  * 停止自动保存
+ * 🔧 已优化：确保所有批量写入也被刷新
  */
 export async function stopAutoSync(): Promise<void> {
   if (autoSaveTimer !== null) {
     clearInterval(autoSaveTimer);
     autoSaveTimer = null;
     console.log('[Persistence] 已停止自动同步');
+  }
+
+  // 🔧 清理批量写入定时器
+  if (batchWriteTimer !== null) {
+    clearTimeout(batchWriteTimer);
+    batchWriteTimer = null;
   }
 
   // 在停止时刷新所有待保存的数据

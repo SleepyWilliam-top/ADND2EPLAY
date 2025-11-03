@@ -77,13 +77,13 @@
                 {{ getRaceAdjustmentText(race) }}
               </div>
             </div>
-            <div v-if="selectedRace === race.id" class="selected-indicator">✓</div>
-            <div v-else-if="!characterStore.canSelectRace(race.id)" class="disabled-indicator">✗</div>
+            <div v-if="selectedRace === race.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+            <div v-else-if="!characterStore.canSelectRace(race.id)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
           </div>
 
           <!-- 创建新种族按钮（仅在自定义种族分类时显示） -->
           <div v-if="selectedCategory === 'custom'" class="create-race-button" @click="showCreator">
-            <div class="race-icon">➕</div>
+            <div class="race-icon"><i class="fa-solid fa-plus"></i></div>
             <div class="race-info">
               <div class="race-name">创建新种族</div>
               <div class="race-adjustments">使用ADND2E规则创建自定义种族</div>
@@ -130,7 +130,7 @@
                       unmet: !checkRequirement(selectedRaceData.id, key),
                     }"
                   >
-                    {{ checkRequirement(selectedRaceData.id, key) ? '✓' : '✗' }}
+                    <i :class="checkRequirement(selectedRaceData.id, key) ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i>
                   </span>
                 </div>
               </div>
@@ -280,8 +280,8 @@
               <div class="subrace-name">{{ subrace.name }}</div>
               <div class="subrace-english">{{ subrace.englishName }}</div>
             </div>
-            <div v-if="selectedSubrace === subrace.id" class="selected-indicator">✓</div>
-            <div v-else-if="!canSelectCurrentSubrace(subrace.id)" class="disabled-indicator">✗</div>
+            <div v-if="selectedSubrace === subrace.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+            <div v-else-if="!canSelectCurrentSubrace(subrace.id)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
           </div>
         </div>
 
@@ -365,7 +365,7 @@
                       unmet: !checkSubraceRequirement(selectedSubraceData.id, key),
                     }"
                   >
-                    {{ checkSubraceRequirement(selectedSubraceData.id, key) ? '✓' : '✗' }}
+                    <i :class="checkSubraceRequirement(selectedSubraceData.id, key) ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i>
                   </span>
                 </div>
               </div>
@@ -907,7 +907,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .step2-race-selection {
   width: 100%;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
 }
 
 // ========== 第一级：分类选择 ==========

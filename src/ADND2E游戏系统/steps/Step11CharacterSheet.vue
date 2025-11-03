@@ -599,7 +599,7 @@ async function completeCreation() {
   console.log('🎯 [Step11] 开始完成创建...');
 
   if (isCreating.value) {
-    console.log('⚠️ [Step11] 正在创建中，忽略重复点击');
+    console.log('[Step11] 正在创建中，忽略重复点击');
     toastr.warning('正在创建中，请勿重复点击');
     return;
   }
@@ -609,18 +609,18 @@ async function completeCreation() {
 
   try {
     // 1. 标记角色创建完成（使用 updateCharacterData）
-    console.log('📝 [Step11] 步骤1: 标记角色创建完成');
+    console.log('[Step11] 步骤1: 标记角色创建完成');
     characterStore.updateCharacterData(data => {
       data.completed = true;
     });
 
     // 2. 生成文本角色卡
-    console.log('📝 [Step11] 步骤2: 生成角色卡文本');
+    console.log('[Step11] 步骤2: 生成角色卡文本');
     const characterCardText = characterStore.generateCharacterCardText();
-    console.log('✅ [Step11] 角色卡文本长度:', characterCardText.length);
+    console.log('[Step11] 角色卡文本长度:', characterCardText.length);
 
     // 3. 保存到角色卡变量（核心步骤，必须完成）
-    console.log('📝 [Step11] 步骤3: 保存到角色卡变量');
+    console.log('[Step11] 步骤3: 保存到角色卡变量');
     const characterDataToSave = {
       ...characterStore.characterData,
       abilities: characterStore.adjustedAbilities,
@@ -647,10 +647,10 @@ async function completeCreation() {
       },
       { type: 'character' },
     );
-    console.log('✅ [Step11] 角色卡变量保存完成');
+    console.log('[Step11] 角色卡变量保存完成');
 
     // 4. 发送角色卡为第一条消息到酒馆聊天
-    console.log('📝 [Step11] 步骤4: 发送角色卡到聊天');
+    console.log('[Step11] 步骤4: 发送角色卡到聊天');
     try {
       const lastMessageId = getLastMessageId();
       console.log(`📝 [Step11] 当前最后消息ID: ${lastMessageId}`);
@@ -658,7 +658,7 @@ async function completeCreation() {
       // 无论聊天是否为空，都发送角色卡作为第一条可被 AI 读取的系统消息
       // 这样可以确保 AI 能够读取到角色的完整信息
       if (lastMessageId < 0) {
-        console.log('📝 [Step11] 聊天为空，发送角色卡作为第一条消息');
+        console.log('[Step11] 聊天为空，发送角色卡作为第一条消息');
         await createChatMessages([
           {
             role: 'system',
@@ -667,16 +667,16 @@ async function completeCreation() {
             is_hidden: false,
           },
         ]);
-        console.log('✅ [Step11] 角色卡已发送到聊天');
+        console.log('[Step11] 角色卡已发送到聊天');
       } else {
-        console.log('⚠️ [Step11] 聊天中已有消息，检查是否已有角色卡...');
+        console.log('[Step11] 聊天中已有消息，检查是否已有角色卡...');
         // 即使聊天中已有消息，也在第一条消息前插入角色卡
         // 以确保 AI 能够在对话开始时就知道角色的完整信息
         const messages = getChatMessages('0-{{lastMessageId}}');
         const hasCharacterCard = messages.some(msg => msg.name === 'ADND 2E 角色卡' || msg.name === '角色卡');
 
         if (!hasCharacterCard) {
-          console.log('📝 [Step11] 未找到角色卡消息，在开头插入角色卡');
+          console.log('[Step11] 未找到角色卡消息，在开头插入角色卡');
           await createChatMessages(
             [
               {
@@ -686,15 +686,15 @@ async function completeCreation() {
                 is_hidden: false,
               },
             ],
-            { insert_at: 0 },
+            { insert_at: -1 },
           );
-          console.log('✅ [Step11] 角色卡已插入到聊天开头');
+          console.log('[Step11] 角色卡已插入到聊天开头');
         } else {
-          console.log('⚠️ [Step11] 角色卡消息已存在，跳过发送');
+          console.log('[Step11] 角色卡消息已存在，跳过发送');
         }
       }
     } catch (error) {
-      console.error('❌ [Step11] 发送角色卡到聊天失败:', error);
+      console.error('[Step11] 发送角色卡到聊天失败:', error);
       // 不抛出错误，因为角色创建的核心步骤（保存到变量）已完成
       toastr.warning('角色卡发送到聊天失败，但角色数据已保存');
     }
@@ -703,13 +703,13 @@ async function completeCreation() {
     toastr.clear();
 
     // 5. 显示成功提示并立即跳转
-    console.log('📝 [Step11] 步骤5: 跳转到游戏界面');
+    console.log('[Step11] 步骤5: 跳转到游戏界面');
     toastr.success('角色创建完成！进入游戏...');
 
     // 立即跳转，不使用 setTimeout
-    console.log('📝 [Step11] 正在执行路由跳转...');
+    console.log('[Step11] 正在执行路由跳转...');
     await router.push('/game');
-    console.log('✅ [Step11] 路由跳转完成，所有步骤完成');
+    console.log('[Step11] 路由跳转完成，所有步骤完成');
 
     isCreating.value = false;
   } catch (error) {
@@ -775,7 +775,7 @@ function getAbilityKey(chineseName: string): keyof Abilities {
 .character-sheet {
   border: 3px solid #8b4513;
   background: #f9f6f0;
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
   section {

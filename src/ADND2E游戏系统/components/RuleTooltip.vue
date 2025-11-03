@@ -101,10 +101,10 @@ watch(
   position: fixed;
   width: 450px;
   max-height: 60vh;
-  background-color: #fffef0;
+  background-color: #fff;
   border: 3px solid #000;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-  font-family: 'Times New Roman', serif;
+  font-family: "临海体", serif;
   display: flex;
   flex-direction: column;
   z-index: 10000;
@@ -127,7 +127,7 @@ watch(
   align-items: center;
   padding: 12px 15px;
   border-bottom: 2px solid #000;
-  background-color: #f5f5dc;
+  background-color: #fff;
 
   h4 {
     font-size: 18px;

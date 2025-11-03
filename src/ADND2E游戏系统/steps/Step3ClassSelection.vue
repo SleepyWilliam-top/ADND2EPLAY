@@ -28,13 +28,13 @@
           :data-category="cls.category"
           @click="selectClass(cls.id)"
         >
-          <div class="class-icon">{{ cls.icon }}</div>
+          <div class="class-icon" v-html="cls.icon"></div>
           <div class="class-info">
             <div class="class-name">{{ cls.name }}</div>
             <div class="class-category">{{ categoryNames[cls.category] }}</div>
           </div>
-          <div v-if="selectedClass === cls.id" class="selected-indicator">✓</div>
-          <div v-else-if="!canSelectClass(cls)" class="disabled-indicator">✗</div>
+          <div v-if="selectedClass === cls.id" class="selected-indicator"><i class="fa-solid fa-check"></i></div>
+          <div v-else-if="!canSelectClass(cls)" class="disabled-indicator"><i class="fa-solid fa-xmark"></i></div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@
                     unmet: !checkRequirement(key),
                   }"
                 >
-                  {{ checkRequirement(key) ? '✓' : '✗' }}
+                  <i :class="checkRequirement(key) ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i>
                 </span>
               </div>
             </div>
@@ -163,7 +163,10 @@
           <div v-if="characterStore.canHaveExceptionalStrength()" class="detail-section exceptional-strength-section">
             <h4>超凡力量（Exceptional Strength）</h4>
             <div class="exceptional-strength-content">
-              <p class="hint">🎲 你的力量值为18，且选择了勇士系职业！你可以掷超凡力量（1d100），获得额外的力量加成。</p>
+              <p class="hint">
+                <i class="fa-solid fa-dice-d20"></i>
+                你的力量值为18，且选择了勇士系职业！你可以掷超凡力量（1d100），获得额外的力量加成。
+              </p>
               <div class="exceptional-strength-roll">
                 <div v-if="characterStore.characterData.exceptionalStrength" class="roll-result">
                   <span class="result-label">超凡力量：</span>
@@ -174,7 +177,8 @@
                   :class="{ reroll: characterStore.characterData.exceptionalStrength }"
                   @click="handleRollExceptionalStrength"
                 >
-                  {{ characterStore.characterData.exceptionalStrength ? '🔄 重新掷骰' : '🎲 掷超凡力量' }}
+                  <i class="fa-solid fa-dice"></i>
+                  {{ characterStore.characterData.exceptionalStrength ? '重新掷骰' : '掷超凡力量' }}
                 </button>
               </div>
             </div>
@@ -417,7 +421,7 @@ function getMaxSpellLevel(): number {
 <style lang="scss" scoped>
 .step3-class-selection {
   width: 100%;
-  font-family: 'Times New Roman', serif;
+  font-family: '临海体', serif;
 }
 
 // 顶部区域

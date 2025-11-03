@@ -405,21 +405,9 @@ export const useCharacterStore = defineStore('character', () => {
       purchasedEquipment: [],
     };
 
-    // 🔧 清除酒馆变量中的角色数据，确保不会重新加载旧数据
-    try {
-      replaceVariables(
-        {
-          adnd2e: {
-            character: characterData.value,
-            lastSaved: new Date().toISOString(),
-          },
-        },
-        { type: 'character' },
-      );
-      console.log('[CharacterStore] 角色数据已重置并清除酒馆变量');
-    } catch (error) {
-      console.error('[CharacterStore] 清除酒馆变量失败:', error);
-    }
+    // 🔧 不要保存重置后的空数据到酒馆变量，因为这会触发不必要的存储
+    // MainMenu 已在创建新角色前清除了所有数据
+    console.log('[CharacterStore] 角色数据已重置（不保存到酒馆变量）');
   }
 
   // 保存角色数据到酒馆变量

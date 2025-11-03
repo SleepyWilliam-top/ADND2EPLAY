@@ -463,7 +463,7 @@ watch(
     }
 
     h1 {
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
       font-size: 28px;
       font-weight: bold;
       margin: 0;
@@ -619,7 +619,7 @@ watch(
     font-size: 24px;
     font-weight: bold;
     color: #000;
-    font-family: 'Times New Roman', serif;
+    font-family: "临海体", serif;
   }
 
   .count {
@@ -680,7 +680,7 @@ watch(
       font-size: 16px;
       font-weight: 700;
       color: #000;
-      font-family: 'Times New Roman', serif;
+      font-family: "临海体", serif;
     }
 
     .english-name {
