@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>神祇数据调试工具</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        border-bottom: 3px solid #4caf50;
+        padding-bottom: 10px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        background: #fafafa;
+        border-left: 4px solid #2196f3;
+      }
+      .section h2 {
+        margin-top: 0;
+        color: #2196f3;
+      }
+      pre {
+        background: #2d2d2d;
+        color: #f8f8f8;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .success {
+        color: #4caf50;
+        font-weight: bold;
+      }
+      .error {
+        color: #f44336;
+        font-weight: bold;
+      }
+      .warning {
+        color: #ff9800;
+        font-weight: bold;
+      }
+      button {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🌟 神祇数据调试工具</h1>
+
+      <div class="section">
+        <h2>操作</h2>
+        <button onclick="checkGameState()">检查游戏状态</button>
+        <button onclick="checkCharacterData()">检查角色卡数据</button>
+        <button onclick="testDeityParsing()">测试神祇解析</button>
+        <button onclick="manuallySetDeity()">手动设置神祇</button>
+      </div>
+
+      <div id="results"></div>
+    </div>
+
+    <script>
+      // 测试神祇解析函数（从代码中复制）
+      function parseDeityFromCharacterBackground(background) {
+        if (!background) return null;
+
+        // 检测是否提到成神
+        const deityPatterns = [/(?:成为|晋升为|获得了?|已经是|现在是)([半]?神|守护[半]?神|神[祇祗])/, /神格|神力|神性/];
+
+        let isDivine = false;
+        for (const pattern of deityPatterns) {
+          if (pattern.test(background)) {
+            isDivine = true;
+            break;
+          }
+        }
+
+        if (!isDivine) return null;
+
+        // 检测神格等级
+        let divineRank = 'demigod';
+        if (/半神/.test(background)) divineRank = 'demigod';
+        else if (/弱等神|次级神/.test(background)) divineRank = 'lesser';
+        else if (/中等神/.test(background)) divineRank = 'intermediate';
+        else if (/高等神|强大神/.test(background)) divineRank = 'greater';
+
+        // 提取神职
+        const portfolios = [];
+
+        // 方式1: 从【神职：xxx】提取
+        const bracketPattern = /【神职[：:]\s*([^】]+)】/g;
+        let match;
+        while ((match = bracketPattern.exec(background)) !== null) {
+          const domains = match[1].trim().split(/[、，,]/);
+          portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+        }
+
+        // 方式2: 从"神职："提取
+        if (portfolios.length === 0) {
+          const portfolioPattern = /神职[：:]\s*([^。！？\n【】]+)/g;
+          while ((match = portfolioPattern.exec(background)) !== null) {
+            const domains = match[1].trim().split(/[、，,]/);
+            portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+          }
+        }
+
+        console.log('解析结果:', { divineRank, portfolios });
+
+        return {
+          type: 'update_deity',
+          data: {
+            divineRank,
+            portfolios,
+          },
+        };
+      }
+
+      function addResult(title, content, type = 'info') {
+        const resultsDiv = document.getElementById('results');
+        const section = document.createElement('div');
+        section.className = 'section';
+        section.innerHTML = `<h2>${title}</h2><pre>${content}</pre>`;
+        resultsDiv.appendChild(section);
+      }
+
+      function checkGameState() {
+        document.getElementById('results').innerHTML = '';
+
+        try {
+          // 尝试从角色卡变量中获取游戏状态
+          if (typeof getVariables === 'undefined') {
+            addResult('❌ 错误', '当前不在酒馆环境中，无法访问 getVariables 函数', 'error');
+            return;
+          }
+
+          const charVars = getVariables({ type: 'character' });
+          const gameState = charVars?.adnd2e?.gameState;
+
+          if (!gameState) {
+            addResult('⚠️ 警告', '未找到游戏状态数据', 'warning');
+            addResult('角色卡变量完整内容', JSON.stringify(charVars, null, 2));
+            return;
+          }
+
+          const deity = gameState.character?.deity;
+
+          if (deity) {
+            addResult('✅ 神祇数据存在', JSON.stringify(deity, null, 2), 'success');
+          } else {
+            addResult(
+              '⚠️ 神祇数据不存在',
+              '游戏状态中没有神祇数据\n\n完整游戏状态：\n' + JSON.stringify(gameState, null, 2),
+              'warning',
+            );
+          }
+        } catch (error) {
+          addResult('❌ 错误', error.toString(), 'error');
+        }
+      }
+
+      function checkCharacterData() {
+        document.getElementById('results').innerHTML = '';
+
+        try {
+          if (typeof getVariables === 'undefined') {
+            addResult('❌ 错误', '当前不在酒馆环境中', 'error');
+            return;
+          }
+
+          const charVars = getVariables({ type: 'character' });
+          const character = charVars?.adnd2e?.character;
+
+          if (!character) {
+            addResult('❌ 错误', '未找到角色卡数据', 'error');
+            return;
+          }
+
+          addResult(
+            '角色基本信息',
+            `
+姓名: ${character.characterName || '未知'}
+种族: ${character.race || '未知'}
+职业: ${character.class || '未知'}
+`,
+            'info',
+          );
+
+          if (character.background) {
+            addResult('角色背景', character.background, 'info');
+
+            // 测试解析
+            const deityCommand = parseDeityFromCharacterBackground(character.background);
+            if (deityCommand) {
+              addResult('✅ 背景中检测到神祇信息', JSON.stringify(deityCommand, null, 2), 'success');
+            } else {
+              addResult('⚠️ 背景中未检测到神祇信息', '解析函数未能识别神祇关键词', 'warning');
+            }
+          } else {
+            addResult('⚠️ 警告', '角色卡中没有背景描述', 'warning');
+          }
+
+          if (character.deity) {
+            addResult('✅ 角色卡中有神祇数据', JSON.stringify(character.deity, null, 2), 'success');
+          } else {
+            addResult('⚠️ 角色卡中没有神祇数据', '角色卡的 deity 字段为空', 'warning');
+          }
+        } catch (error) {
+          addResult('❌ 错误', error.toString() + '\n\n' + error.stack, 'error');
+        }
+      }
+
+      function testDeityParsing() {
+        document.getElementById('results').innerHTML = '';
+
+        const testCases = [
+          '过去是北方统一的狼裔部落的强大展示，最后借助首领和同族们的帮助成为狼裔的守护神，因为是半神，所以可以居住在物质位面，不会被迫去其他位面【神职：狼裔、性爱（雄性间的同性交配）、宿命论】',
+          '他成为了半神',
+          '周锦获得了神力',
+          '普通的背景描述，没有提到成神',
+        ];
+
+        testCases.forEach((testCase, index) => {
+          const result = parseDeityFromCharacterBackground(testCase);
+          if (result) {
+            addResult(
+              `✅ 测试 ${index + 1}`,
+              `输入: ${testCase}\n\n解析结果:\n${JSON.stringify(result, null, 2)}`,
+              'success',
+            );
+          } else {
+            addResult(`⚠️ 测试 ${index + 1}`, `输入: ${testCase}\n\n未检测到神祇信息`, 'warning');
+          }
+        });
+      }
+
+      function manuallySetDeity() {
+        if (typeof replaceVariables === 'undefined') {
+          addResult('❌ 错误', '当前不在酒馆环境中', 'error');
+          return;
+        }
+
+        try {
+          const charVars = getVariables({ type: 'character' });
+
+          if (!charVars?.adnd2e?.gameState) {
+            addResult('❌ 错误', '未找到游戏状态', 'error');
+            return;
+          }
+
+          // 手动设置神祇数据
+          charVars.adnd2e.gameState.character.deity = {
+            divineRank: 'demigod',
+            portfolios: ['狼裔', '性爱（雄性间的同性交配）', '宿命论'],
+            magicResistance: 70,
+            divineAbilities: [],
+            maxAvatars: 1,
+            sensingRange: 1,
+          };
+
+          replaceVariables(charVars, { type: 'character' });
+
+          addResult('✅ 成功', '已手动设置神祇数据，请刷新游戏界面查看效果', 'success');
+
+          // 触发自定义事件通知前端更新
+          if (typeof eventEmit === 'function') {
+            eventEmit('adnd2e_character_data_synced');
+          }
+        } catch (error) {
+          addResult('❌ 错误', error.toString() + '\n\n' + error.stack, 'error');
+        }
+      }
+    </script>
+  </body>
+</html>

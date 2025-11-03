@@ -192,7 +192,9 @@ const canProceed = computed(() => {
 
 // 返回上一步
 function goBack() {
-  characterStore.characterData.step = 9;
+  characterStore.updateCharacterData(data => {
+    data.step = 9;
+  });
 }
 
 // 确认并继续
@@ -202,21 +204,25 @@ function confirmAndProceed() {
     return;
   }
 
-  // 保存数据（确保空字符串被转换为 null）
-  characterStore.characterData.characterName = characterName.value?.trim() || null;
-  characterStore.characterData.gender = gender.value;
-  characterStore.characterData.appearance = appearance.value?.trim() || null;
-  characterStore.characterData.background = background.value?.trim() || null;
+  // 使用 updateCharacterData 更新数据
+  characterStore.updateCharacterData(data => {
+    // 保存数据（确保空字符串被转换为 null）
+    data.characterName = characterName.value?.trim() || null;
+    data.gender = gender.value;
+    data.appearance = appearance.value?.trim() || null;
+    data.background = background.value?.trim() || null;
 
-  // 只有男性才保存阴茎大小
-  if (gender.value === 'male') {
-    characterStore.characterData.penisSize = penisSize.value || null;
-  } else {
-    characterStore.characterData.penisSize = null;
-  }
+    // 只有男性才保存阴茎大小
+    if (gender.value === 'male') {
+      data.penisSize = penisSize.value || null;
+    } else {
+      data.penisSize = null;
+    }
 
-  // 前进到下一步
-  characterStore.characterData.step = 11;
+    // 前进到下一步
+    data.step = 11;
+  });
+
   toastr.success('基本信息填写完成');
 }
 </script>

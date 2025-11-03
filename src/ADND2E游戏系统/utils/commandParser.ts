@@ -17,13 +17,19 @@ export interface GameCommand {
     | 'update_weather' // 更新天气
     | 'add_quest' // 添加任务
     | 'update_quest' // 更新任务
+    | 'add_extra_ability' // 添加额外能力
+    | 'remove_extra_ability' // 移除额外能力
     | 'add_effect' // 添加效果/状态
     | 'remove_effect' // 移除效果
     | 'gain_xp' // 获得经验
     | 'level_up' // 升级
     | 'take_damage' // 受到伤害
     | 'heal' // 治疗
-    | 'rest'; // 休息
+    | 'rest' // 休息
+    | 'update_deity' // 更新神祇数据
+    | 'add_divine_ability' // 添加神力能力
+    | 'update_magic_resistance' // 更新魔法抗力
+    | 'cast_spell'; // 🔧 新增：施展法术（消耗已记忆的法术）
   data: Record<string, any>;
 }
 
@@ -74,9 +80,22 @@ export function parseAiResponse(response: string): ParseResult {
 /**
  * 智能文本解析：从 AI 的自然语言输出中自动提取状态变化
  * 即使 AI 没有使用命令块，也能识别位置、时间、天气等信息的变化
+ *
+ * 增强功能：
+ * - 自动识别NPC（带描述的角色名）
+ * - 自动识别新能力描述
+ * - 自动提取关键信息到游戏状态
  */
 function parseIntelligentText(text: string): GameCommand[] {
   const commands: GameCommand[] = [];
+
+  // 0.3 🔧 新增：解析施法（检测AI输出中的施法描述）
+  const spellCommands = parseSpellCastingFromText(text);
+  commands.push(...spellCommands);
+
+  // 0.5 解析额外能力（特殊能力等）
+  const abilityCommands = parseAbilitiesFromText(text);
+  commands.push(...abilityCommands);
 
   // 1. 解析位置变化
   const locationPatterns = [
@@ -290,6 +309,12 @@ export function validateCommand(command: GameCommand): boolean {
     case 'update_quest':
       return typeof command.data.title === 'string';
 
+    case 'add_extra_ability':
+      return typeof command.data.name === 'string';
+
+    case 'remove_extra_ability':
+      return typeof command.data.name === 'string';
+
     case 'add_effect':
     case 'remove_effect':
       return typeof command.data.effect === 'string';
@@ -332,10 +357,44 @@ export function getCommandInstructions(): string {
 4. 更新金币：
    {"type": "update_gold", "data": {"amount": 100}}  // 正数增加，负数减少
 
-5. NPC管理：
-   {"type": "add_npc", "data": {"name": "安迪", "hp": 10, "ac": 5, "attitude": "friendly"}}
-   {"type": "update_npc", "data": {"name": "安迪", "hp": 5}}
-   {"type": "remove_npc", "data": {"name": "哥布林"}}
+5. NPC管理（完整 ADND2E 格式）：
+   // 添加 NPC - 完整格式（推荐）
+   {"type": "add_npc", "data": {
+     "name": "地精",
+     "ac": 6,           // 护甲等级，必需
+     "mv": 6,           // 移动速度，必需
+     "hd": "1-1",       // 生命骰，必需
+     "hp": 4,           // 当前生命值，必需
+     "maxHp": 4,        // 最大生命值，可选，默认等于hp
+     "thac0": 20,       // 命中值，必需
+     "at": "1",         // 攻击次数，必需
+     "dmg": "1d6",      // 伤害骰，必需
+     "sz": "S",         // 体型（T/S/M/L/H/G），必需
+     "int": "低（5-7）", // 智力，必需
+     "al": "LE",        // 阵营，必需
+     "ml": 8,           // 士气，必需
+     "xp": 15,          // 经验值，必需
+     "sa": "无",      // 特殊攻击，可选
+     "sd": "无",        // 特殊防御，可选
+     "sw": "畏光,攻击检定和士气检定获得-1惩罚",      // 特殊弱点，可选
+     "sp": "无",        // 法术能力，可选
+     "mr": "无",        // 魔法抗力，可选
+     "magicItems": "无", // 魔法物品，可选
+     "race": "地精",    // 种族，可选
+     "class": "无",   // 职业，可选
+     "location": "洞穴", // 位置，可选
+     "status": "警戒",  // 状态，可选
+     "attitude": "hostile" // 态度，可选
+   }}
+
+   // 简化格式（仅必需字段）
+   {"type": "add_npc", "data": {"name": "村民", "hp": 4, "ac": 10, "mv": 12, "hd": "1", "hp": 4, "thac0": 20, "at": "1", "dmg": "1d4", "sz": "M", "int": "8-10", "al": "N", "ml": 10, "xp": 10}}
+
+   // 更新 NPC
+   {"type": "update_npc", "data": {"name": "地精战士", "hp": 2, "status": "受伤"}}
+
+   // 移除 NPC
+   {"type": "remove_npc", "data": {"name": "地精战士"}}
 
 6. 更新位置：
    {"type": "update_location", "data": {"location": "深林旅店"}}
@@ -350,20 +409,35 @@ export function getCommandInstructions(): string {
    {"type": "add_quest", "data": {"title": "击败地精", "description": "清除洞穴中的地精"}}
    {"type": "update_quest", "data": {"title": "击败地精", "status": "completed"}}
 
-10. 效果/状态：
+10. 额外能力管理（角色特殊能力）：
+   // 添加额外能力
+   {"type": "add_extra_ability", "data": {
+     "name": "哀号",
+     "description": "这是所有亡灵能力中最可怕最强大的能力之一。每当拥有这个能力的生物发出哀号时，30英尺内的所有生物必须进行一次对抗死亡魔法的豁免检定。检定失败的受害者会立即死亡",
+     "effect": "每当拥有这个能力的生物发出哀号时，30英尺内的所有生物必须进行一次对抗死亡魔法的豁免检定。检定失败的受害者会立即死亡",
+     "conditions": "无",
+     "uses": "永久",
+     "source": "亡灵能力"
+   }}
+
+   // 移除额外能力
+   {"type": "remove_extra_ability", "data": {"name": "哀号"}}
+
+11. 效果/状态
     {"type": "add_effect", "data": {"effect": "中毒", "duration": "3轮"}}
     {"type": "remove_effect", "data": {"effect": "中毒"}}
 
-11. 战斗相关：
+12. 战斗相关：
     {"type": "take_damage", "data": {"amount": 10, "source": "地精的匕首"}}
     {"type": "heal", "data": {"amount": 15, "source": "治疗药水"}}
 
-12. 进度：
+13. 进度：
     {"type": "gain_xp", "data": {"amount": 50, "source": "击败地精"}}
     {"type": "level_up", "data": {"newLevel": 2}}
 
-13. 休息：
-    {"type": "rest", "data": {"type": "short"}}  // 或 "long"
+14. 休息（ADND2E 自然治疗）：
+    {"type": "rest", "data": {"type": "normal"}}  // 普通休息（少量活动），每天恢复1点HP
+    {"type": "rest", "data": {"type": "bed"}}     // 卧床休息，每天恢复3点HP，满一周额外加体质奖励
 
 示例输出：
 <!-- <gamestate>
@@ -384,6 +458,180 @@ export function getCommandInstructions(): string {
 - "此时已是午后时分" → 自动更新时间
 - "天气变得晴朗温暖" → 自动更新天气
 `;
+}
+
+/**
+ * 从自然文本中解析额外能力和神祇相关信息
+ */
+function parseAbilitiesFromText(text: string): GameCommand[] {
+  const commands: GameCommand[] = [];
+
+  // === 识别神祇觉醒/神格变化 ===
+  // 🔧 修复：扩展神祇检测模式，与 parseDeityFromCharacterBackground 保持一致
+  const deityAwakeningPatterns = [
+    /(?:成为|晋升为|获得了?|是一名?|是个?|是位?)([半]?神|守护[半]?神|神[祇祗])/g,
+    /接受了仪式/g,
+    /神性|神格|神力/g,
+    /半神|微弱神|弱等神|次级神|中等神|高等神|强大神|伟大神/g,
+    /DemiPower|Demi\s*Power|Lesser\s*Power|Intermediate\s*Power|Greater\s*Power/gi,
+  ];
+
+  let isDivine = false;
+  for (const pattern of deityAwakeningPatterns) {
+    if (pattern.test(text)) {
+      isDivine = true;
+      break;
+    }
+  }
+
+  if (isDivine) {
+    // 🔧 修复：扩展神格等级检测，支持英文和更多表述
+    let divineRank: 'demigod' | 'lesser' | 'intermediate' | 'greater' = 'demigod';
+    if (/(半神|微弱神|DemiPower|Demi\s*Power)/i.test(text)) divineRank = 'demigod';
+    else if (/(弱等神|次级神|Lesser\s*Power)/i.test(text)) divineRank = 'lesser';
+    else if (/(中等神|Intermediate\s*Power)/i.test(text)) divineRank = 'intermediate';
+    else if (/(高等神|强大神|伟大神|Greater\s*Power)/i.test(text)) divineRank = 'greater';
+
+    // 提取神职
+    const portfolios: string[] = [];
+
+    // 方式1: 从【神职：xxx】提取
+    const bracketPattern = /【神职[：:]\s*([^】]+)】/g;
+    for (const match of text.matchAll(bracketPattern)) {
+      const domains = match[1].trim().split(/[、，,]/);
+      portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+    }
+
+    // 方式2: 从"神职："提取
+    if (portfolios.length === 0) {
+      const portfolioPattern = /神职[：:]\s*([^。！？\n【】]+)/g;
+      for (const match of text.matchAll(portfolioPattern)) {
+        const domains = match[1].trim().split(/[、，,]/);
+        portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+      }
+    }
+
+    commands.push({
+      type: 'update_deity',
+      data: {
+        divineRank,
+        portfolios,
+      },
+    });
+    console.log('[智能解析] 检测到神祇觉醒:', divineRank, portfolios);
+  }
+
+  return commands;
+}
+
+/**
+ * 从角色卡背景中解析神祇信息
+ * 用于角色创建完成时或游戏初始化时同步神祇数据到游戏状态
+ */
+export function parseDeityFromCharacterBackground(background: string): GameCommand | null {
+  if (!background) return null;
+
+  // 🔧 修复：扩展神祇检测模式，支持"是一名...半神"等更多表达方式
+  const deityPatterns = [
+    /(?:成为|晋升为|获得了?|已经是|现在是|是一名?|是个?|是位?)([半]?神|守护[半]?神|神[祇祗])/,
+    /神格|神力|神性/,
+    /半神|微弱神|弱等神|次级神|中等神|高等神|强大神|伟大神/,
+    /DemiPower|Demi\s*Power|Lesser\s*Power|Intermediate\s*Power|Greater\s*Power/i, // 支持英文
+  ];
+
+  let isDivine = false;
+  for (const pattern of deityPatterns) {
+    if (pattern.test(background)) {
+      isDivine = true;
+      console.log('[解析背景] 匹配到神祇模式:', pattern, '文本片段:', background.match(pattern)?.[0]);
+      break;
+    }
+  }
+
+  if (!isDivine) {
+    console.log('[解析背景] 未检测到神祇模式');
+    return null;
+  }
+
+  // 🔧 修复：扩展神格等级检测，支持英文和更多中文表述
+  let divineRank: 'demigod' | 'lesser' | 'intermediate' | 'greater' = 'demigod';
+  if (/(半神|微弱神|DemiPower|Demi\s*Power)/i.test(background)) divineRank = 'demigod';
+  else if (/(弱等神|次级神|Lesser\s*Power)/i.test(background)) divineRank = 'lesser';
+  else if (/(中等神|Intermediate\s*Power)/i.test(background)) divineRank = 'intermediate';
+  else if (/(高等神|强大神|伟大神|Greater\s*Power)/i.test(background)) divineRank = 'greater';
+
+  // 提取神职
+  const portfolios: string[] = [];
+
+  // 方式1: 从【神职：xxx】提取
+  const bracketPattern = /【神职[：:]\s*([^】]+)】/g;
+  let match;
+  while ((match = bracketPattern.exec(background)) !== null) {
+    const domains = match[1].trim().split(/[、，,]/);
+    portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+  }
+
+  // 方式2: 从"神职："提取
+  if (portfolios.length === 0) {
+    const portfolioPattern = /神职[：:]\s*([^。！？\n【】]+)/g;
+    while ((match = portfolioPattern.exec(background)) !== null) {
+      const domains = match[1].trim().split(/[、，,]/);
+      portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+    }
+  }
+
+  console.log('[解析背景] 检测到神祇:', { divineRank, portfolios });
+
+  return {
+    type: 'update_deity',
+    data: {
+      divineRank,
+      portfolios,
+    },
+  };
+}
+
+/**
+ * 🔧 新增：从文本中解析施法行为
+ * 检测AI输出中的施法描述，如"你施展了魔法飞弹"、"使用了治疗轻伤"等
+ * 自动从已记忆的法术中移除已使用的法术
+ */
+function parseSpellCastingFromText(text: string): GameCommand[] {
+  const commands: GameCommand[] = [];
+
+  // 法术施放模式（中文）
+  const castPatterns = [
+    /(?:你|我|角色|施法者|法师|巫师|祭司|牧师|德鲁伊)(?:施展|施放|使用|释放|念咒|吟唱)(?:了)?[「『"《]?([^「』"》。！？\n]{2,20})[」』"》]?(?:法术)?/gi,
+    /[「『"《]([^「』"》]{2,20})[」』"》](?:法术)?(?:被|已)?(?:施展|施放|使用|释放)/gi,
+    /(?:cast|casted|casting)\s+(?:spell\s+)?[「『"《]?([^「』"》。！？\n]{2,20})[」』"》]?/gi,
+  ];
+
+  const detectedSpells = new Set<string>(); // 避免重复检测
+
+  for (const pattern of castPatterns) {
+    const matches = text.matchAll(pattern);
+    for (const match of matches) {
+      const spellName = match[1].trim();
+      // 过滤无效匹配
+      if (
+        spellName.length < 2 ||
+        spellName.length > 20 ||
+        /[\d]+/.test(spellName) || // 排除纯数字
+        detectedSpells.has(spellName)
+      ) {
+        continue;
+      }
+
+      detectedSpells.add(spellName);
+      commands.push({
+        type: 'cast_spell',
+        data: { spellName },
+      });
+      console.log('[智能解析] 检测到施法:', spellName);
+    }
+  }
+
+  return commands;
 }
 
 /**

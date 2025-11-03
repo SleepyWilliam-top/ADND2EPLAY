@@ -215,7 +215,9 @@ const remainingLanguageSlots = computed(
 const languageSlotsToNonweapon = computed({
   get: () => characterStore.characterData.languageSlotsToNonweapon,
   set: (value: number) => {
-    characterStore.characterData.languageSlotsToNonweapon = value;
+    characterStore.updateCharacterData(data => {
+      data.languageSlotsToNonweapon = value;
+    });
   },
 });
 
@@ -319,9 +321,11 @@ function addProficiency(profId: string) {
 
   const cost = getProficiencyCostForCharacter(prof);
   if (remainingSlots.value >= cost) {
-    characterStore.characterData.nonweaponProficiencies.push({
-      id: profId,
-      slots: cost,
+    characterStore.updateCharacterData(data => {
+      data.nonweaponProficiencies.push({
+        id: profId,
+        slots: cost,
+      });
     });
     toastr.success(`选择了 ${prof.name}`);
   } else {
@@ -331,9 +335,9 @@ function addProficiency(profId: string) {
 
 // 移除熟练
 function removeProficiency(profId: string) {
-  characterStore.characterData.nonweaponProficiencies = characterStore.characterData.nonweaponProficiencies.filter(
-    p => p.id !== profId,
-  );
+  characterStore.updateCharacterData(data => {
+    data.nonweaponProficiencies = data.nonweaponProficiencies.filter(p => p.id !== profId);
+  });
   const prof = getProficiencyById(profId);
   if (prof) {
     toastr.info(`移除了 ${prof.name}`);
@@ -391,7 +395,9 @@ function formatDescription(desc: string): string {
 
 // 返回上一步
 function goBack() {
-  characterStore.characterData.step = 5;
+  characterStore.updateCharacterData(data => {
+    data.step = 5;
+  });
 }
 
 // 进入下一步（装备购买）
@@ -400,7 +406,9 @@ function goNext() {
     toastr.warning('请先分配完所有熟练槽位');
     return;
   }
-  characterStore.characterData.step = 7;
+  characterStore.updateCharacterData(data => {
+    data.step = 7;
+  });
   toastr.success('非武器熟练选择完成，进入装备购买');
 }
 </script>

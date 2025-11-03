@@ -218,11 +218,13 @@ function selectAlignment(alignmentId: string) {
 // 返回上一步
 function goBack() {
   // 根据是否有施法能力决定返回哪一步
-  if (characterStore.canCastSpellsAtLevel1()) {
-    characterStore.characterData.step = 8; // 返回法术选择
-  } else {
-    characterStore.characterData.step = 7; // 返回装备购买
-  }
+  characterStore.updateCharacterData(data => {
+    if (characterStore.canCastSpellsAtLevel1()) {
+      data.step = 8; // 返回法术选择
+    } else {
+      data.step = 7; // 返回装备购买
+    }
+  });
 }
 
 // 确认选择
@@ -234,11 +236,14 @@ function confirmSelection() {
     return;
   }
 
-  // 保存选择
-  characterStore.characterData.alignment = selectedAlignment.value;
+  // 使用 updateCharacterData 更新数据
+  characterStore.updateCharacterData(data => {
+    // 保存选择
+    data.alignment = selectedAlignment.value;
+    // 前进到下一步
+    data.step = 10;
+  });
 
-  // 前进到下一步
-  characterStore.characterData.step = 10;
   toastr.success('阵营选择成功');
 }
 </script>

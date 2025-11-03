@@ -277,13 +277,16 @@ function rollHitPoints() {
   // 计算最终生命值（最少为1）
   const max = Math.max(1, rolled + constitutionBonus + racialBonus);
 
-  characterStore.characterData.hitPoints = {
-    rolled,
-    constitutionBonus,
-    racialBonus,
-    current: max,
-    max,
-  };
+  // 使用 updateCharacterData 更新数据
+  characterStore.updateCharacterData(data => {
+    data.hitPoints = {
+      rolled,
+      constitutionBonus,
+      racialBonus,
+      current: max,
+      max,
+    };
+  });
 }
 
 // 获取体质加成说明文本
@@ -385,7 +388,9 @@ const canProceedTooltip = computed(() => {
 });
 
 function goToPreviousStep() {
-  characterStore.characterData.step = 3;
+  characterStore.updateCharacterData(data => {
+    data.step = 3;
+  });
 }
 
 // 前进到下一步：武器熟练
@@ -394,7 +399,9 @@ function goToNextStep() {
     toastr.warning('请先掷骰生命值');
     return;
   }
-  characterStore.characterData.step = 5;
+  characterStore.updateCharacterData(data => {
+    data.step = 5;
+  });
 }
 </script>
 

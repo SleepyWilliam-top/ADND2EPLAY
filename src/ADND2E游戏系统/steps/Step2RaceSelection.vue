@@ -530,7 +530,9 @@ const abilityLabels: Record<keyof Abilities, string> = {
 // 方法
 function goToPreviousStep() {
   // 回退到上一步（属性掷骰）
-  characterStore.characterData.step = 1;
+  characterStore.updateCharacterData(data => {
+    data.step = 1;
+  });
 }
 
 function selectCategory(categoryId: string) {
@@ -653,53 +655,57 @@ function finishSelection() {
   const previousSubrace = characterStore.characterData.subrace;
   const raceChanged = previousRace !== selectedRace.value || previousSubrace !== selectedSubrace.value;
 
-  // 保存选择
-  characterStore.characterData.raceCategory = selectedCategory.value;
-  characterStore.characterData.race = selectedRace.value;
-  characterStore.characterData.subrace = selectedSubrace.value;
+  // 使用 updateCharacterData 更新数据
+  characterStore.updateCharacterData(data => {
+    // 保存选择
+    data.raceCategory = selectedCategory.value;
+    data.race = selectedRace.value;
+    data.subrace = selectedSubrace.value;
 
-  // 如果种族改变，清空后续步骤的相关数据
-  if (raceChanged) {
-    // 清空职业选择
-    characterStore.characterData.class = null;
+    // 如果种族改变，清空后续步骤的相关数据
+    if (raceChanged) {
+      // 清空职业选择
+      data.class = null;
 
-    // 清空超凡力量
-    characterStore.characterData.exceptionalStrength = null;
+      // 清空超凡力量
+      data.exceptionalStrength = null;
 
-    // 清空武器熟练数据
-    characterStore.characterData.weaponProficiencies = [];
-    characterStore.characterData.weaponSpecializations = [];
+      // 清空武器熟练数据
+      data.weaponProficiencies = [];
+      data.weaponSpecializations = [];
 
-    // 清空非武器熟练数据
-    characterStore.characterData.nonweaponProficiencies = [];
-    characterStore.characterData.languageSlotsToWeapon = 0;
-    characterStore.characterData.languageSlotsToNonweapon = 0;
+      // 清空非武器熟练数据
+      data.nonweaponProficiencies = [];
+      data.languageSlotsToWeapon = 0;
+      data.languageSlotsToNonweapon = 0;
 
-    // 清空装备购买数据
-    characterStore.characterData.startingMoney = 0;
-    characterStore.characterData.currentMoney = 0;
-    characterStore.characterData.purchasedEquipment = [];
+      // 清空装备购买数据
+      data.startingMoney = 0;
+      data.currentMoney = 0;
+      data.purchasedEquipment = [];
 
-    // 清空法术数据
-    if (characterStore.characterData.spells) {
-      characterStore.characterData.spells = {
-        memorizedSpells: {
-          level1: [],
-          level2: [],
-          level3: [],
-          level4: [],
-          level5: [],
-          level6: [],
-          level7: [],
-          level8: [],
-          level9: [],
-        },
-      };
+      // 清空法术数据
+      if (data.spells) {
+        data.spells = {
+          memorizedSpells: {
+            level1: [],
+            level2: [],
+            level3: [],
+            level4: [],
+            level5: [],
+            level6: [],
+            level7: [],
+            level8: [],
+            level9: [],
+          },
+        };
+      }
     }
-  }
 
-  // 前进到下一步
-  characterStore.characterData.step = 3;
+    // 前进到下一步
+    data.step = 3;
+  });
+
   toastr.success('种族选择成功');
 }
 

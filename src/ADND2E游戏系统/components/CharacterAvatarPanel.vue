@@ -138,9 +138,30 @@ onUnmounted(() => {
 });
 
 // 从角色卡变量读取角色数据
-const characterData = computed(() => {
+// 使用 ref 以便在数据更新时能手动触发响应式更新
+const characterData = ref<any>(null);
+
+// 加载角色数据
+function loadCharacterData() {
   const charVars = getVariables({ type: 'character' });
-  return charVars?.adnd2e?.character || null;
+  characterData.value = charVars?.adnd2e?.character || null;
+  console.log('[CharacterAvatar] 角色数据已更新');
+}
+
+// 初始加载
+loadCharacterData();
+
+// 监听角色数据更新事件
+eventOn('adnd2e_character_data_synced', () => {
+  loadCharacterData();
+});
+
+// 监听消息接收事件，AI 可能在消息中更新了角色数据
+eventOn(tavern_events.MESSAGE_RECEIVED, () => {
+  // 延迟一点加载，确保命令已经处理完成
+  setTimeout(() => {
+    loadCharacterData();
+  }, 100);
 });
 
 // 头像URL（使用 ref 而不是 computed，这样可以手动触发更新）

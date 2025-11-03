@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试 NPC 正则表达式</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ccc;
+        }
+        .original {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .result {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .matched {
+            background: #90ee90;
+            padding: 2px 5px;
+        }
+        .not-matched {
+            background: #ffcccb;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>NPC 正则表达式测试</h1>
+    
+    <div id="results"></div>
+
+    <script>
+        // 原始正则（从代码中复制）
+        const pattern = '<\\[.+?\\][:：]\\s*(?:AC\\s+[^；;<>]+?)?[；;]?\\s*(?:MV\\s+[^；;<>]+?)?[；;]?\\s*(?:HD\\s+[^；;<>]+?)?[；;]?\\s*(?:hp\\s+[^；;<>]+?)?[；;]?\\s*(?:THAC0\\s+[^；;<>]+?)?[；;]?\\s*(?:#AT\\s+[^；;<>]+?)?[；;]?\\s*(?:Dmg\\s+[^；;<>]+?)?[；;]?\\s*(?:SA\\s+[^；;<>]+?)?[；;]?\\s*(?:SD\\s+[^；;<>]+?)?[；;]?\\s*(?:SW\\s+[^；;<>]+?)?[；;]?\\s*(?:SP\\s+[^；;<>]+?)?[；;]?\\s*(?:MR\\s+[^；;<>]+?)?[；;]?\\s*(?:SZ\\s+[^；;<>]+?)?[；;]?\\s*(?:Int\\s+[^；;<>]+?)?[；;]?\\s*(?:AL\\s+[^；;<>]+?)?[；;]?\\s*(?:ML\\s+[^；;<>]+?)?[；;]?\\s*(?:XP\\s+[^；;<>]+?)?[；;]?\\s*(?:MagicItem\\s+[^；;<>]+?)?\\s*>';
+        
+        const regex = new RegExp(pattern, 'gi');
+
+        // 测试用例
+        const testCases = [
+            {
+                name: '完整的 NPC (中文冒号)',
+                text: '<[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>'
+            },
+            {
+                name: '完整的 NPC (英文冒号)',
+                text: '<[地精战士]:AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>'
+            },
+            {
+                name: '带神职的半神',
+                text: '周锦借助首领和同族们的帮助<[周锦]：AC 10；MV 12；HD 1；hp 14；THAC0 20；#AT 1；Dmg 1d8；SZ M；Int 17；AL CN；ML 10；XP 15；神职：狼裔、性爱>成为了狼裔的守护神'
+            },
+            {
+                name: '简短的 NPC',
+                text: '<[卫兵]：AC 5；hp 10；THAC0 18>'
+            },
+            {
+                name: '包含其他文本',
+                text: '你遇到了一个地精战士<[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>他向你冲来！'
+            }
+        ];
+
+        const resultsDiv = document.getElementById('results');
+
+        testCases.forEach((testCase, index) => {
+            const div = document.createElement('div');
+            div.className = 'test-case';
+            
+            const matches = testCase.text.match(regex);
+            const replaced = testCase.text.replace(regex, '');
+            
+            div.innerHTML = `
+                <h3>测试 ${index + 1}: ${testCase.name}</h3>
+                <div class="original"><strong>原文:</strong><br>${testCase.text}</div>
+                <div class="result">
+                    <strong>匹配结果:</strong> 
+                    <span class="${matches ? 'matched' : 'not-matched'}">
+                        ${matches ? `匹配成功 (${matches.length}个)` : '未匹配'}
+                    </span>
+                </div>
+                ${matches ? `<div><strong>匹配到的内容:</strong><br>${matches.join('<br>')}</div>` : ''}
+                <div><strong>替换后:</strong><br>${replaced || '(空)'}</div>
+            `;
+            
+            resultsDiv.appendChild(div);
+        });
+    </script>
+</body>
+</html>
+

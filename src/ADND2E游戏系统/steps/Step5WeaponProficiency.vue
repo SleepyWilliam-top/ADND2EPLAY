@@ -221,7 +221,9 @@ const remainingLanguageSlots = computed(
 const languageSlotsToWeapon = computed({
   get: () => characterStore.characterData.languageSlotsToWeapon,
   set: (value: number) => {
-    characterStore.characterData.languageSlotsToWeapon = value;
+    characterStore.updateCharacterData(data => {
+      data.languageSlotsToWeapon = value;
+    });
   },
 });
 
@@ -260,17 +262,17 @@ function toggleWeapon(weaponId: string) {
 
   if (isSelected) {
     // 取消选择（同时取消专精）
-    characterStore.characterData.weaponProficiencies = characterStore.characterData.weaponProficiencies.filter(
-      id => id !== weaponId,
-    );
-    if (isSpecialized) {
-      characterStore.characterData.weaponSpecializations = characterStore.characterData.weaponSpecializations.filter(
-        id => id !== weaponId,
-      );
-    }
+    characterStore.updateCharacterData(data => {
+      data.weaponProficiencies = data.weaponProficiencies.filter(id => id !== weaponId);
+      if (isSpecialized) {
+        data.weaponSpecializations = data.weaponSpecializations.filter(id => id !== weaponId);
+      }
+    });
   } else if (remainingSlots.value > 0) {
     // 选择武器
-    characterStore.characterData.weaponProficiencies.push(weaponId);
+    characterStore.updateCharacterData(data => {
+      data.weaponProficiencies.push(weaponId);
+    });
   } else {
     toastr.warning('没有剩余的熟练槽位');
   }
@@ -282,12 +284,14 @@ function toggleSpecialization(weaponId: string) {
 
   if (isSpecialized) {
     // 取消专精
-    characterStore.characterData.weaponSpecializations = characterStore.characterData.weaponSpecializations.filter(
-      id => id !== weaponId,
-    );
+    characterStore.updateCharacterData(data => {
+      data.weaponSpecializations = data.weaponSpecializations.filter(id => id !== weaponId);
+    });
   } else if (canAffordSpecialization(weaponId)) {
     // 专精武器
-    characterStore.characterData.weaponSpecializations.push(weaponId);
+    characterStore.updateCharacterData(data => {
+      data.weaponSpecializations.push(weaponId);
+    });
   } else {
     toastr.warning('槽位不足以专精此武器');
   }
@@ -335,7 +339,9 @@ function getRelatedWeaponsText(weaponId: string): string {
 
 // 返回上一步
 function goBack() {
-  characterStore.characterData.step = 4;
+  characterStore.updateCharacterData(data => {
+    data.step = 4;
+  });
 }
 
 // 进入下一步
@@ -344,7 +350,9 @@ function goNext() {
     toastr.warning('请先分配完所有熟练槽位');
     return;
   }
-  characterStore.characterData.step = 6;
+  characterStore.updateCharacterData(data => {
+    data.step = 6;
+  });
   toastr.success('武器熟练选择完成');
 }
 </script>

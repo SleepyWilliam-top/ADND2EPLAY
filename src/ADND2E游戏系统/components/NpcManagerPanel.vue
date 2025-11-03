@@ -2,7 +2,7 @@
   <div class="npc-manager-panel">
     <div class="panel-header">
       <h3><i class="fas fa-users"></i> 在场人物管理</h3>
-      <button class="refresh-btn" @click="refreshNpcs" title="刷新列表">
+      <button class="refresh-btn" title="刷新列表" @click="refreshNpcs">
         <i class="fas fa-sync-alt"></i>
       </button>
     </div>
@@ -19,6 +19,8 @@
           <div class="npc-name">
             {{ npc.name }}
             <i v-if="npc.favorite" class="fas fa-heart favorite-icon" title="特别关心"></i>
+            <!-- 🔧 新增：红点提示（学习 lucklyjkop 的 updatedCharacterIds 红点） -->
+            <span v-if="npc.isUpdated" class="red-dot" title="状态已更新"></span>
           </div>
           <div class="npc-basic-stats">
             <span class="stat">AC {{ npc.ac }}</span>
@@ -165,12 +167,101 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useNpcAutoDetection } from '../composables/useNpcAutoDetection';
-import type { NPC } from '../composables/useNpcAutoDetection';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import type { GameState } from '../stores/gameStateStore';
+import { useGameStateStore } from '../stores/gameStateStore';
+import { eventBus } from '../utils/eventBus';
 
-const npcDetection = useNpcAutoDetection();
-const { npcList, toggleNpcFavorite, removeNpc } = npcDetection;
+// 直接从 gameStateStore 读取 NPC 列表（确保与快照同步）
+const gameStateStore = useGameStateStore();
+
+// 监听游戏数据更新事件，触发重新计算
+const forceUpdateKey = ref(0);
+let updateListener: (() => void) | null = null;
+let cleanupFunctions: Array<() => void> = [];
+
+onMounted(() => {
+  // 🔧 使用双事件系统监听（DOM + 酒馆助手）
+  updateListener = () => {
+    forceUpdateKey.value++;
+    console.log('[NpcManager] 收到游戏数据更新事件，NPC 数量:', gameStateStore.gameState.npcs.length);
+  };
+  
+  // 监听旧系统事件（兼容）
+  eventOn('adnd2e_game_data_updated', updateListener);
+  eventOn('adnd2e_character_data_synced', updateListener);
+  
+  // 🔧 监听新的双事件系统
+  cleanupFunctions.push(
+    eventBus.on('adnd2e:npc-added', detail => {
+      console.log(`[NpcManager] 🔵 NPC 添加事件: ${detail.npcName}`);
+      forceUpdateKey.value++;
+    }),
+  );
+  
+  cleanupFunctions.push(
+    eventBus.on('adnd2e:npc-updated', detail => {
+      console.log(`[NpcManager] 🔵 NPC 更新事件: ${detail.npcName}`, detail.changes);
+      forceUpdateKey.value++;
+    }),
+  );
+  
+  cleanupFunctions.push(
+    eventBus.on('adnd2e:npc-removed', detail => {
+      console.log(`[NpcManager] 🔵 NPC 移除事件: ${detail.npcName}`);
+      forceUpdateKey.value++;
+    }),
+  );
+
+  console.log('[NpcManager] 已注册双事件系统监听器 (DOM + 酒馆助手)');
+});
+
+onUnmounted(() => {
+  // 🔧 清理双事件系统监听器
+  cleanupFunctions.forEach(cleanup => cleanup());
+  console.log('[NpcManager] 组件卸载，已清理所有事件监听器');
+});
+
+// 🔧 新增：NPC 更新追踪（学习 lucklyjkop 的 updatedCharacterIds）
+const updatedNpcIds = ref<Set<string>>(new Set());
+
+// 🔧 新增：上次查看的 NPC 数据快照
+const lastNpcSnapshot = ref<Map<string, string>>(new Map());
+
+// NPC 类型（从 GameState 中提取）
+type GameStateNPC = GameState['npcs'][number];
+type NPC = GameStateNPC & { favorite: boolean; lastSeen: number; isUpdated?: boolean };
+
+// 🔧 优化：追踪 NPC 变更并标记（学习 lucklyjkop 的 updatedCharacterIds）
+function trackNpcChanges() {
+  gameStateStore.gameState.npcs.forEach(npc => {
+    const currentSnapshot = JSON.stringify({ hp: npc.hp, location: npc.location, status: npc.status });
+    const lastSnapshot = lastNpcSnapshot.value.get(npc.id);
+
+    if (lastSnapshot && lastSnapshot !== currentSnapshot) {
+      updatedNpcIds.value.add(npc.id);
+      console.log(`[NpcManager] 🔴 NPC "${npc.name}" 已更新`);
+    }
+
+    lastNpcSnapshot.value.set(npc.id, currentSnapshot);
+  });
+}
+
+// 将 gameState 中的 NPC 转换为前端显示格式
+const npcList = computed(() => {
+  // 使用 forceUpdateKey 确保在事件触发时重新计算
+  const _forceUpdate = forceUpdateKey.value;
+
+  // 🔧 每次计算时追踪变更
+  trackNpcChanges();
+
+  return gameStateStore.gameState.npcs.map(npc => ({
+    ...npc,
+    favorite: false, // TODO: 从用户配置中读取
+    lastSeen: Date.now(), // TODO: 从历史记录中获取
+    isUpdated: updatedNpcIds.value.has(npc.id), // 🔧 新增：标记是否更新
+  }));
+});
 
 const selectedNpc = ref<NPC | null>(null);
 
@@ -218,8 +309,15 @@ function attitudeText(attitude?: string): string {
   return map[attitude || 'neutral'] || '未知';
 }
 
+// 🔧 优化：选择 NPC 时清除更新标记（学习 lucklyjkop 的红点清除机制）
 function selectNpc(npc: NPC) {
   selectedNpc.value = npc;
+
+  // 清除该 NPC 的更新标记
+  if (updatedNpcIds.value.has(npc.id)) {
+    updatedNpcIds.value.delete(npc.id);
+    console.log(`[NpcManager] 已清除 "${npc.name}" 的更新标记`);
+  }
 }
 
 function closeDetail() {
@@ -227,26 +325,35 @@ function closeDetail() {
 }
 
 function refreshNpcs() {
-  npcDetection.loadNpcList();
-  toastr.success('NPC 列表已刷新');
+  // NPC 列表现在直接从 gameStateStore 读取，无需手动刷新
+  // 输出调试信息
+  console.log('[NpcManager] 当前 NPC 数量:', gameStateStore.gameState.npcs.length);
+  console.log(
+    '[NpcManager] NPC 列表:',
+    gameStateStore.gameState.npcs.map(n => n.name),
+  );
+  toastr.info(`NPC 列表实时同步（当前 ${gameStateStore.gameState.npcs.length} 个）`);
 }
 
 function toggleFavorite() {
   if (selectedNpc.value) {
-    toggleNpcFavorite(selectedNpc.value.name);
-    // 更新本地引用
-    selectedNpc.value.favorite = !selectedNpc.value.favorite;
+    // TODO: 实现 favorite 功能（需要在 gameState 或用户配置中存储）
+    toastr.info('收藏功能待实现');
   }
 }
 
 async function confirmRemove() {
   if (!selectedNpc.value) return;
 
-  const confirmed = confirm(`确定要移除 NPC "${selectedNpc.value.name}" 吗？`);
+  const confirmed = confirm(`确定要移除 NPC "${selectedNpc.value.name}" 吗？\n\n提示：这将从游戏状态中删除该 NPC。`);
   if (confirmed) {
-    removeNpc(selectedNpc.value.name);
-    toastr.success(`已移除 ${selectedNpc.value.name}`);
-    closeDetail();
+    // 从 gameState 中删除 NPC
+    const index = gameStateStore.gameState.npcs.findIndex(n => n.id === selectedNpc.value!.id);
+    if (index !== -1) {
+      gameStateStore.gameState.npcs.splice(index, 1);
+      toastr.success(`已移除 ${selectedNpc.value.name}`);
+      closeDetail();
+    }
   }
 }
 </script>
@@ -371,6 +478,30 @@ async function confirmRemove() {
 .favorite-icon {
   color: #ff6b6b;
   font-size: 14px;
+}
+
+// 🔧 新增：红点样式（学习 lucklyjkop 的 red-dot）
+.red-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4444;
+  border-radius: 50%;
+  margin-left: 6px;
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 0 4px rgba(255, 68, 68, 0.6);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
 }
 
 .npc-basic-stats {

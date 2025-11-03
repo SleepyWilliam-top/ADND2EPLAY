@@ -608,9 +608,11 @@ async function completeCreation() {
   toastr.info('正在创建角色，请稍候...');
 
   try {
-    // 1. 标记角色创建完成
+    // 1. 标记角色创建完成（使用 updateCharacterData）
     console.log('📝 [Step11] 步骤1: 标记角色创建完成');
-    characterStore.characterData.completed = true;
+    characterStore.updateCharacterData(data => {
+      data.completed = true;
+    });
 
     // 2. 生成文本角色卡
     console.log('📝 [Step11] 步骤2: 生成角色卡文本');
@@ -623,6 +625,10 @@ async function completeCreation() {
       ...characterStore.characterData,
       abilities: characterStore.adjustedAbilities,
       completed: true,
+      // 保存计算后的战斗数据
+      thac0: thac0.value,
+      savingThrows: savingThrows.value,
+      movement: movement.value,
     };
 
     replaceVariables(
@@ -643,26 +649,49 @@ async function completeCreation() {
     );
     console.log('✅ [Step11] 角色卡变量保存完成');
 
-    // 4. 发送角色卡为第一条消息到酒馆聊天（如果当前聊天为空）
-    console.log('📝 [Step11] 步骤4: 检查是否需要发送角色卡到聊天');
+    // 4. 发送角色卡为第一条消息到酒馆聊天
+    console.log('📝 [Step11] 步骤4: 发送角色卡到聊天');
     try {
       const lastMessageId = getLastMessageId();
       console.log(`📝 [Step11] 当前最后消息ID: ${lastMessageId}`);
 
-      // 如果聊天中没有消息（lastMessageId为-1或0），则发送角色卡作为第一条消息
+      // 无论聊天是否为空，都发送角色卡作为第一条可被 AI 读取的系统消息
+      // 这样可以确保 AI 能够读取到角色的完整信息
       if (lastMessageId < 0) {
         console.log('📝 [Step11] 聊天为空，发送角色卡作为第一条消息');
         await createChatMessages([
           {
             role: 'system',
-            name: '角色卡',
+            name: 'ADND 2E 角色卡',
             message: characterCardText,
             is_hidden: false,
           },
         ]);
         console.log('✅ [Step11] 角色卡已发送到聊天');
       } else {
-        console.log('⚠️ [Step11] 聊天中已有消息，跳过发送角色卡');
+        console.log('⚠️ [Step11] 聊天中已有消息，检查是否已有角色卡...');
+        // 即使聊天中已有消息，也在第一条消息前插入角色卡
+        // 以确保 AI 能够在对话开始时就知道角色的完整信息
+        const messages = getChatMessages('0-{{lastMessageId}}');
+        const hasCharacterCard = messages.some(msg => msg.name === 'ADND 2E 角色卡' || msg.name === '角色卡');
+
+        if (!hasCharacterCard) {
+          console.log('📝 [Step11] 未找到角色卡消息，在开头插入角色卡');
+          await createChatMessages(
+            [
+              {
+                role: 'system',
+                name: 'ADND 2E 角色卡',
+                message: characterCardText,
+                is_hidden: false,
+              },
+            ],
+            { insert_at: 0 },
+          );
+          console.log('✅ [Step11] 角色卡已插入到聊天开头');
+        } else {
+          console.log('⚠️ [Step11] 角色卡消息已存在，跳过发送');
+        }
       }
     } catch (error) {
       console.error('❌ [Step11] 发送角色卡到聊天失败:', error);
@@ -695,7 +724,9 @@ async function completeCreation() {
 }
 
 function goBack() {
-  characterStore.characterData.step = 10;
+  characterStore.updateCharacterData(data => {
+    data.step = 10;
+  });
 }
 
 // 辅助函数：将中文属性名转换为英文key

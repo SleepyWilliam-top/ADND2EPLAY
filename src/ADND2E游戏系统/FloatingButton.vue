@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import type { Race } from './utils/raceData';
+import { clearAllData } from './composables/usePersistence';
 
 const isOpen = ref(false);
 const cacheSize = ref('0 KB');
@@ -158,11 +159,20 @@ async function confirmClearCache() {
 // 清除存档
 async function clearCache() {
   try {
-    // 清除角色卡变量中的游戏数据
-    await replaceVariables({}, { type: 'character' });
+    // 🔧 学习 lucklyjkop.html 的完整清除机制
+    // 1. 清除 IndexedDB 中的所有数据（存档 + 设置缓存）
+    //    类似 lucklyjkop 的 db.archives.clear() + db.npcAvatars.clear()
+    await clearAllData();
+    console.log('[FloatingButton] IndexedDB 所有数据已清除（存档 + 设置）');
 
-    toastr.success('游戏存档已清除');
-    updateCacheSize();
+    // 2. 清除角色卡变量中的游戏数据
+    await replaceVariables({}, { type: 'character' });
+    console.log('[FloatingButton] 角色卡变量已清除');
+
+    toastr.success('游戏存档已完全清除（IndexedDB + 角色卡变量）');
+    
+    // 3. 刷新缓存管理器（学习 lucklyjkop 的 openCacheManager）
+    refreshCacheManager();
 
     // 触发自定义事件通知其他组件更新状态
     window.dispatchEvent(new CustomEvent('adnd2e-save-cleared'));
@@ -175,6 +185,13 @@ async function clearCache() {
     console.error('清除缓存失败:', error);
     toastr.error('清除存档失败');
   }
+}
+
+// 刷新缓存管理器（学习 lucklyjkop 的 openCacheManager）
+function refreshCacheManager() {
+  console.log('[FloatingButton] 刷新缓存管理器');
+  updateCacheSize();
+  loadCustomRaces();
 }
 
 // 确认删除单个种族

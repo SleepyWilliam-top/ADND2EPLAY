@@ -11,6 +11,27 @@ export interface RegexRule {
 }
 
 /**
+ * 默认的正则规则列表
+ * 包含系统预设的隐藏规则等
+ */
+export const DEFAULT_REGEX_RULES: RegexRule[] = [
+  {
+    name: '[系统] 隐藏NPC标准格式-带方括号',
+    pattern:
+      '/<\\[.+?\\][:：]\\s*(?:AC\\s+[^；;<>]+?)?[；;]?\\s*(?:MV\\s+[^；;<>]+?)?[；;]?\\s*(?:HD\\s+[^；;<>]+?)?[；;]?\\s*(?:hp\\s+[^；;<>]+?)?[；;]?\\s*(?:THAC0\\s+[^；;<>]+?)?[；;]?\\s*(?:#AT\\s+[^；;<>]+?)?[；;]?\\s*(?:Dmg\\s+[^；;<>]+?)?[；;]?\\s*(?:SA\\s+[^；;<>]+?)?[；;]?\\s*(?:SD\\s+[^；;<>]+?)?[；;]?\\s*(?:SW\\s+[^；;<>]+?)?[；;]?\\s*(?:SP\\s+[^；;<>]+?)?[；;]?\\s*(?:MR\\s+[^；;<>]+?)?[；;]?\\s*(?:SZ\\s+[^；;<>]+?)?[；;]?\\s*(?:Int\\s+[^；;<>]+?)?[；;]?\\s*(?:AL\\s+[^；;<>]+?)?[；;]?\\s*(?:ML\\s+[^；;<>]+?)?[；;]?\\s*(?:XP\\s+[^；;<>]+?)?[；;]?\\s*(?:MagicItem\\s+[^；;<>]+?)?\\s*>/gi',
+    replacement: '',
+    enabled: true,
+  },
+  {
+    name: '[系统] 隐藏NPC标准格式-无方括号',
+    pattern:
+      '/<([^<>\\[\\]]+?)[:：]\\s*(?:AC\\s+[^；;<>]+?)?[；;]?\\s*(?:MV\\s+[^；;<>]+?)?[；;]?\\s*(?:HD\\s+[^；;<>]+?)?[；;]?\\s*(?:hp\\s+[^；;<>]+?)?[；;]?\\s*(?:THAC0\\s+[^；;<>]+?)?[；;]?\\s*(?:#AT\\s+[^；;<>]+?)?[；;]?\\s*(?:Dmg\\s+[^；;<>]+?)?[；;]?\\s*(?:SA\\s+[^；;<>]+?)?[；;]?\\s*(?:SD\\s+[^；;<>]+?)?[；;]?\\s*(?:SW\\s+[^；;<>]+?)?[；;]?\\s*(?:SP\\s+[^；;<>]+?)?[；;]?\\s*(?:MR\\s+[^；;<>]+?)?[；;]?\\s*(?:SZ\\s+[^；;<>]+?)?[；;]?\\s*(?:Int\\s+[^；;<>]+?)?[；;]?\\s*(?:AL\\s+[^；;<>]+?)?[；;]?\\s*(?:ML\\s+[^；;<>]+?)?[；;]?\\s*(?:XP\\s+[^；;<>]+?)?[；;]?\\s*(?:MagicItem\\s+[^；;<>]+?)?\\s*>/gi',
+    replacement: '',
+    enabled: true,
+  },
+];
+
+/**
  * 解析正则表达式字符串
  * 支持 /pattern/flags 格式和纯文本格式
  */
@@ -95,7 +116,7 @@ export function applyRegexRules(text: string, rules: RegexRule[]): string {
 
 /**
  * 从酒馆变量加载正则规则
- * @returns 正则规则数组
+ * @returns 正则规则数组（包含默认规则）
  */
 export function loadRegexRulesFromVariables(): RegexRule[] {
   try {
@@ -106,18 +127,29 @@ export function loadRegexRulesFromVariables(): RegexRule[] {
     console.log('[RegexProcessor] 加载的变量:', vars?.adnd2e);
     console.log('[RegexProcessor] 正则设置:', settings);
 
+    let userRules: RegexRule[] = [];
+
     if (settings && settings.regexRules && Array.isArray(settings.regexRules)) {
-      const enabledCount = settings.regexRules.filter((r: RegexRule) => r.enabled).length;
-      console.log(`[RegexProcessor] 加载了 ${settings.regexRules.length} 条规则，其中 ${enabledCount} 条已启用`);
-      return settings.regexRules;
+      userRules = settings.regexRules;
+      console.log(`[RegexProcessor] 加载了 ${userRules.length} 条用户规则`);
     } else {
-      console.log('[RegexProcessor] 未找到正则规则');
+      console.log('[RegexProcessor] 未找到用户规则');
     }
+
+    // 合并默认规则和用户规则
+    // 默认规则优先执行（放在前面），确保NPC格式首先被隐藏
+    const allRules = [...DEFAULT_REGEX_RULES, ...userRules];
+    const enabledCount = allRules.filter(r => r.enabled).length;
+    console.log(
+      `[RegexProcessor] 总共 ${allRules.length} 条规则（含 ${DEFAULT_REGEX_RULES.length} 条默认规则），其中 ${enabledCount} 条已启用`,
+    );
+
+    return allRules;
   } catch (error) {
     console.warn('[RegexProcessor] 加载正则规则失败:', error);
+    // 如果加载失败，至少返回默认规则
+    return [...DEFAULT_REGEX_RULES];
   }
-
-  return [];
 }
 
 /**

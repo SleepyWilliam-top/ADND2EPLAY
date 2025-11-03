@@ -391,21 +391,34 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       minimizer: [
         argv.mode === 'production' && entry.html === undefined // 仅对脚本项目压缩
           ? new TerserPlugin({
+              parallel: false, // 禁用并行处理以减少内存占用
               terserOptions: {
+                parse: {
+                  ecma: 2020,
+                },
                 format: { 
                   quote_style: 3,
                   ascii_only: false,
                 },
-                mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z', 'Vue', 'PIXI', 'gsap', 'jquery'] },
+                mangle: { 
+                  reserved: ['_', 'toastr', 'YAML', '$', 'z', 'Vue', 'PIXI', 'gsap', 'jquery'],
+                },
                 compress: {
+                  ecma: 2020,
                   drop_console: false,
                   drop_debugger: false,
+                  passes: 1, // 减少压缩次数
                 },
+                ecma: 2020,
               },
             })
           : new TerserPlugin({
+              parallel: false, // 禁用并行处理以减少内存占用
               extractComments: false,
               terserOptions: {
+                parse: {
+                  ecma: 2020,
+                },
                 format: { 
                   beautify: true, 
                   indent_level: 2, 
@@ -416,6 +429,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 mangle: false,
                 keep_classnames: true,
                 keep_fnames: true,
+                ecma: 2020,
               },
             }),
       ],

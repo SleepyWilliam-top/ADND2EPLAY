@@ -18,6 +18,11 @@
           <span class="button-icon">👥</span>
           <span>在场NPC管理</span>
         </button>
+
+        <button class="action-button quest-button" @click="showQuestManager">
+          <span class="button-icon">📋</span>
+          <span>任务管理</span>
+        </button>
       </div>
 
       <!-- 分隔线 -->
@@ -185,6 +190,9 @@
   <!-- 法术图鉴弹窗 -->
   <SpellCompendium :visible="showSpellModal" @close="closeSpellCompendium" />
 
+  <!-- 任务管理弹窗 -->
+  <QuestManagerPanel :visible="showQuestModal" @close="closeQuestManager" />
+
   <!-- 聊天记录管理弹窗 -->
   <ChatRecordManager :visible="showChatRecordModal" @close="closeChatRecordManager" />
 
@@ -216,6 +224,7 @@ import { useCharacterStore } from '../stores/characterStore';
 import { useGameStore } from '../stores/gameStore';
 import ChatRecordManager from './ChatRecordManager.vue';
 import NpcDetailPanel from './NpcDetailPanel.vue';
+import QuestManagerPanel from './QuestManagerPanel.vue';
 import SpellCompendium from './SpellCompendium.vue';
 import SpellbookModal from './SpellbookModal.vue';
 import SummarySettingsModal from './SummarySettingsModal.vue';
@@ -237,6 +246,7 @@ const showChatRecordModal = ref(false);
 const showSystemSettingsModal = ref(false);
 const showTextRegexModal = ref(false);
 const showSummaryModal = ref(false);
+const showQuestModal = ref(false);
 const avatarInput = ref<HTMLInputElement | null>(null);
 const selectedNpc = ref<NPC | null>(null);
 
@@ -315,6 +325,14 @@ function showNpcManager() {
 function closeNpcManager() {
   showNpcModal.value = false;
   selectedNpc.value = null;
+}
+
+function showQuestManager() {
+  showQuestModal.value = true;
+}
+
+function closeQuestManager() {
+  showQuestModal.value = false;
 }
 
 // 法术图鉴功能
@@ -644,6 +662,14 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   &:hover {
     background-color: #28a745;
     border-color: #28a745;
+    color: #fff;
+  }
+}
+
+.quest-button {
+  &:hover {
+    background-color: #ff9800;
+    border-color: #ff9800;
     color: #fff;
   }
 }

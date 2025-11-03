@@ -257,11 +257,13 @@ function rollSpellbook() {
   spellbookRolled.value = true;
 
   // 初始化法术书，加入侦测魔法和阅读魔法
-  if (!characterStore.characterData.spells) {
-    characterStore.initializeSpellData();
-  }
-  characterStore.characterData.spells!.spellbookRoll = roll;
-  characterStore.characterData.spells!.spellbook = ['detect_magic', 'read_magic'];
+  characterStore.updateCharacterData(data => {
+    if (!data.spells) {
+      characterStore.initializeSpellData();
+    }
+    data.spells!.spellbookRoll = roll;
+    data.spells!.spellbook = ['detect_magic', 'read_magic'];
+  });
 
   toastr.info(`你掷出了 ${roll}，法术书可以容纳 ${roll + 2} 个1级法术（含侦测魔法和阅读魔法）`);
 }
@@ -295,25 +297,31 @@ function canAddToSpellbook(spellId: string): boolean {
 function toggleSpellInSpellbook(spellId: string) {
   if (!characterStore.characterData.spells?.spellbook) return;
 
-  const spellbook = characterStore.characterData.spells.spellbook;
-  const index = spellbook.indexOf(spellId);
+  characterStore.updateCharacterData(data => {
+    if (!data.spells?.spellbook) return;
 
-  if (index !== -1) {
-    // 移除（但不能移除侦测魔法和阅读魔法）
-    if (spellId !== 'detect_magic' && spellId !== 'read_magic') {
-      spellbook.splice(index, 1);
+    const spellbook = data.spells.spellbook;
+    const index = spellbook.indexOf(spellId);
+
+    if (index !== -1) {
+      // 移除（但不能移除侦测魔法和阅读魔法）
+      if (spellId !== 'detect_magic' && spellId !== 'read_magic') {
+        spellbook.splice(index, 1);
+      }
+    } else if (canAddToSpellbook(spellId)) {
+      // 添加
+      spellbook.push(spellId);
     }
-  } else if (canAddToSpellbook(spellId)) {
-    // 添加
-    spellbook.push(spellId);
-  }
+  });
 }
 
 // 重置法术书选择
 function resetSpellbookSelection() {
-  if (characterStore.characterData.spells) {
-    characterStore.characterData.spells.spellbook = ['detect_magic', 'read_magic'];
-  }
+  characterStore.updateCharacterData(data => {
+    if (data.spells) {
+      data.spells.spellbook = ['detect_magic', 'read_magic'];
+    }
+  });
 }
 
 // 确认法术书
@@ -425,23 +433,29 @@ function addMemorizedSpell(spellId: string) {
   }
 
   // 添加到记忆列表
-  if (!characterStore.characterData.spells) return;
-  const levelKey = `level${spellLevel}` as keyof typeof characterStore.characterData.spells.memorizedSpells;
-  characterStore.characterData.spells.memorizedSpells[levelKey].push(spellId);
+  characterStore.updateCharacterData(data => {
+    if (!data.spells) return;
+    const levelKey = `level${spellLevel}` as keyof typeof data.spells.memorizedSpells;
+    data.spells.memorizedSpells[levelKey].push(spellId);
+  });
 }
 
 // 移除记忆法术
 function removeMemorizedSpell(level: number, index: number) {
-  if (!characterStore.characterData.spells) return;
-  const levelKey = `level${level}` as keyof typeof characterStore.characterData.spells.memorizedSpells;
-  characterStore.characterData.spells.memorizedSpells[levelKey].splice(index, 1);
+  characterStore.updateCharacterData(data => {
+    if (!data.spells) return;
+    const levelKey = `level${level}` as keyof typeof data.spells.memorizedSpells;
+    data.spells.memorizedSpells[levelKey].splice(index, 1);
+  });
 }
 
 // ==================== 导航函数 ====================
 
 // 返回上一步
 function goBack() {
-  characterStore.characterData.step = 7;
+  characterStore.updateCharacterData(data => {
+    data.step = 7;
+  });
 }
 
 // 检查是否可以继续
@@ -460,7 +474,9 @@ const canProceed = computed(() => {
 // 确认并进入下一步
 function confirmAndProceed() {
   // 进入第9步（阵营选择）
-  characterStore.characterData.step = 9;
+  characterStore.updateCharacterData(data => {
+    data.step = 9;
+  });
   toastr.success('法术选择完成，请选择阵营');
 }
 </script>

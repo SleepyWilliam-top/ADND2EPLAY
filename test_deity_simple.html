@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>快速测试神祇解析</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test { margin: 20px 0; padding: 15px; background: #2d2d2d; border-left: 4px solid #4CAF50; }
+        .success { color: #4CAF50; }
+        .fail { color: #f44336; }
+        pre { background: #1e1e1e; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 神祇解析测试</h1>
+    <div id="output"></div>
+    
+    <script>
+        function parseDeityFromCharacterBackground(background) {
+            if (!background) return null;
+
+            const deityPatterns = [
+                /(?:成为|晋升为|获得了?|已经是|现在是)([半]?神|守护[半]?神|神[祇祗])/,
+                /神格|神力|神性/,
+            ];
+
+            let isDivine = false;
+            for (const pattern of deityPatterns) {
+                if (pattern.test(background)) {
+                    isDivine = true;
+                    break;
+                }
+            }
+
+            if (!isDivine) return null;
+
+            let divineRank = 'demigod';
+            if (/半神/.test(background)) divineRank = 'demigod';
+            else if (/弱等神|次级神/.test(background)) divineRank = 'lesser';
+            else if (/中等神/.test(background)) divineRank = 'intermediate';
+            else if (/高等神|强大神/.test(background)) divineRank = 'greater';
+
+            const portfolios = [];
+            const bracketPattern = /【神职[：:]\s*([^】]+)】/g;
+            let match;
+            while ((match = bracketPattern.exec(background)) !== null) {
+                const domains = match[1].trim().split(/[、，,]/);
+                portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+            }
+
+            if (portfolios.length === 0) {
+                const portfolioPattern = /神职[：:]\s*([^。！？\n【】]+)/g;
+                while ((match = portfolioPattern.exec(background)) !== null) {
+                    const domains = match[1].trim().split(/[、，,]/);
+                    portfolios.push(...domains.map(d => d.trim()).filter(d => d));
+                }
+            }
+
+            return {
+                type: 'update_deity',
+                data: { divineRank, portfolios },
+            };
+        }
+
+        const userBackground = '过去是北方统一的狼裔部落的强大展示，最后借助首领和同族们的帮助成为狼裔的守护神，因为是半神，所以可以居住在物质位面，不会被迫去其他位面【神职：狼裔、性爱（雄性间的同性交配）、宿命论】';
+
+        const result = parseDeityFromCharacterBackground(userBackground);
+
+        document.getElementById('output').innerHTML = `
+            <div class="test">
+                <h2>📝 输入文本</h2>
+                <pre>${userBackground}</pre>
+            </div>
+            <div class="test">
+                <h2>🔬 解析结果</h2>
+                ${result ? `<p class="success">✅ 成功检测到神祇信息！</p>` : `<p class="fail">❌ 未检测到神祇信息</p>`}
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            </div>
+            <div class="test">
+                <h2>💡 预期结果</h2>
+                <pre>{
+  "type": "update_deity",
+  "data": {
+    "divineRank": "demigod",
+    "portfolios": ["狼裔", "性爱（雄性间的同性交配）", "宿命论"]
+  }
+}</pre>
+            </div>
+        `;
+    </script>
+</body>
+</html>
+

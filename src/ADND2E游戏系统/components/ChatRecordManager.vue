@@ -72,6 +72,9 @@
                 <span class="message-role">{{ getRoleLabel(message.role) }}</span>
                 <span class="message-time">{{ formatTime(message.timestamp) }}</span>
                 <span class="message-index">#{{ chapters[currentChapter].start + idx + 1 }}</span>
+                <span v-if="message.stateSnapshot" class="snapshot-badge" title="此消息包含状态快照（删除时可回溯）">
+                  <i class="fas fa-bookmark"></i>
+                </span>
                 <div class="message-actions">
                   <button
                     class="message-action-btn edit-btn"
@@ -82,7 +85,7 @@
                   </button>
                   <button
                     class="message-action-btn delete-btn"
-                    title="删除"
+                    title="删除（会自动回溯游戏状态）"
                     @click="deleteMessage(chapters[currentChapter].start + idx)"
                   >
                     <i class="fas fa-trash-alt"></i>
@@ -118,13 +121,16 @@
                   <span class="message-role">{{ getRoleLabel(message.role) }}</span>
                   <span class="message-time">{{ formatTime(message.timestamp) }}</span>
                   <span class="message-index">#{{ chapter.start + idx + 1 }}</span>
+                  <span v-if="message.stateSnapshot" class="snapshot-badge" title="此消息包含状态快照（删除时可回溯）">
+                    <i class="fas fa-bookmark"></i>
+                  </span>
                   <div class="message-actions">
                     <button class="message-action-btn edit-btn" title="编辑" @click="editMessage(chapter.start + idx)">
                       <i class="fas fa-edit"></i>
                     </button>
                     <button
                       class="message-action-btn delete-btn"
-                      title="删除"
+                      title="删除（会自动回溯游戏状态）"
                       @click="deleteMessage(chapter.start + idx)"
                     >
                       <i class="fas fa-trash-alt"></i>
@@ -177,7 +183,7 @@
         <div v-if="bookmarks.length === 0" class="empty-state">
           <p>暂无书签</p>
         </div>
-        <div v-else v-for="(bookmark, index) in bookmarks" :key="index" class="bookmark-item">
+        <div v-for="(bookmark, index) in bookmarks" v-else :key="index" class="bookmark-item">
           <div class="bookmark-info" @click="jumpToChapter(bookmark.chapter)">
             <i class="fas fa-bookmark"></i>
             <span class="bookmark-chapter">第{{ bookmark.chapter + 1 }}章</span>
@@ -213,8 +219,12 @@
 </template>
 
 <script setup lang="ts">
+import { klona } from 'klona';
 import { computed, nextTick, ref, watch } from 'vue';
+import { saveGameData } from '../composables/usePersistence';
+import { useGameStateStore } from '../stores/gameStateStore';
 import { useGameStore } from '../stores/gameStore';
+import { emitChatMessageDeleted, emitChatMessageEdited, emitGameDataUpdated } from '../utils/eventBus';
 
 interface Props {
   visible: boolean;
@@ -374,11 +384,30 @@ async function clearAllMessages() {
     // 立即触发 Vue 响应式更新
     await nextTick();
 
-    await gameStore.saveProgress();
+    // 立即保存到 IndexedDB 和角色卡变量
+    const gameStateStore = useGameStateStore();
+
+    // 🔧 修复：先调用 syncToCharacterVariables，将最新的游戏状态（包括 character 和 gameState）同步到角色卡变量
+    // 然后 saveGameData 只需要保存 messages 即可，不需要再传递 character（避免重复保存和数据冲突）
+    gameStateStore.syncToCharacterVariables(); // 同步 character 和 gameState 到角色卡变量
+    await nextTick(); // 等待同步完成
+
+    await saveGameData({
+      messages: [],
+      gameState: gameStateStore.exportGameState(),
+      // 不需要传递 character，因为 syncToCharacterVariables 已经同步了
+    });
+
+    console.log('[ChatRecordManager] 清空后的数据已立即保存到 IndexedDB 和角色卡变量');
 
     // 清空书签
     bookmarks.value = [];
     saveBookmarks();
+
+    // 触发自定义事件，通知其他组件数据已更新（如变量管理器、NPC管理器、状态栏等）
+    console.log('[ChatRecordManager] 🔔 触发更新事件: adnd2e_game_data_updated, adnd2e_character_data_synced');
+    eventEmit('adnd2e_game_data_updated');
+    eventEmit('adnd2e_character_data_synced');
 
     toastr.success('已清空所有消息（游戏独立层，不影响酒馆聊天）');
   } catch (error) {
@@ -412,11 +441,122 @@ async function saveEdit() {
   }
 
   try {
-    // 更新前端消息（同层游玩，不影响酒馆）
-    gameStore.messages[index].content = newContent;
-    await gameStore.saveProgress();
+    const message = gameStore.messages[index];
+    const gameStateStore = useGameStateStore(); // 在函数开始就定义，避免作用域问题
 
-    toastr.success('消息已更新（游戏独立层）');
+    // 1. 更新消息内容
+    message.content = newContent;
+
+    // 2. 如果是 AI 消息，重新解析命令并更新游戏状态
+    if (message.role === 'assistant') {
+      console.log('[ChatRecordManager] 检测到 AI 消息编辑，重新解析命令并重放后续消息...');
+
+      // 动态导入 commandParser
+      const { parseAiResponse } = await import('../utils/commandParser');
+
+      // 回溯到该消息之前的快照
+      let snapshotToRestore: any = null;
+      let snapshotIndex = -1;
+      for (let i = index - 1; i >= 0; i--) {
+        const snapshot = gameStore.messages[i].stateSnapshot;
+        if (snapshot) {
+          snapshotToRestore = JSON.parse(snapshot);
+          snapshotIndex = i;
+          console.log(`[ChatRecordManager] 找到快照: 消息 #${i + 1}，准备回溯`);
+          break;
+        }
+      }
+
+      // 如果没有找到快照，从初始状态开始
+      if (snapshotToRestore) {
+        gameStateStore.restoreGameState(snapshotToRestore);
+        console.log('[ChatRecordManager] 已回溯到快照状态');
+      } else {
+        // 从角色卡数据初始化游戏状态
+        const charVars = getVariables({ type: 'character' });
+        const characterData = charVars?.adnd2e?.character;
+        gameStateStore.resetGameState();
+        if (characterData) {
+          gameStateStore.initializeGameState(characterData);
+          console.log('[ChatRecordManager] 未找到快照，已从角色数据初始化游戏状态');
+        } else {
+          console.log('[ChatRecordManager] 未找到快照，从空白状态开始');
+        }
+      }
+
+      // 重新应用从当前消息到最后一条消息的所有 AI 命令
+      let totalCommands = 0;
+      let successCommands = 0;
+      const errors: string[] = [];
+
+      for (let i = index; i < gameStore.messages.length; i++) {
+        const msg = gameStore.messages[i];
+
+        // 只处理 AI 消息
+        if (msg.role === 'assistant') {
+          // 使用新内容（如果是当前编辑的消息）或原内容
+          const contentToParse = i === index ? newContent : msg.content;
+          const parseResult = parseAiResponse(contentToParse);
+
+          if (parseResult.commands.length > 0) {
+            totalCommands += parseResult.commands.length;
+            const successCount = gameStateStore.applyCommands(parseResult.commands);
+            successCommands += successCount;
+
+            // 更新该消息的快照
+            msg.stateSnapshot = JSON.stringify(gameStateStore.exportGameState());
+
+            console.log(
+              `[ChatRecordManager] 消息 #${i + 1}: 应用了 ${successCount}/${parseResult.commands.length} 个命令`,
+            );
+
+            // 收集错误
+            if (parseResult.errors.length > 0) {
+              errors.push(...parseResult.errors.map(err => `消息#${i + 1}: ${err}`));
+            }
+          }
+        }
+      }
+
+      console.log(`[ChatRecordManager] 重放完成: 共 ${successCommands}/${totalCommands} 个命令成功应用`);
+
+      if (errors.length > 0) {
+        console.warn('[ChatRecordManager] 命令解析错误:', errors);
+        toastr.warning(`部分命令解析失败，详见控制台`);
+      }
+
+      if (totalCommands > 0) {
+        toastr.success(`消息已更新，重放了 ${successCommands}/${totalCommands} 个命令`);
+      } else {
+        toastr.info('消息已更新（未检测到命令）');
+      }
+    } else {
+      toastr.success('消息已更新');
+    }
+
+    // 3. 立即保存到 IndexedDB 和角色卡变量（编辑是关键操作，不使用防抖）
+    await nextTick();
+
+    // 🔧 修复：先调用 syncToCharacterVariables，将最新的游戏状态（包括 character 和 gameState）同步到角色卡变量
+    // 然后 saveGameData 只需要保存 messages 即可，不需要再传递 character（避免重复保存和数据冲突）
+    gameStateStore.syncToCharacterVariables(); // 同步 character 和 gameState 到角色卡变量
+    await nextTick(); // 等待同步完成
+
+    await saveGameData({
+      messages: klona(gameStore.messages),
+      gameState: gameStateStore.exportGameState(),
+      // 不需要传递 character，因为 syncToCharacterVariables 已经同步了
+    });
+
+    console.log('[ChatRecordManager] 编辑后的消息已立即保存到 IndexedDB 和角色卡变量');
+
+    // 4. 🔧 触发双事件系统，通知其他组件数据已更新
+    console.log('[ChatRecordManager] 🔔 触发更新事件（双系统）');
+    emitChatMessageEdited(index);
+    emitGameDataUpdated('chat-edit');
+    eventEmit('adnd2e_game_data_updated'); // 兼容旧系统
+    eventEmit('adnd2e_character_data_synced'); // 兼容旧系统
+
     cancelEdit();
   } catch (error) {
     console.error('[ChatRecordManager] 更新消息失败:', error);
@@ -424,7 +564,7 @@ async function saveEdit() {
   }
 }
 
-// 删除单条消息（同层游玩，不影响酒馆）
+// 删除单条消息（同层游玩，不影响酒馆）并回溯游戏状态
 async function deleteMessage(index: number) {
   if (index < 0 || index >= gameStore.messages.length) return;
 
@@ -432,31 +572,81 @@ async function deleteMessage(index: number) {
   const roleLabel = getRoleLabel(message.role);
 
   if (
-    !confirm(`确定要删除第 ${index + 1} 条消息吗？\n\n类型：${roleLabel}\n内容预览：${message.content.slice(0, 50)}...`)
+    !confirm(
+      `确定要删除第 ${index + 1} 条消息吗？\n\n类型：${roleLabel}\n内容预览：${message.content.slice(0, 50)}...\n\n⚠️ 删除此消息后，游戏状态将回溯到该消息之前的状态，且之后的所有消息也将被删除。`,
+    )
   ) {
     return;
   }
 
   try {
-    // 删除前端消息（同层游玩，不影响酒馆）
-    gameStore.messages.splice(index, 1);
+    // 1. 找到要回溯到的快照（该消息之前最近的带快照的消息）
+    let snapshotToRestore: any = null;
+    for (let i = index - 1; i >= 0; i--) {
+      const snapshot = gameStore.messages[i].stateSnapshot;
+      if (snapshot) {
+        snapshotToRestore = JSON.parse(snapshot);
+        console.log(`[ChatRecordManager] 找到快照: 消息 #${i + 1}`);
+        break;
+      }
+    }
 
-    // 立即触发 Vue 响应式更新，确保 MessageArea 检测到变化
+    // 2. 恢复游戏状态
+    const gameStateStore = useGameStateStore();
+    if (snapshotToRestore) {
+      gameStateStore.restoreGameState(snapshotToRestore);
+      console.log('[ChatRecordManager] 游戏状态已回溯到快照');
+    } else {
+      // 如果没有快照，回溯到初始状态（从角色数据初始化）
+      const charVars = getVariables({ type: 'character' });
+      const characterData = charVars?.adnd2e?.character;
+      gameStateStore.resetGameState();
+      if (characterData) {
+        gameStateStore.initializeGameState(characterData);
+        console.log('[ChatRecordManager] 未找到快照，已回溯到初始状态');
+        toastr.info('未找到快照，已回溯到角色创建时的初始状态');
+      } else {
+        console.warn('[ChatRecordManager] 未找到快照和角色数据，游戏状态未回溯');
+        toastr.warning('未找到状态快照，游戏状态未回溯');
+      }
+    }
+
+    // 3. 删除该消息及之后的所有消息
+    const deletedCount = gameStore.messages.length - index;
+    gameStore.messages.splice(index);
+
+    // 4. 立即保存到 IndexedDB 和角色卡变量（删除是关键操作，不使用防抖）
     await nextTick();
 
-    await gameStore.saveProgress();
+    // 🔧 修复：先调用 syncToCharacterVariables，将最新的游戏状态（包括 character 和 gameState）同步到角色卡变量
+    // 然后 saveGameData 只需要保存 messages 即可，不需要再传递 character（避免重复保存和数据冲突）
+    gameStateStore.syncToCharacterVariables(); // 同步 character 和 gameState 到角色卡变量
+    await nextTick(); // 等待同步完成
 
-    // 更新书签（删除消息后，后面的消息索引会变化）
+    await saveGameData({
+      messages: klona(gameStore.messages),
+      gameState: gameStateStore.exportGameState(),
+      // 不需要传递 character，因为 syncToCharacterVariables 已经同步了
+    });
+
+    console.log('[ChatRecordManager] 删除后的消息已立即保存到 IndexedDB 和角色卡变量');
+
+    // 🔧 触发双事件系统，通知其他组件数据已更新
+    console.log('[ChatRecordManager] 🔔 触发删除事件（双系统）');
+    emitChatMessageDeleted(index);
+    emitGameDataUpdated('chat-delete');
+    eventEmit('adnd2e_game_data_updated'); // 兼容旧系统
+    eventEmit('adnd2e_character_data_synced'); // 兼容旧系统
+
+    // 5. 更新书签（删除消息后，后面的消息索引会变化）
     bookmarks.value = bookmarks.value
       .filter(b => {
         const chapterStart = b.chapter * chapterSize.value;
-        const chapterEnd = chapterStart + chapterSize.value - 1;
-        return index < chapterStart || index > chapterEnd;
+        return chapterStart < index;
       })
       .map(b => {
         const chapterStart = b.chapter * chapterSize.value;
         if (index < chapterStart) {
-          // 如果删除的消息在这个书签的章节之前，章节索引需要调整
           const newChapter = Math.floor((chapterStart - 1) / chapterSize.value);
           return { ...b, chapter: newChapter };
         }
@@ -464,7 +654,7 @@ async function deleteMessage(index: number) {
       });
     saveBookmarks();
 
-    toastr.success('消息已删除（游戏独立层）');
+    toastr.success(`已删除 ${deletedCount} 条消息并回溯游戏状态`);
   } catch (error) {
     console.error('[ChatRecordManager] 删除消息失败:', error);
     toastr.error('删除失败: ' + (error as Error).message);
@@ -492,7 +682,7 @@ function formatTime(timestamp: number): string {
 }
 
 function formatMessage(content: string): string {
-  return content.replace(/\n/g, '<br>').replace(/  /g, '&nbsp;&nbsp;');
+  return content.replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
 }
 
 // 持久化
@@ -929,12 +1119,35 @@ watch([chapterSize, displayMode], () => {
   font-family: 'Courier New', monospace;
   font-size: 11px;
   color: #666;
-  margin-left: auto;
+}
+
+.snapshot-badge {
+  margin-left: 8px;
+  color: #ffd700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  animation: pulse 2s ease-in-out infinite;
+
+  i {
+    filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .message-actions {
   display: flex;
   gap: 6px;
+  margin-left: auto;
 }
 
 .message-action-btn {

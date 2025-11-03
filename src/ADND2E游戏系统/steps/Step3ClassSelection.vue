@@ -242,7 +242,9 @@ const selectedClassData = computed(() => {
 
 // 方法
 function goToPreviousStep() {
-  characterStore.characterData.step = 2;
+  characterStore.updateCharacterData(data => {
+    data.step = 2;
+  });
 }
 
 function resetSelection() {
@@ -292,48 +294,52 @@ function confirmSelection() {
   const previousClass = characterStore.characterData.class;
   const classChanged = previousClass !== selectedClass.value;
 
-  // 保存选择
-  characterStore.characterData.class = selectedClass.value;
+  // 使用 updateCharacterData 更新数据
+  characterStore.updateCharacterData(data => {
+    // 保存选择
+    data.class = selectedClass.value;
 
-  // 如果职业改变，清空后续步骤的相关数据
-  if (classChanged) {
-    // 清空超凡力量
-    characterStore.characterData.exceptionalStrength = null;
+    // 如果职业改变，清空后续步骤的相关数据
+    if (classChanged) {
+      // 清空超凡力量
+      data.exceptionalStrength = null;
 
-    // 清空武器熟练数据
-    characterStore.characterData.weaponProficiencies = [];
-    characterStore.characterData.weaponSpecializations = [];
+      // 清空武器熟练数据
+      data.weaponProficiencies = [];
+      data.weaponSpecializations = [];
 
-    // 清空非武器熟练数据
-    characterStore.characterData.nonweaponProficiencies = [];
-    characterStore.characterData.languageSlotsToWeapon = 0;
-    characterStore.characterData.languageSlotsToNonweapon = 0;
+      // 清空非武器熟练数据
+      data.nonweaponProficiencies = [];
+      data.languageSlotsToWeapon = 0;
+      data.languageSlotsToNonweapon = 0;
 
-    // 清空装备购买数据
-    characterStore.characterData.startingMoney = 0;
-    characterStore.characterData.currentMoney = 0;
-    characterStore.characterData.purchasedEquipment = [];
+      // 清空装备购买数据
+      data.startingMoney = 0;
+      data.currentMoney = 0;
+      data.purchasedEquipment = [];
 
-    // 清空法术数据
-    if (characterStore.characterData.spells) {
-      characterStore.characterData.spells = {
-        memorizedSpells: {
-          level1: [],
-          level2: [],
-          level3: [],
-          level4: [],
-          level5: [],
-          level6: [],
-          level7: [],
-          level8: [],
-          level9: [],
-        },
-      };
+      // 清空法术数据
+      if (data.spells) {
+        data.spells = {
+          memorizedSpells: {
+            level1: [],
+            level2: [],
+            level3: [],
+            level4: [],
+            level5: [],
+            level6: [],
+            level7: [],
+            level8: [],
+            level9: [],
+          },
+        };
+      }
     }
-  }
 
-  // 前进到下一步
-  characterStore.characterData.step = 4;
+    // 前进到下一步
+    data.step = 4;
+  });
+
   toastr.success('职业选择成功');
 }
 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试真实的正则处理逻辑</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-result {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        .success {
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .failure {
+            border-color: #f44336;
+            background: #fef1f1;
+        }
+        pre {
+            background: #eee;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试正则处理逻辑</h1>
+    <div id="results"></div>
+
+    <script>
+        // 模拟 parseRegexString 函数
+        function parseRegexString(regexString) {
+            if (!regexString) {
+                return { pattern: '', flags: 'g' };
+            }
+
+            // 检查是否是 /pattern/flags 格式
+            if (regexString.startsWith('/')) {
+                const lastSlash = regexString.lastIndexOf('/');
+                if (lastSlash > 0) {
+                    const pattern = regexString.substring(1, lastSlash);
+                    const flags = regexString.substring(lastSlash + 1);
+                    return { pattern, flags };
+                }
+            }
+
+            // 纯文本格式，默认使用全局匹配
+            return { pattern: regexString, flags: 'g' };
+        }
+
+        // 模拟 applyRegexRules 函数
+        function applyRegexRules(text, rules) {
+            if (!text || !rules || rules.length === 0) {
+                return text;
+            }
+
+            let processedText = text;
+            let appliedCount = 0;
+            const logs = [];
+
+            rules.forEach((rule, index) => {
+                if (!rule.enabled) {
+                    logs.push(`跳过禁用规则: ${rule.name}`);
+                    return;
+                }
+
+                if (!rule.pattern) {
+                    logs.push(`跳过空规则: ${rule.name}`);
+                    return;
+                }
+
+                try {
+                    const { pattern, flags } = parseRegexString(rule.pattern);
+                    logs.push(`应用规则 "${rule.name}":`);
+                    logs.push(`  原始pattern: ${rule.pattern}`);
+                    logs.push(`  解析后pattern: ${pattern}`);
+                    logs.push(`  flags: ${flags}`);
+
+                    const regex = new RegExp(pattern, flags);
+                    const beforeLength = processedText.length;
+                    const matches = processedText.match(regex);
+                    
+                    if (matches) {
+                        logs.push(`  匹配到 ${matches.length} 个: ${JSON.stringify(matches.slice(0, 2))}`);
+                    }
+                    
+                    processedText = processedText.replace(regex, rule.replacement || '');
+                    const afterLength = processedText.length;
+
+                    if (beforeLength !== afterLength) {
+                        appliedCount++;
+                        logs.push(`  规则生效! 文本长度: ${beforeLength} -> ${afterLength}`);
+                    } else {
+                        logs.push(`  规则未匹配到任何内容`);
+                    }
+                } catch (error) {
+                    logs.push(`❌ 规则执行失败: ${error.message}`);
+                }
+            });
+
+            return { processedText, logs, appliedCount };
+        }
+
+        // 测试数据
+        const rules = [
+            {
+                name: '[系统] 隐藏NPC标准格式',
+                pattern: '/<\\[.+?\\][:：]\\s*(?:AC\\s+[^；;<>]+?)?[；;]?\\s*(?:MV\\s+[^；;<>]+?)?[；;]?\\s*(?:HD\\s+[^；;<>]+?)?[；;]?\\s*(?:hp\\s+[^；;<>]+?)?[；;]?\\s*(?:THAC0\\s+[^；;<>]+?)?[；;]?\\s*(?:#AT\\s+[^；;<>]+?)?[；;]?\\s*(?:Dmg\\s+[^；;<>]+?)?[；;]?\\s*(?:SA\\s+[^；;<>]+?)?[；;]?\\s*(?:SD\\s+[^；;<>]+?)?[；;]?\\s*(?:SW\\s+[^；;<>]+?)?[；;]?\\s*(?:SP\\s+[^；;<>]+?)?[；;]?\\s*(?:MR\\s+[^；;<>]+?)?[；;]?\\s*(?:SZ\\s+[^；;<>]+?)?[；;]?\\s*(?:Int\\s+[^；;<>]+?)?[；;]?\\s*(?:AL\\s+[^；;<>]+?)?[；;]?\\s*(?:ML\\s+[^；;<>]+?)?[；;]?\\s*(?:XP\\s+[^；;<>]+?)?[；;]?\\s*(?:MagicItem\\s+[^；;<>]+?)?\\s*>/gi',
+                replacement: '',
+                enabled: true
+            }
+        ];
+
+        const testTexts = [
+            {
+                name: '完整 NPC (中文冒号)',
+                text: '你遇到了<[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>一个敌人'
+            },
+            {
+                name: '完整 NPC (英文冒号)',
+                text: '你遇到了<[地精战士]:AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>一个敌人'
+            },
+            {
+                name: '简短 NPC',
+                text: '房间里有<[卫兵]:AC 5；hp 10；THAC0 18>一名卫兵'
+            }
+        ];
+
+        const resultsDiv = document.getElementById('results');
+
+        testTexts.forEach(testData => {
+            const { processedText, logs, appliedCount } = applyRegexRules(testData.text, rules);
+            
+            const div = document.createElement('div');
+            div.className = `test-result ${appliedCount > 0 ? 'success' : 'failure'}`;
+            
+            div.innerHTML = `
+                <h3>${testData.name} ${appliedCount > 0 ? '✅' : '❌'}</h3>
+                <div class="label">原文:</div>
+                <pre>${testData.text}</pre>
+                <div class="label">处理后:</div>
+                <pre>${processedText}</pre>
+                <div class="label">处理日志:</div>
+                <pre>${logs.join('\n')}</pre>
+            `;
+            
+            resultsDiv.appendChild(div);
+        });
+    </script>
+</body>
+</html>
+

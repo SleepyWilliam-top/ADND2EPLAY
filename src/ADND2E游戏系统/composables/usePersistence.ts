@@ -251,28 +251,49 @@ export async function syncIndexedDBToCharacterVariables(): Promise<void> {
  */
 export async function saveGameData(data: Partial<GameArchive['data']>): Promise<void> {
   try {
-    // 1. 快速保存到 IndexedDB（主要存储）
-    await saveToIndexedDB(data);
+    // 🔧 修复：从角色卡变量中读取最新的 character 数据，确保 IndexedDB 也保存了完整的 character
+    const charVars = getVariables({ type: 'character' });
+    const latestCharacter = charVars?.adnd2e?.character;
+    
+    // 合并 character 数据（优先使用传入的，如果没有则从角色卡变量读取）
+    const completeData = {
+      ...data,
+      character: data.character || latestCharacter,
+    };
+
+    // 1. 快速保存到 IndexedDB（主要存储）- 包含完整的 character 数据
+    await saveToIndexedDB(completeData);
+    console.log('[Persistence] 已保存到 IndexedDB，包含 character:', !!completeData.character);
 
     // 2. 同层游玩：不保存到酒馆消息楼层，改为保存到角色卡变量
     // 角色卡变量作为备份，在浏览器数据丢失时可以恢复
 
-    // 3. 保存角色数据到角色卡变量（确保重进时能找到角色数据）
-    if (data.character) {
+    // 3. 保存关键数据到角色卡变量（确保重进时能找到角色数据和最新角色卡）
+    // 注意：gameStateStore.syncToCharacterVariables() 已经同步了 character 和 gameState 数据
+    // 这里只需要保存 messages（消息历史）到角色卡变量
+    if (data.messages) {
       try {
         const charVars = getVariables({ type: 'character' }) || {};
         charVars.adnd2e = charVars.adnd2e || {};
-        charVars.adnd2e.character = data.character;
+
+        // 保存第一条消息（角色卡）到角色卡变量，确保始终是最新版本
+        if (data.messages.length > 0) {
+          // 只保存第一条消息（角色卡），不保存全部历史对话
+          charVars.adnd2e.messages = [data.messages[0]];
+          console.log('[Persistence] 最新角色卡已同步到角色卡变量');
+        }
+
         charVars.adnd2e.lastSaved = new Date().toISOString();
         replaceVariables(charVars, { type: 'character' });
-        console.log('[Persistence] 角色数据已同步到角色卡变量');
+        console.log('[Persistence] 消息数据已同步到角色卡变量');
       } catch (error) {
-        console.error('[Persistence] 保存角色数据到角色卡变量失败:', error);
+        console.error('[Persistence] 保存到角色卡变量失败:', error);
         // 不抛出错误，因为 IndexedDB 保存已成功
       }
     }
 
     console.log('[Persistence] 游戏数据已完整保存（同层游玩模式：IndexedDB + 角色卡变量）');
+    console.log('[Persistence] 注意：character 和 gameState 数据已由 gameStateStore.syncToCharacterVariables() 同步');
   } catch (error) {
     console.error('[Persistence] 完整保存失败:', error);
     throw error;
@@ -281,6 +302,7 @@ export async function saveGameData(data: Partial<GameArchive['data']>): Promise<
 
 /**
  * 智能加载：优先从 IndexedDB 加载，回退到角色卡变量（同层游玩模式）
+ * 加载后自动用角色卡变量中的最新角色卡更新 IndexedDB
  */
 export async function loadGameData(): Promise<GameArchive['data'] | null> {
   try {
@@ -289,6 +311,34 @@ export async function loadGameData(): Promise<GameArchive['data'] | null> {
 
     if (data) {
       console.log('[Persistence] 使用 IndexedDB 数据（同层游玩模式）');
+
+      // 1.1 从角色卡变量中获取最新的角色卡，更新 IndexedDB 中的第一条消息
+      try {
+        const charVars = getVariables({ type: 'character' });
+        if (charVars?.adnd2e?.messages && charVars.adnd2e.messages.length > 0) {
+          const latestCharacterCard = charVars.adnd2e.messages[0];
+
+          // 如果 IndexedDB 中有消息，更新第一条为最新角色卡
+          if (data.messages && data.messages.length > 0) {
+            const oldCard = data.messages[0];
+            // 只有当角色卡内容不同时才更新
+            if (oldCard.content !== latestCharacterCard.content) {
+              console.log('[Persistence] 检测到角色卡变量中有更新，同步到 IndexedDB');
+              data.messages[0] = {
+                ...latestCharacterCard,
+                timestamp: oldCard.timestamp, // 保留原有时间戳
+              };
+              // 立即保存更新后的数据回 IndexedDB
+              await saveToIndexedDB(data);
+              console.log('[Persistence] IndexedDB 中的角色卡已更新为最新版本');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Persistence] 更新 IndexedDB 中的角色卡失败:', error);
+        // 不影响主流程，继续返回数据
+      }
+
       return data;
     }
 
@@ -411,6 +461,33 @@ export async function clearAllArchives(): Promise<void> {
     console.log('[Persistence] 已清除所有存档');
   } catch (error) {
     console.error('[Persistence] 清除存档失败:', error);
+  }
+}
+
+/**
+ * 清除所有设置缓存（学习 lucklyjkop 的 npcAvatars 清除机制）
+ */
+export async function clearAllSettings(): Promise<void> {
+  try {
+    await db.settings.clear();
+    console.log('[Persistence] 已清除所有设置缓存');
+  } catch (error) {
+    console.error('[Persistence] 清除设置缓存失败:', error);
+  }
+}
+
+/**
+ * 完全清除所有数据（存档 + 设置）
+ * 学习 lucklyjkop.html 的完整清除机制
+ */
+export async function clearAllData(): Promise<void> {
+  try {
+    await db.archives.clear();
+    await db.settings.clear();
+    console.log('[Persistence] 已清除所有数据（存档 + 设置）');
+  } catch (error) {
+    console.error('[Persistence] 清除所有数据失败:', error);
+    throw error;
   }
 }
 

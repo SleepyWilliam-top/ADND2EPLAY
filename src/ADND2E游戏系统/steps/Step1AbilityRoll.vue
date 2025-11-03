@@ -59,15 +59,32 @@
 
           <!-- 点数池模式 -->
           <template v-if="currentMode === 'point-buy'">
-            <input
-              type="number"
-              min="3"
-              max="18"
-              class="ability-input"
-              :value="getAbilityValue(ability.key)"
-              @input="e => setAbility(ability.key, parseInt((e.target as HTMLInputElement).value))"
-              placeholder="3-18"
-            />
+            <div class="point-buy-controls">
+              <button
+                class="adjust-button decrease"
+                @click="adjustAbility(ability.key, -1)"
+                :disabled="!canDecreaseAbility(ability.key)"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="3"
+                max="18"
+                class="ability-input"
+                :value="getAbilityValue(ability.key) ?? ''"
+                @change="e => setAbilityFromInput(ability.key, (e.target as HTMLInputElement).value)"
+                @blur="e => validateAndSetAbility(ability.key, (e.target as HTMLInputElement))"
+                placeholder="3-18"
+              />
+              <button
+                class="adjust-button increase"
+                @click="adjustAbility(ability.key, 1)"
+                :disabled="!canIncreaseAbility(ability.key)"
+              >
+                +
+              </button>
+            </div>
           </template>
         </div>
 
@@ -247,10 +264,12 @@ function getAbilityValue(key: AbilityKey): number | null {
   return characterStore.characterData.abilities[key];
 }
 
-// 设置属性值
+// 设置属性值（内部使用，已经过验证的值）
 function setAbility(key: AbilityKey, value: number) {
   if (isNaN(value) || value < 3 || value > 18) {
-    characterStore.characterData.abilities[key] = null;
+    characterStore.updateCharacterData(data => {
+      data.abilities[key] = null;
+    });
     return;
   }
 
@@ -264,37 +283,113 @@ function setAbility(key: AbilityKey, value: number) {
     }
   }
 
-  characterStore.characterData.abilities[key] = value;
+  characterStore.updateCharacterData(data => {
+    data.abilities[key] = value;
+  });
+}
+
+// 从输入框设置属性值（使用 @change 事件，仅在失去焦点或按回车时触发）
+function setAbilityFromInput(key: AbilityKey, valueStr: string) {
+  const value = parseInt(valueStr);
+  
+  if (valueStr === '' || isNaN(value)) {
+    // 允许暂时为空，不立即重置
+    return;
+  }
+
+  if (value < 3 || value > 18) {
+    toastr.warning('属性值必须在 3-18 之间');
+    return;
+  }
+
+  setAbility(key, value);
+}
+
+// 验证并设置属性值（在失去焦点时调用）
+function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
+  const valueStr = input.value;
+  
+  if (valueStr === '') {
+    // 如果为空，恢复为当前值
+    const current = getAbilityValue(key);
+    input.value = current !== null ? current.toString() : '';
+    return;
+  }
+
+  const value = parseInt(valueStr);
+  
+  if (isNaN(value) || value < 3 || value > 18) {
+    toastr.warning('属性值必须在 3-18 之间');
+    // 恢复为当前值
+    const current = getAbilityValue(key);
+    input.value = current !== null ? current.toString() : '';
+    return;
+  }
+
+  setAbility(key, value);
+}
+
+// 调整属性值（+1 或 -1）
+function adjustAbility(key: AbilityKey, delta: number) {
+  const current = getAbilityValue(key) || 9; // 默认从9开始
+  const newValue = current + delta;
+  
+  if (newValue < 3 || newValue > 18) {
+    return;
+  }
+
+  setAbility(key, newValue);
+}
+
+// 检查是否可以减少属性值
+function canDecreaseAbility(key: AbilityKey): boolean {
+  const current = getAbilityValue(key);
+  return current !== null && current > 3;
+}
+
+// 检查是否可以增加属性值
+function canIncreaseAbility(key: AbilityKey): boolean {
+  const current = getAbilityValue(key);
+  if (current === null || current >= 18) return false;
+  
+  // 检查点数是否足够
+  return remainingPoints.value >= 1;
 }
 
 // 掷骰
 function rollAbility(key: AbilityKey, type: '3d6' | '4d6k3') {
   const result = type === '3d6' ? roll3d6() : roll4d6k3();
 
-  // 直接更新数据，不使用动画
-  characterStore.characterData.abilities[key] = result;
+  // 使用 updateCharacterData 触发响应式更新
+  characterStore.updateCharacterData(data => {
+    data.abilities[key] = result;
+  });
   toastr.success(`${abilitiesList.find(a => a.key === key)?.name}: ${result}`);
 }
 
 // 全部掷骰
 function rollAll(type: '3d6' | '4d6k3') {
-  abilitiesList.forEach(ability => {
-    const result = type === '3d6' ? roll3d6() : roll4d6k3();
-    characterStore.characterData.abilities[ability.key] = result;
+  characterStore.updateCharacterData(data => {
+    abilitiesList.forEach(ability => {
+      const result = type === '3d6' ? roll3d6() : roll4d6k3();
+      data.abilities[ability.key] = result;
+    });
   });
   toastr.success('所有属性已投掷完成');
 }
 
 // 重置属性
 function resetAbilities() {
-  characterStore.characterData.abilities = {
-    str: null,
-    dex: null,
-    con: null,
-    int: null,
-    wis: null,
-    cha: null,
-  };
+  characterStore.updateCharacterData(data => {
+    data.abilities = {
+      str: null,
+      dex: null,
+      con: null,
+      int: null,
+      wis: null,
+      cha: null,
+    };
+  });
 }
 
 // 切换展开/收起
@@ -349,7 +444,9 @@ function backToMenu() {
 function nextStep() {
   if (!canProceed.value) return;
 
-  characterStore.characterData.step = 2;
+  characterStore.updateCharacterData(data => {
+    data.step = 2;
+  });
   toastr.success('属性设置完成，进入下一步');
 }
 
@@ -730,6 +827,70 @@ function generateCharismaTable(): string {
   @media (max-width: 768px) {
     flex-wrap: wrap;
   }
+}
+
+// 点数池控制器
+.point-buy-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.adjust-button {
+  width: 45px;
+  height: 45px;
+  padding: 0;
+  background-color: #fff;
+  border: 2px solid #000;
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background-color: #000;
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    color: #999;
+  }
+
+  &.decrease {
+    border-radius: 4px 0 0 4px;
+  }
+
+  &.increase {
+    border-radius: 0 4px 4px 0;
+  }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+}
+
+.point-buy-controls .ability-input {
+  flex: 1;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
 .roll-button {

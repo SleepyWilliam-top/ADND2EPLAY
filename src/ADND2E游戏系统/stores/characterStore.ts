@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
+import { getAlignmentById } from '../utils/alignmentData';
 import { canRaceSelectClass, getClassById } from '../utils/classData';
-import { getClassCategory, getTHAC0 } from '../utils/combatData';
+import { getClassCategory, getSavingThrows, getTHAC0 } from '../utils/combatData';
 import { getEquipmentById } from '../utils/equipmentData';
 import {
   getAllPriestLevel1Spells,
@@ -57,6 +58,28 @@ export interface SpellData {
   };
 }
 
+/**
+ * 神祇数据接口
+ */
+export interface DeityData {
+  // 神格等级
+  divineRank: 'demigod' | 'lesser' | 'intermediate' | 'greater' | null;
+  // 神职（神祇的统治领域）
+  portfolios: string[]; // 如：['狼裔', '性爱（雄性间的同性交配）', '宿命论']
+  // 魔法抗力（对凡人魔法的抗力百分比）
+  magicResistance: number; // 半神70%，弱等90%，中等95%，高等100%
+  // 神祇特殊能力（除共有能力外的特殊能力）
+  divineAbilities: Array<{
+    name: string; // 能力名称
+    description: string; // 能力描述
+    category: 'common' | 'rank_specific' | 'portfolio_specific'; // 能力类别
+  }>;
+  // 同时操控化身数（神祇可无限创造化身，但同时只能操控有限数量）
+  maxAvatars: number; // 半神1，弱等2，中等5，高等10
+  // 感知范围（英里）
+  sensingRange: number; // 半神1，弱等10，中等100，高等全位面
+}
+
 export interface CharacterData {
   step: number;
   completed: boolean; // 是否完成角色创建
@@ -89,6 +112,10 @@ export interface CharacterData {
   purchasedEquipment: PurchasedEquipment[]; // 已购买装备列表
   // 法术相关数据
   spells?: SpellData;
+  // 是否为神祇（存储在角色卡变量中，标记该角色是否具有神祇身份）
+  isDeity?: boolean;
+  // 神祇相关数据（如果角色是神祇或半神）
+  deity?: DeityData;
   // 战斗数据
   hitPoints?: {
     rolled: number; // 掷骰结果
@@ -377,6 +404,22 @@ export const useCharacterStore = defineStore('character', () => {
       currentMoney: 0,
       purchasedEquipment: [],
     };
+
+    // 🔧 清除酒馆变量中的角色数据，确保不会重新加载旧数据
+    try {
+      replaceVariables(
+        {
+          adnd2e: {
+            character: characterData.value,
+            lastSaved: new Date().toISOString(),
+          },
+        },
+        { type: 'character' },
+      );
+      console.log('[CharacterStore] 角色数据已重置并清除酒馆变量');
+    } catch (error) {
+      console.error('[CharacterStore] 清除酒馆变量失败:', error);
+    }
   }
 
   // 保存角色数据到酒馆变量
@@ -399,18 +442,28 @@ export const useCharacterStore = defineStore('character', () => {
   }
 
   // 从酒馆变量加载角色数据
-  function loadFromTavern() {
+  function loadFromTavern(silent = false) {
     try {
       const variables = getVariables({ type: 'character' });
       if (variables?.adnd2e?.character) {
         characterData.value = variables.adnd2e.character;
-        toastr.success('角色数据已加载');
+        if (!silent) {
+          toastr.success('角色数据已加载');
+        }
+        console.log('[CharacterStore] 角色数据已从变量加载');
       }
     } catch (error) {
       console.error('加载角色数据失败:', error);
-      toastr.error('加载失败');
+      if (!silent) {
+        toastr.error('加载失败');
+      }
     }
   }
+
+  // 监听角色数据同步事件，自动重新加载
+  eventOn('adnd2e_character_data_synced', () => {
+    loadFromTavern(true); // 静默加载，不显示 toastr
+  });
 
   // 检查是否可以选择某个职业
   function canSelectClass(classId: string): boolean {
@@ -1011,28 +1064,561 @@ export const useCharacterStore = defineStore('character', () => {
     return getClassById(characterData.value.class);
   }
 
+  // 🔧 新增：生成神祇专属角色卡
+  function generateDeityCharacterCardText(data: any, race: any, subrace: any, alignmentData: any): string {
+    let text = '';
+
+    // 基本信息
+    text += '【基本信息】\n';
+    const defaultName = (typeof SillyTavern !== 'undefined' && SillyTavern.name1) || 'Player';
+    text += `角色名: ${data.characterName?.trim() || defaultName}\n`;
+    text += `性别: ${data.gender === 'male' ? '男' : data.gender === 'female' ? '女' : '其他'}\n`;
+
+    // 种族（如果有）
+    const raceName = race?.name || subrace?.name;
+    text += `种族: ${raceName || '无'}\n`;
+
+    // 神祇标志
+    text += `神祇：是\n`;
+
+    // 尝试从背景中解析神格等级和神职
+    let deityRank = '半神力'; // 默认为半神力
+    let portfolios: string[] = [];
+    let deityRankDetected = false; // 标记是否成功检测到神格等级
+
+    if (data.background) {
+      // 🔧 更严格的神格等级检测：必须明确表明角色"是"或"成为"该神格
+      // 排除"侍奉"、"信仰"、"崇拜"等关键词
+      const isNotServant = !/(侍奉|信仰|崇拜|追随|效忠|服侍|祭司|牧师|圣武士|信徒)[^，。！？]*?(神|神祇|神明)/i.test(
+        data.background,
+      );
+
+      if (isNotServant) {
+        // 检测"是xxx神力"或"成为xxx神力"等明确表述
+        if (
+          /(是|成为|晋升为|获得了?|已经是|现在是|作为)[^，。！？]{0,20}(高等神力?|强大神力?|伟大神力?|Greater\s*Power)/i.test(
+            data.background,
+          )
+        ) {
+          deityRank = '高等神力';
+          deityRankDetected = true;
+        } else if (
+          /(是|成为|晋升为|获得了?|已经是|现在是|作为)[^，。！？]{0,20}(中等神力?|Intermediate\s*Power)/i.test(
+            data.background,
+          )
+        ) {
+          deityRank = '中等神力';
+          deityRankDetected = true;
+        } else if (
+          /(是|成为|晋升为|获得了?|已经是|现在是|作为)[^，。！？]{0,20}(弱等神力?|次级神力?|Lesser\s*Power)/i.test(
+            data.background,
+          )
+        ) {
+          deityRank = '弱等神力';
+          deityRankDetected = true;
+        } else if (
+          /(是|成为|晋升为|获得了?|已经是|现在是|作为)[^，。！？]{0,20}(半神力?|微弱神力?|守护神|DemiPower|Demi\s*Power)/i.test(
+            data.background,
+          )
+        ) {
+          deityRank = '半神力';
+          deityRankDetected = true;
+        }
+      }
+
+      // 🔧 解析神职（支持多种格式）
+      // 格式1: 【神职：xxx】或【神职:xxx】
+      let portfolioMatch = data.background.match(/【神职[：:](.*?)】/);
+
+      // 格式2: 神职：xxx 或 神职:xxx（不带【】）
+      if (!portfolioMatch) {
+        portfolioMatch = data.background.match(/神职[：:]\s*([^\n。！？]+)/);
+      }
+
+      // 格式3: "掌管xxx"
+      if (!portfolioMatch) {
+        const zhangguanMatch = data.background.match(/掌管[：:\s]*([^\n。！？]+)/);
+        if (zhangguanMatch) {
+          portfolioMatch = zhangguanMatch;
+        }
+      }
+
+      // 格式4: "作为xxx之神"或"是xxx之神"
+      if (!portfolioMatch) {
+        const godOfMatch = data.background.match(/(作为|是)([^，。！？]{1,30})(之神|神)/);
+        if (godOfMatch && godOfMatch[2]) {
+          // 提取"xxx"部分
+          portfolioMatch = [godOfMatch[0], godOfMatch[2]];
+        }
+      }
+
+      if (portfolioMatch && portfolioMatch[1]) {
+        // 清理并分割神职
+        const rawPortfolios = portfolioMatch[1]
+          .replace(/^[\s【[]+|[\s】\]]+$/g, '') // 移除首尾的空格和括号
+          .split(/[、，,和与及]/) // 支持多种分隔符
+          .map((p: string) => p.trim())
+          .filter(Boolean);
+
+        // 进一步清理每个神职项（移除"的"、"之"等助词）
+        portfolios = rawPortfolios.map((p: string) => p.replace(/^(的|之)\s*/, '').replace(/\s*(的|之)$/, ''));
+      }
+    }
+
+    text += `神力等级：${deityRank}`;
+    if (!deityRankDetected) {
+      text += ` (默认值，建议在背景中明确描述神格等级)\n`;
+    } else {
+      text += '\n';
+    }
+    if (portfolios.length > 0) {
+      text += `神职：${portfolios.join('、')}\n`;
+    }
+
+    text += `职业: 不适用\n`;
+    text += `阵营: ${alignmentData?.name || data.alignment || '未知'}\n`;
+    text += `等级: 不适用\n`;
+    text += `经验值: 不适用\n`;
+    text += `经验值调整: 不适用\n\n`;
+
+    // 角色描述
+    if (data.appearance || data.background || (data.gender === 'male' && data.penisSize)) {
+      text += '【角色描述】\n';
+      if (data.appearance) {
+        text += `外貌: ${data.appearance}\n`;
+      }
+      if (data.background) {
+        text += `背景: ${data.background}\n`;
+      }
+      if (data.gender === 'male' && data.penisSize) {
+        const sizeMap: Record<string, string> = {
+          xs: '特小',
+          s: '偏小',
+          m: '平均',
+          l: '偏大',
+          xl: '特大',
+          xxl: '超大',
+        };
+        text += `身体特征: 阴茎大小${sizeMap[data.penisSize] || data.penisSize}\n`;
+      }
+      text += '\n';
+    }
+
+    // 属性值 - 神祇不适用
+    text += '【属性值】\n';
+    text += '力量: 不适用\n';
+    text += '敏捷: 不适用\n';
+    text += '体质: 不适用\n';
+    text += '智力: 不适用\n';
+    text += '灵知: 不适用\n';
+    text += '魅力: 不适用\n\n';
+
+    // 战斗数据 - 神祇不适用
+    text += '【战斗数据】\n';
+    text += '护甲等级 (AC): 不适用\n';
+    text += '生命值 (HP): 不适用\n';
+    text += '移动力: 不适用\n';
+    text += 'THAC0: 不适用\n\n';
+
+    // 武器熟练 - 神祇不适用
+    text += '【武器熟练】\n';
+    text += '不适用\n\n';
+
+    // 非武器熟练 - 神祇不适用
+    text += '【非武器熟练】\n';
+    text += '不适用\n\n';
+
+    // 装备 - 神祇不适用
+    text += '【装备】\n';
+    text += '金币: 不适用\n\n';
+
+    // 种族描述（如果有）
+    const raceForDisplay = subrace || race;
+    if (raceForDisplay) {
+      text += '【种族描述】\n';
+      text += `${raceForDisplay.description}\n\n`;
+
+      text += '种族能力:\n';
+      text += '不适用\n\n';
+
+      if (raceForDisplay.specialDisadvantages) {
+        text += `特殊劣势: ${raceForDisplay.specialDisadvantages}\n\n`;
+      }
+    }
+
+    // 职业特性 - 神祇不适用
+    text += '【职业特性】\n';
+    text += '不适用\n\n';
+    text += '职业能力:\n';
+    text += '不适用\n\n';
+    text += '武器限制: 可以使用任何武器\n';
+    text += '护甲限制: 可以穿戴任何类型的护甲和盾牌\n\n';
+
+    // 神祇能力
+    text += '【神祇共有能力】\n';
+    text += '神职（Portfolios）\n';
+    text += '  使用时机: 判定神祇影响范围、力量强弱、能否干涉特定事务时\n\n';
+    text += '  定义: 神祇统治/驱动/控制的特定主题/事物/概念/情感\n';
+    text += '  特性: 神祇在神职范围内通常最强\n';
+    text += '  变化条件: 消逝复活/同神系神祇消逝/性格转变/神格升降/神系重大变故\n';
+    text += '  规则：同一神职神力里，只有一个可以抵达比半神更高位的层次，其余均为半神\n\n';
+    text += '  化身伪装: 高等或中等神力可创造被融入神祇的精确化身模仿物，必须表现出全部能力但不必表现意图和思想\n\n';
+
+    text += '不朽（Immortality）\n';
+    text += '  使用时机: 判定神祇是否会因年龄或普通伤害死亡时\n\n';
+    text += '  特性: 无年龄，只能通过特殊手段死亡\n';
+    text += '  死亡方式: 被更高神格神力在魔法或物理战斗中毁灭、被遗忘以至于完全没有信众\n';
+    text += '  复生机制: 遭受足以毁灭的攻击后崩散并重组（掷1d100决定天数）\n\n';
+
+    text += '传送（Teleportation）\n';
+    text += '  使用时机: 神祇需要移动到同位面任意位置时\n\n';
+    text += '  特性: 立即传送到同位面任意位置，随意使用，无偏差\n\n';
+
+    text += '先攻（Initiative）\n';
+    text += '  使用时机: 神祇与凡人进行战斗或互动时\n\n';
+    text += '  特性: 自动获得最早先攻权，可选择等待观察凡人行动\n\n';
+
+    text += '沟通（Communication）\n';
+    text += '  使用时机: 神祇需要与任何生物交流或传递信息时\n\n';
+    text += '  能力范围:\n';
+    text += '  - 理解并使用任何语言（书写/阅读/特殊沟通方式如气味语言）\n';
+    text += '  - 穿越虚空/物理屏障/魔法屏障直接秘密地向任何存在说话\n';
+    text += '  - 超越空间和位面界限（通常不超越时间）\n\n';
+
+    text += '魔法使用（Magic Use）\n';
+    text += '  使用时机: 神祇需要施展法术或魔法效果时\n\n';
+    text += '  能力范围:\n';
+    text += '  - 可使用任何等级的任何法术（祭司或法师法术）\n';
+    text += '  - 无需法术书/祈祷/材料成分/言语成分/姿势成分\n';
+    text += '  - 可即兴发明新法术或改变法术\n';
+    text += '  - 仅需心念一动\n\n';
+
+    text += '免疫（Immunities）\n';
+    text += '  使用时机: 判定神祇是否受到武器或魔法伤害时\n\n';
+    text += '  武器免疫:\n';
+    text += '  - 半神力或更弱: 仅被+1或更好魔法武器伤害\n';
+    text += '  - 中等神力: 仅被+2或更好魔法武器伤害\n';
+    text += '  - 高等神力: 仅被+3或更好魔法武器伤害\n\n';
+    text += '  魔法免疫:\n';
+    text += '  - 免疫即死魔法（豁免失败自动死亡或无豁免立即死亡）\n';
+    text += '  - 免疫能量吸取或生命等级吸取\n';
+    text += '  - 免疫所有符文或徽记的力量\n';
+    text += '  - 免疫所有非神性存在施展的灵能能力\n';
+    text += '  - 免疫神格等级比自己低的神祇施展的灵能能力\n\n';
+
+    text += '授予能力（Granted Abilities）\n';
+    text += '  使用时机: 判定祭司/圣武士/游侠能否获得法术和能力时\n\n';
+    text += '  能力范围:\n';
+    text += '  - 可授予任何能力和任何等级法术给祭司（不超过自身能力）\n';
+    text += '  - 通过此能力给予祭司/圣武士/游侠魔法能力和法术\n';
+    text += '  - 仅神力和准神性地位生物（如塔纳厘领主）能授予法术\n\n';
+
+    text += '特殊规则\n';
+    text += '  - 神祇无卡面，除明确提及的数据外其他数值不适用\n';
+    text += '  - 神祇力量不可量化，数据对神祇毫无意义\n\n';
+
+    // 根据神格等级添加对应能力
+    text += `【${deityRank}能力】\n`;
+    if (deityRank === '半神力') {
+      text += '半神力能力\n';
+      text += '  前置条件: 除神祇共有能力（不朽/传送/先攻/沟通/魔法使用/免疫/授予能力）外，半神力额外拥有以下能力\n\n';
+      text +=
+        '  定位: 任何神系中最不强大的神祇，通常是初次擢升到神性地位、刚从消逝中归来、与更高神格共享神职、或追随者不足的神祇\n\n';
+      text += '  典型来源: 在小群体或小区域中特别强大而赢得神性地位的凡人\n\n';
+
+      text += '改变现形（Shapeshifting）\n';
+      text += '  使用时机: 半神力需要改变形态或伪装时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 只能变形为与其天性和神职契合的有生命对象\n\n';
+      text += '  限制: 新形态只是该生物的平均个体（或许额外伴随浅薄的神圣化特殊效果）\n\n';
+
+      text += '魔法抗力（Magic Resistance）\n';
+      text += '  使用时机: 半神力受到法术攻击时\n\n';
+      text += '  抗力数值:\n';
+      text += '  - 对凡人魔法: 70%抗力\n';
+      text += '  - 对其他半神力魔法: 40%抗力\n';
+      text += '  - 对更高地位神力魔法: 20%抗力\n\n';
+
+      text += '豁免检定（Saving Throws）\n';
+      text += '  使用时机: 半神力需要进行豁免检定时\n\n';
+      text += '  特性: 所有类型豁免检定为4，仅在掷出自然骰3或更低时失败（除非化身豁免检定更好）\n\n';
+
+      text += ' 位面旅行（Planar Travel）\n';
+      text += '  使用时机: 半神力需要跨位面移动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 只能依赖魔法法术和设备在位面间旅行\n\n';
+      text += '  限制: 无法像其他神力那样随意位面旅行\n\n';
+      text += '  特殊情况: 因此缺陷，半神力更倾向于逗留在某个位面（不少半神居住在物质位面）\n\n';
+      text += '  与其他神格差异:\n';
+      text += '  - 高等/中等/弱等神力: 随意使用位面旅行，但不能进入主物质位面\n';
+      text += '  - 半神力: 必须依赖魔法法术和设备，但可以进入主物质位面\n\n';
+
+      text += '感知能力（Sensing Ability）\n';
+      text += '  使用时机: 判定半神力是否知晓特定事件或信息时\n\n';
+      text += '  感知范围:\n';
+      text += '  - 知晓自身/任何追随者/圣物1英里内发生之事\n';
+      text += '  - 某人念出其名讳或头衔后1小时内，可延展感知知晓1英里内发生之事\n\n';
+      text += '  限制: 可被同等地位神力有意识努力、或更高地位神力无意识愿望阻止\n\n';
+
+      text += '创造（Creation）\n';
+      text += '  使用时机: 半神力需要获取物体或生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 必须通过感知能力收集信息，尝试寻觅想要的存世之物\n';
+      text += '  - 或花费时间和努力用合适原材料创造\n';
+      text += '  - 或找到能造出它们之人\n\n';
+      text += '  限制: 不能凭空创造或复制任何对象\n\n';
+      text += '  策略: 通常与中等或高等神力结盟，依靠更强大的朋友协助事物创造\n\n';
+
+      text += '生命与死亡（Life and Death）\n';
+      text += '  使用时机: 半神力需要复活生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可从死亡中复活任何之前有生命的凡物\n';
+      text += '  - 随意使用，不论躯体当前状况\n\n';
+      text += '  限制: 复活的躯体所在位置必须有某尊化身或某件圣物在场\n\n';
+
+      text += '一心多用（Multitasks）\n';
+      text += '  使用时机: 半神力需要同时执行多个行动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可一次执行任何2项行动而不受惩罚\n\n';
+      text += '  限制: 极少数情况下当前物理形态会限制此能力\n\n';
+
+      text += '化身（Avatars）\n';
+      text += '  使用时机: 半神力需要显现化身时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 同一时间只能操纵1尊化身\n';
+      text += '  - 化身被毁灭后需1整年塑造新化身\n\n';
+      text += '  特殊情况: 有些半神力无法操纵化身，或选择不这样做\n';
+    } else if (deityRank === '弱等神力') {
+      text += '弱等神力能力\n';
+      text +=
+        '  前置条件: 除神祇共有能力（不朽/传送/先攻/沟通/魔法使用/免疫/授予能力）外，弱等神力额外拥有以下能力\n\n';
+      text += '  定位: 拥有相当追随者和影响力的神祇，在神系中占据重要但非核心地位\n\n';
+
+      text += '改变现形（Shapeshifting）\n';
+      text += '  使用时机: 弱等神力需要改变形态或伪装时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可变形为期望的对象\n\n';
+      text += '  限制: 新形态只是该生物的平均个体（或许额外伴随浅薄的神圣化特殊效果）\n\n';
+
+      text += '魔法抗力（Magic Resistance）\n';
+      text += '  使用时机: 弱等神力受到法术攻击时\n\n';
+      text += '  抗力数值:\n';
+      text += '  - 对凡人魔法: 90%抗力\n';
+      text += '  - 对较低神格神祇魔法: 60%抗力\n';
+      text += '  - 对其他弱等神力法术: 45%抗力\n';
+      text += '  - 对更高地位神力魔法: 20%抗力\n\n';
+
+      text += '豁免检定（Saving Throws）\n';
+      text += '  使用时机: 弱等神力需要进行豁免检定时\n\n';
+      text += '  特性: 所有类型豁免检定为2，仅在掷出自然骰1和2时失败（除非化身豁免检定更好）\n\n';
+
+      text += '位面旅行（Planar Travel）\n';
+      text += '  使用时机: 弱等神力需要跨位面移动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 随意使用，能在位面间旅行\n';
+      text += '  - 无物理或物质屏障可阻碍\n';
+      text += '  - 绝对不会被传送去目标之外的地方\n\n';
+      text += '  限制: 被禁止进入主物质位面\n\n';
+
+      text += '感知能力（Sensing Ability）\n';
+      text += '  使用时机: 判定弱等神力是否知晓特定事件或信息时\n\n';
+      text += '  感知范围:\n';
+      text += '  - 知晓自身10英里内发生之事\n';
+      text += '  - 可延展感知容纳任何崇拜者或圣物10英里内所揭露的知识\n';
+      text += '  - 某人念出其名讳或头衔后1天内，可延展感知知晓10英里内发生之事\n\n';
+      text += '  限制: 可被同等地位神力有意识努力、或更高地位神力无意识愿望阻止\n\n';
+
+      text += '创造（Creation）\n';
+      text += '  使用时机: 弱等神力需要获取物体或生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 知晓在哪里可以找到想要的存世之物\n';
+      text += '  - 若物品不存在，能感知到能制造该物品的人\n\n';
+      text += '  限制: 不能凭空创造或复制任何对象\n\n';
+      text += '  策略: 通常与中等或高等神力结盟，依靠更强大的朋友协助事物创造\n\n';
+
+      text += '一心多用（Multitasks）\n';
+      text += '  使用时机: 弱等神力需要同时执行多个行动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可一次执行最多5项行动而不受惩罚\n\n';
+      text += '  限制: 当前物理形态的自然限制仍可能适用\n\n';
+
+      text += '化身（Avatars）\n';
+      text += '  使用时机: 弱等神力需要在多个地点同时显现时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可同时操纵最多2尊化身\n';
+      text += '  - 随意使用，可在整个位面移动化身\n';
+      text += '  - 化身被毁灭后需1个月制造新化身\n';
+    } else if (deityRank === '中等神力') {
+      text += '中等神力能力\n';
+      text +=
+        '  前置条件: 除神祇共有能力（不朽/传送/先攻/沟通/魔法使用/免疫/授予能力）外，中等神力额外拥有以下能力\n\n';
+      text += '  定位: 神系中的核心成员，拥有庞大的信徒群体和广泛的影响力\n\n';
+
+      text += '改变现形（Shapeshifting）\n';
+      text += '  使用时机: 中等神力需要改变形态或伪装时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可变形为任何对象（有生命或无生命）\n\n';
+      text += '  限制: 不能变得比该自然或魔法物品存在过的最大体型更大\n\n';
+
+      text += '魔法抗力（Magic Resistance）\n';
+      text += '  使用时机: 中等神力受到法术攻击时\n\n';
+      text += '  抗力数值:\n';
+      text += '  - 对凡人魔法: 95%抗力\n';
+      text += '  - 对较低神格神祇魔法: 70%抗力\n';
+      text += '  - 对其他中等神力法术: 50%抗力\n';
+      text += '  - 对高等神力法术: 25%抗力\n\n';
+
+      text += '豁免检定（Saving Throws）\n';
+      text += '  使用时机: 中等神力需要进行豁免检定时\n\n';
+      text += '  特性: 所有类型豁免检定为2，仅在掷出自然骰1时失败\n\n';
+
+      text += '位面旅行（Planar Travel）\n';
+      text += '  使用时机: 中等神力需要跨位面移动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 如同高等神力在位面间旅行\n';
+      text += '  - 总能无误到达希望到的地方\n\n';
+      text += '  限制: 不能进入主物质位面\n\n';
+
+      text += '感知能力（Sensing Ability）\n';
+      text += '  使用时机: 判定中等神力是否知晓特定事件或信息时\n\n';
+      text += '  感知范围:\n';
+      text += '  - 总是知晓当前位置100英里内发生之事\n';
+      text += '  - 可延展感官了解自己和盟友的崇拜者或圣物100英里内发生之事\n';
+      text += '  - 某人念出其名讳或头衔后一个月内，可延展感知知晓100英里内发生之事\n\n';
+      text += '  限制: 可被同等或更高地位神力有意识努力阻止\n\n';
+
+      text += '创造（Creation）\n';
+      text += '  使用时机: 中等神力需要创造物体或生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可召唤或创造所持任何物品的复制品\n\n';
+      text += '  限制: 不能无中生有，需在同一位面可获得合适材料\n\n';
+
+      text += '生命与死亡（Life and Death）\n';
+      text += '  使用时机: 中等神力需要杀死或复活生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可在任何地方安排足以杀死任何凡物的意外事故（随意使用）\n';
+      text += '  - 可将任何之前有生命的存在从死亡中复活（自动成功，无论死亡时间和躯体状况）\n\n';
+      text += '  限制: 不能直接导致活物死亡，只能安排意外\n\n';
+
+      text += '一心多用（Multitasks）\n';
+      text += '  使用时机: 中等神力需要同时执行多个行动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可一次执行最多100项行动而不受惩罚\n\n';
+      text += '  限制: 当前物理形态的自然限制仍可能适用\n\n';
+
+      text += '化身（Avatars）\n';
+      text += '  使用时机: 中等神力需要在多个地点同时显现时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可同时操纵最多5尊化身\n';
+      text += '  - 随意使用，可在位面间移动化身\n';
+      text += '  - 化身被毁灭后需5天制造新化身\n';
+    } else if (deityRank === '高等神力') {
+      text += '高等神力能力\n';
+      text +=
+        '  前置条件: 除神祇共有能力（不朽/传送/先攻/沟通/魔法使用/免疫/授予能力）外，高等神力额外拥有以下能力\n\n';
+      text += '  定位: 神系的最高统治者，拥有近乎无限的力量和影响力\n\n';
+
+      text += '改变现形（Shapeshifting）\n';
+      text += '  使用时机: 高等神力需要改变形态或伪装时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可变形为任何对象（有生命或无生命）\n';
+      text += '  - 无尺寸体型限制（已知案例可呈现为行星大小）\n\n';
+
+      text += '魔法抗力（Magic Resistance）\n';
+      text += '  使用时机: 高等神力受到法术攻击时\n\n';
+      text += '  抗力数值:\n';
+      text += '  - 对凡人魔法: 100%抗力\n';
+      text += '  - 对较低神格神祇魔法: 75%抗力\n';
+      text += '  - 对其他高等神力法术: 50%抗力\n\n';
+
+      text += '豁免检定（Saving Throws）\n';
+      text += '  使用时机: 高等神力需要进行豁免检定时\n\n';
+      text += '  特性: 自动通过所有豁免检定，反映伟大能力/精神力量/肉体力量\n\n';
+
+      text += '位面旅行（Planar Travel）\n';
+      text += '  使用时机: 高等神力需要跨位面移动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 随意使用，无误地在各实存位面间旅行\n\n';
+      text += '  限制: 不能旅行到主物质位面\n\n';
+
+      text += '感知能力（Sensing Ability）\n';
+      text += '  使用时机: 判定高等神力是否知晓特定事件或信息时\n\n';
+      text += '  感知范围:\n';
+      text += '  - 总是知晓自己栖居的整个位面发生之事\n';
+      text += '  - 总是知晓自己和盟友的崇拜者或圣物所在整个位面发生之事\n';
+      text += '  - 某人念出其名讳或头衔后一年内，知晓该位面发生之事\n';
+      text += '  - 可基于广博知识准确预测凡人和其他神祇的精确行动\n\n';
+      text += '  限制: 可被同地位神力有意效果阻碍\n\n';
+
+      text += '创造（Creation）\n';
+      text += '  使用时机: 高等神力需要凭空创造物体或生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可创造任何对象（有生命或无生命）\n';
+      text += '  - 仅受想象力限制\n\n';
+      text += '  限制: 耗散性过程，需将自身能量储备转化为物质对象\n\n';
+
+      text += '生命与死亡（Life and Death）\n';
+      text += '  使用时机: 高等神力需要杀死或复活生物时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 以一个念头杀死任何活物\n';
+      text += '  - 在任何地方赋予任何被杀凡物生命\n\n';
+      text += '  限制: 另一位高等神力可立即扭转此效果\n\n';
+
+      text += '一心多用（Multitasks）\n';
+      text += '  使用时机: 高等神力需要同时执行多个行动时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可一次执行任意数量行动\n';
+      text += '  - 不会因复杂性受到惩罚\n\n';
+      text += '  限制: 当前物理形态的自然限制仍可能适用\n\n';
+
+      text += '化身（Avatars）\n';
+      text += '  使用时机: 高等神力需要在多个地点同时显现时\n\n';
+      text += '  能力范围:\n';
+      text += '  - 可同时操纵最多10尊化身\n';
+      text += '  - 随意使用，可在位面间移动化身\n';
+      text += '  - 化身被毁灭后需1天制造新化身\n';
+    }
+
+    text += '═══════════════════════════════════════════════';
+
+    return text;
+  }
+
   // 生成文本格式的角色卡
-  function generateCharacterCardText(): string {
-    const data = characterData.value;
+  // 参数 useAdjustedData: 是否使用调整后的属性值（默认 true）
+  function generateCharacterCardText(useAdjustedData = true): string {
+    // 如果 useAdjustedData 为 true，使用调整后的属性值
+    const data = useAdjustedData
+      ? {
+          ...characterData.value,
+          abilities: adjustedAbilities.value, // 使用调整后的属性值
+        }
+      : characterData.value;
+
     const race = getRaceById(data.race || '');
     const subrace = data.subrace ? getSubraceById(data.race || '', data.subrace) : null;
     const cls = getClassById(data.class || '');
-    const alignment = data.alignment;
+    const alignmentData = getAlignmentById(data.alignment || '');
 
-    let text = '═══════════════════════════════════\n';
+    let text = '═══════════════════════════════════════════════\n';
     text += '        ADND 2E 角色卡\n';
-    text += '═══════════════════════════════════\n\n';
+    text += '═══════════════════════════════════════════════\n\n';
+
+    // 🔧 如果角色是神祇，生成神祇专属角色卡
+    if (data.isDeity) {
+      return generateDeityCharacterCardText(data, race, subrace, alignmentData);
+    }
 
     // 基本信息
     text += '【基本信息】\n';
     // 使用酒馆的用户名作为默认值
     const defaultName = (typeof SillyTavern !== 'undefined' && SillyTavern.name1) || 'Player';
     text += `角色名: ${data.characterName?.trim() || defaultName}\n`;
-    text += `性别: ${data.gender === 'male' ? '男性' : data.gender === 'female' ? '女性' : '其他'}\n`;
+    text += `性别: ${data.gender === 'male' ? '男' : data.gender === 'female' ? '女' : '其他'}\n`;
     text += `种族: ${race?.name}${subrace ? ` (${subrace.name})` : ''}\n`;
     text += `职业: ${cls?.name}\n`;
-    text += `阵营: ${alignment}\n`;
-    text += `等级: 1级\n`;
+    text += `阵营: ${alignmentData?.name || data.alignment || '未知'}\n`;
+    text += `等级: 1\n`;
     text += `经验值: 0\n`;
 
     // 经验值调整
@@ -1067,6 +1653,29 @@ export const useCharacterStore = defineStore('character', () => {
     }
     text += '\n';
 
+    // 角色信息 - 外貌和背景
+    if (data.appearance || data.background || (data.gender === 'male' && data.penisSize)) {
+      text += '【角色描述】\n';
+      if (data.appearance) {
+        text += `外貌: ${data.appearance}\n`;
+      }
+      if (data.background) {
+        text += `背景: ${data.background}\n`;
+      }
+      if (data.gender === 'male' && data.penisSize) {
+        const sizeMap: Record<string, string> = {
+          xs: '特小',
+          s: '偏小',
+          m: '平均',
+          l: '偏大',
+          xl: '特大',
+          xxl: '超大',
+        };
+        text += `身体特征: 阴茎大小${sizeMap[data.penisSize] || data.penisSize}\n`;
+      }
+      text += '\n';
+    }
+
     // 属性值
     text += '【属性值】\n';
     const abilityNames: Record<string, string> = {
@@ -1099,45 +1708,54 @@ export const useCharacterStore = defineStore('character', () => {
     const raceData = subrace || race;
     const movement = raceData?.movement?.ground || 12;
     const hp = data.hitPoints?.max || '[待掷骰]';
-    text += `生命值 (HP): ${hp}\n`;
+    const currentHp = data.hitPoints?.current !== undefined ? data.hitPoints.current : hp;
+    text += `生命值 (HP): ${currentHp}/${hp}\n`;
     text += `移动力: ${movement}\n`;
     const classCategory = cls ? getClassCategory(cls.name) : 'warrior';
     const thac0 = getTHAC0(classCategory, 1);
     text += `THAC0: ${thac0}\n`;
+
+    // 豁免检定
+    const savingThrows = getSavingThrows(classCategory, 1);
+    text += `豁免检定:\n`;
+    text += `  - 麻痹/毒素/死亡魔法: ${savingThrows.paralyzation}\n`;
+    text += `  - 权杖/法杖/魔杖: ${savingThrows.rod}\n`;
+    text += `  - 石化/变形: ${savingThrows.petrification}\n`;
+    text += `  - 喷吐武器: ${savingThrows.breath}\n`;
+    text += `  - 法术: ${savingThrows.spell}\n`;
     text += '\n';
 
-    // 熟练
-    text += '【熟练】\n';
-    text += '武器熟练:\n';
+    // 武器熟练
+    text += '【武器熟练】\n';
     if (data.weaponProficiencies.length > 0) {
       data.weaponProficiencies.forEach(id => {
         const weapon = getWeaponById(id);
         const weaponName = weapon?.name || id;
         const isSpec = data.weaponSpecializations.includes(id);
-        text += `  - ${weaponName}${isSpec ? ' (专精)' : ''}\n`;
+        text += `- ${weaponName}${isSpec ? ' (专精)' : ''}\n`;
       });
     } else {
-      text += '  无\n';
+      text += '无\n';
     }
+    text += '\n';
 
-    text += '非武器熟练:\n';
+    // 非武器熟练
+    text += '【非武器熟练】\n';
     if (data.nonweaponProficiencies.length > 0) {
       data.nonweaponProficiencies.forEach(prof => {
         const profData = getProficiencyById(prof.id);
         const profName = profData?.name || prof.id;
-        text += `  - ${profName} (${prof.slots}槽)\n`;
+        text += `- ${profName} (${prof.slots}槽)\n`;
       });
     } else {
-      text += '  无\n';
+      text += '无\n';
     }
     text += '\n';
 
-    // 装备与财富
-    text += '【装备与财富】\n';
-    text += `起始金币: ${data.startingMoney} GP\n`;
-    text += `当前金币: ${data.currentMoney} GP\n`;
+    // 装备
+    text += '【装备】\n';
+    text += `金币: ${data.currentMoney.toFixed(2)} GP\n`;
     if (data.purchasedEquipment.length > 0) {
-      text += '已购装备:\n';
       // 按类别分组
       const grouped = new Map<string, typeof data.purchasedEquipment>();
       data.purchasedEquipment.forEach(item => {
@@ -1149,143 +1767,110 @@ export const useCharacterStore = defineStore('character', () => {
       });
 
       grouped.forEach((items, category) => {
-        text += `  ${category}:\n`;
+        text += `${category}:\n`;
         items.forEach(item => {
-          text += `    - ${item.name} × ${item.quantity}\n`;
+          text += `  - ${item.name} × ${item.quantity}\n`;
         });
       });
-    } else {
-      text += '装备: 无\n';
     }
     text += '\n';
 
-    // 法术（如有）
-    if (data.spells && cls?.spellcasting) {
-      text += '【法术】\n';
-      text += '法术位:\n';
+    // 法术能力（如有）
+    if (cls?.spellcasting) {
+      text += '【法术能力】\n';
+      text += `类型: ${cls.spellcasting.type === 'wizard' ? '奥术施法者' : '神术施法者'}\n`;
 
-      const progression = cls.spellcasting.spellProgression;
-      const level1Progression = progression.find(p => p.level === 1);
-      if (level1Progression) {
-        level1Progression.spells.forEach((baseSlots, index) => {
-          if (baseSlots > 0) {
-            const spellLevel = index + 1;
-            const bonusSlots = getBonusSpellSlots(spellLevel);
-            text += `  ${spellLevel}环: ${baseSlots}`;
-            if (bonusSlots > 0) text += ` +${bonusSlots}(奖励)`;
-            text += ` = ${baseSlots + bonusSlots}\n`;
-          }
-        });
-      }
-
-      if (cls.spellcasting.type === 'wizard') {
-        text += '\n法术书:\n';
-        if (data.spells.spellbook && data.spells.spellbook.length > 0) {
+      if (data.spells) {
+        if (cls.spellcasting.type === 'wizard' && data.spells.spellbook && data.spells.spellbook.length > 0) {
+          text += '\n法术书:\n';
           data.spells.spellbook.forEach(spellId => {
             const spell = getWizardSpellById(spellId);
             const spellName = spell?.name || spellId;
             text += `  - ${spellName}\n`;
           });
-        } else {
+        } else if (cls.spellcasting.type === 'priest') {
+          text += `\n法术领域:\n`;
+          text += `  主要: ${cls.spellSpheres?.major.join(', ') || '无'}\n`;
+          if (cls.spellSpheres?.minor && cls.spellSpheres.minor.length > 0) {
+            text += `  次要: ${cls.spellSpheres.minor.join(', ')}\n`;
+          }
+        }
+
+        // 已记忆法术
+        text += '\n已记忆法术:\n';
+        console.log('[角色卡生成] 检查法术记忆数据:', JSON.stringify(data.spells.memorizedSpells, null, 2));
+        let hasMemorizedSpells = false;
+        Object.entries(data.spells.memorizedSpells).forEach(([key, spells]) => {
+          const level = key.replace('level', '');
+          console.log(`[角色卡生成] ${key} (${level}环):`, spells);
+          if (spells && Array.isArray(spells) && spells.length > 0) {
+            hasMemorizedSpells = true;
+            const spellNames = spells.map((id: string) => {
+              const spell = cls.spellcasting!.type === 'wizard' ? getWizardSpellById(id) : getPriestSpellById(id);
+              console.log(`[角色卡生成] 解析法术ID ${id}:`, spell?.name);
+              return spell?.name || id;
+            });
+            text += `  ${level}环: ${spellNames.join(', ')}\n`;
+          }
+        });
+        if (!hasMemorizedSpells) {
           text += '  无\n';
         }
-        text += '\n已记忆法术:\n';
-        Object.entries(data.spells.memorizedSpells).forEach(([key, spells]) => {
-          const level = key.replace('level', '');
-          if (spells.length > 0) {
-            const spellNames = spells.map(id => getWizardSpellById(id)?.name || id);
-            text += `  ${level}环: ${spellNames.join(', ')}\n`;
-          }
-        });
-      } else {
-        text += `\n法术领域:\n`;
-        text += `  主要: ${cls.spellSpheres?.major.join(', ')}\n`;
-        if (cls.spellSpheres?.minor && cls.spellSpheres.minor.length > 0) {
-          text += `  次要: ${cls.spellSpheres.minor.join(', ')}\n`;
-        }
-        text += '\n已记忆法术:\n';
-        Object.entries(data.spells.memorizedSpells).forEach(([key, spells]) => {
-          const level = key.replace('level', '');
-          if (spells.length > 0) {
-            const spellNames = spells.map(id => getPriestSpellById(id)?.name || id);
-            text += `  ${level}环: ${spellNames.join(', ')}\n`;
-          }
-        });
+        console.log('[角色卡生成] 是否有记忆法术:', hasMemorizedSpells);
       }
       text += '\n';
     }
 
-    // 角色信息
-    if (data.appearance || data.background || (data.gender === 'male' && data.penisSize)) {
-      text += '【角色信息】\n';
-      if (data.appearance) {
-        text += `外貌: ${data.appearance}\n\n`;
-      }
-      if (data.background) {
-        text += `背景: ${data.background}\n\n`;
-      }
-      if (data.gender === 'male' && data.penisSize) {
-        const sizeMap: Record<string, string> = {
-          xs: '特小',
-          s: '偏小',
-          m: '平均',
-          l: '偏大',
-          xl: '特大',
-          xxl: '超大',
-        };
-        text += `身体特征: 阴茎大小${sizeMap[data.penisSize] || data.penisSize}\n\n`;
-      }
-    }
-
     // 种族描述与特性
-    text += '【种族描述与特性】\n';
+    text += '【种族特性】\n';
     const raceForDisplay = subrace || race;
     if (raceForDisplay) {
       // 种族描述
-      text += `\n${raceForDisplay.description}\n\n`;
+      text += `${raceForDisplay.description}\n\n`;
 
       // 种族能力
       const raceAbilities = raceForDisplay.abilities || [];
       if (raceAbilities.length > 0) {
         text += '种族能力:\n';
         raceAbilities.forEach(ability => {
-          text += `  • ${ability.name}: ${ability.description}\n`;
+          text += `• ${ability.name}: ${ability.description}\n`;
         });
         text += '\n';
       }
 
       // 种族优势
       if (raceForDisplay.specialAdvantages) {
-        text += `特殊优势: ${raceForDisplay.specialAdvantages}\n\n`;
+        text += `特殊优势: ${raceForDisplay.specialAdvantages}\n`;
       }
 
       // 种族劣势
       if (raceForDisplay.specialDisadvantages) {
-        text += `特殊劣势: ${raceForDisplay.specialDisadvantages}\n\n`;
+        text += `特殊劣势: ${raceForDisplay.specialDisadvantages}\n`;
       }
     }
+    text += '\n';
 
     // 职业描述与特性
-    text += '【职业描述与特性】\n';
+    text += '【职业特性】\n';
     if (cls) {
       // 职业描述
-      text += `\n${cls.description}\n\n`;
+      text += `${cls.description}\n\n`;
 
       // 职业能力（1级）
       const classAbilities = cls.specialAbilities.filter(a => a.level === 1);
       if (classAbilities.length > 0) {
         text += '职业能力:\n';
         classAbilities.forEach(ability => {
-          text += `  • ${ability.name}: ${ability.description}\n`;
+          text += `• ${ability.name}: ${ability.description}\n`;
         });
         text += '\n';
       }
 
       // 职业说明
       if (cls.specialNotes && cls.specialNotes.length > 0) {
-        text += '职业说明:\n';
+        text += '特殊说明:\n';
         cls.specialNotes.forEach(note => {
-          text += `  - ${note}\n`;
+          text += `- ${note}\n`;
         });
         text += '\n';
       }
@@ -1295,7 +1880,7 @@ export const useCharacterStore = defineStore('character', () => {
       text += `护甲限制: ${cls.armorRestrictions}\n`;
     }
 
-    text += '\n═══════════════════════════════════\n';
+    text += '\n═══════════════════════════════════════════════\n';
 
     return text;
   }

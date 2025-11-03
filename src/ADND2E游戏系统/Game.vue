@@ -114,6 +114,9 @@ onBeforeUnmount(() => {
   eventRemoveListener(iframe_events.STREAM_TOKEN_RECEIVED_FULLY, handleStreamTokenFully);
   eventRemoveListener(iframe_events.GENERATION_ENDED, handleGenerationEnded);
 
+  // 清理 NPC 自动检测
+  npcDetection.cleanup();
+
   // 停止自动同步并清理资源
   gameStore.cleanup();
 });

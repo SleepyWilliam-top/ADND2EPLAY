@@ -318,8 +318,10 @@ function rollDice() {
 
 // 确认金币
 function confirmMoney() {
-  characterStore.characterData.startingMoney = finalMoney.value;
-  characterStore.characterData.currentMoney = finalMoney.value;
+  characterStore.updateCharacterData(data => {
+    data.startingMoney = finalMoney.value;
+    data.currentMoney = finalMoney.value;
+  });
   showDiceDialog.value = false;
   toastr.success(`起始资金已设置为 ${finalMoney.value} GP`);
 }
@@ -460,7 +462,9 @@ function onlyNumber(event: KeyboardEvent) {
 
 // 上一步
 function handlePrevious() {
-  characterStore.characterData.step = 6;
+  characterStore.updateCharacterData(data => {
+    data.step = 6;
+  });
 }
 
 // 下一步
@@ -468,11 +472,15 @@ function handleNext() {
   // 检查职业是否1级就能施法
   if (characterStore.canCastSpellsAtLevel1()) {
     // 进入法术选择步骤
-    characterStore.characterData.step = 8;
+    characterStore.updateCharacterData(data => {
+      data.step = 8;
+    });
     toastr.success('装备购买完成，请选择法术');
   } else {
     // 跳过法术选择，进入阵营选择
-    characterStore.characterData.step = 9;
+    characterStore.updateCharacterData(data => {
+      data.step = 9;
+    });
     toastr.success('装备购买完成，请选择阵营');
   }
 }
