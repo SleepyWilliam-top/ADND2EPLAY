@@ -305,12 +305,12 @@ function closeCreateModal() {
 async function confirmCreateCharacter() {
   closeCreateModal();
   toastr.info('正在清理旧数据...');
-  
+
   try {
     // 🔧 修复：创建新角色前清除所有 IndexedDB 缓存
     await clearAllData();
     console.log('[MainMenu] 已清除所有 IndexedDB 缓存');
-    
+
     // 清除角色卡变量中的旧数据
     replaceVariables(
       {
@@ -319,7 +319,7 @@ async function confirmCreateCharacter() {
       { type: 'character' },
     );
     console.log('[MainMenu] 已清除角色卡变量');
-    
+
     toastr.success('正在进入角色创建...');
     router.push('/character-creation');
   } catch (error) {

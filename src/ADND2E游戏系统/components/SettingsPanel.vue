@@ -197,11 +197,7 @@
   </div>
 
   <!-- 图片图库弹窗 -->
-  <ImageLibraryModal
-    v-model="showImageLibraryModal"
-    :category="imageLibraryCategory"
-    @select="handleImageSelect"
-  />
+  <ImageLibraryModal v-model="showImageLibraryModal" :category="imageLibraryCategory" @select="handleImageSelect" />
 
   <!-- 法术图鉴弹窗 -->
   <SpellCompendium :visible="showSpellModal" @close="closeSpellCompendium" />

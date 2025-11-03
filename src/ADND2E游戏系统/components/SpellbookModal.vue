@@ -585,7 +585,7 @@ function saveMemorizedSpells() {
 
   .header-content {
     h2 {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 24px;
       font-weight: bold;
       margin: 0 0 5px 0;
@@ -630,7 +630,7 @@ function saveMemorizedSpells() {
     padding: 10px 20px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
@@ -727,7 +727,7 @@ function saveMemorizedSpells() {
   .danger-btn {
     padding: 10px 20px;
     border: 2px solid #000;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -774,7 +774,7 @@ function saveMemorizedSpells() {
       background-color: #9370db;
       color: #fff;
       border: 2px solid #000;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-weight: bold;
 
       .level {
@@ -835,7 +835,7 @@ function saveMemorizedSpells() {
       background-color: #4682b4;
       color: #fff;
       border: 2px solid #000;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-weight: bold;
 
       .level {
@@ -933,7 +933,7 @@ function saveMemorizedSpells() {
   }
 
   p {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     margin: 10px 0;
     color: #666;
@@ -978,7 +978,7 @@ function saveMemorizedSpells() {
     align-items: center;
 
     h3 {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 20px;
       margin: 0;
     }

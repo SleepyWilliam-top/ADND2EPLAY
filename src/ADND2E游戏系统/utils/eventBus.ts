@@ -1,9 +1,9 @@
 /**
  * ADND2E 双事件系统
- * 
+ *
  * 学习自 lucklyjkop.html 的事件处理机制
  * 结合 DOM 自定义事件 + 酒馆助手事件系统，实现双重保障
- * 
+ *
  * 类似于我们的双重持久化机制：
  * - 酒馆变量 + IndexedDB
  * - 酒馆助手事件 + DOM 自定义事件
@@ -98,10 +98,7 @@ class EventBus {
    * 🔧 触发事件（双系统）
    * 同时触发 DOM 自定义事件和内部监听器
    */
-  emit<K extends keyof ADND2EEventMap>(
-    eventName: K,
-    detail: ADND2EEventMap[K],
-  ): void {
+  emit<K extends keyof ADND2EEventMap>(eventName: K, detail: ADND2EEventMap[K]): void {
     const timestamp = Date.now();
 
     // 1. 触发 DOM 自定义事件（学习 lucklyjkop 的 DOM 事件机制）
@@ -156,10 +153,7 @@ class EventBus {
    * 🔧 监听事件（双系统）
    * 同时监听 DOM 自定义事件和内部事件
    */
-  on<K extends keyof ADND2EEventMap>(
-    eventName: K,
-    callback: (detail: ADND2EEventMap[K]) => void,
-  ): () => void {
+  on<K extends keyof ADND2EEventMap>(eventName: K, callback: (detail: ADND2EEventMap[K]) => void): () => void {
     // 1. 注册 DOM 事件监听器
     const domListener = (e: Event) => {
       const customEvent = e as CustomEvent<ADND2EEventMap[K]>;
@@ -209,10 +203,7 @@ class EventBus {
   /**
    * 仅监听一次
    */
-  once<K extends keyof ADND2EEventMap>(
-    eventName: K,
-    callback: (detail: ADND2EEventMap[K]) => void,
-  ): () => void {
+  once<K extends keyof ADND2EEventMap>(eventName: K, callback: (detail: ADND2EEventMap[K]) => void): () => void {
     const cleanup = this.on(eventName, detail => {
       callback(detail);
       cleanup();
@@ -290,9 +281,7 @@ export function emitGameDataUpdated(
 /**
  * 触发角色数据同步事件
  */
-export function emitCharacterDataSynced(
-  source: 'initial-load' | 'update' | 'rollback' = 'update',
-): void {
+export function emitCharacterDataSynced(source: 'initial-load' | 'update' | 'rollback' = 'update'): void {
   eventBus.emit('adnd2e:character-data-synced', {
     source,
     timestamp: Date.now(),
@@ -372,4 +361,3 @@ export function emitChatMessageDeleted(messageIndex: number): void {
     timestamp: Date.now(),
   });
 }
-

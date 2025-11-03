@@ -592,7 +592,7 @@ watch(
     }
 
     h1 {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 28px;
       font-weight: bold;
       margin: 0;
@@ -623,7 +623,7 @@ watch(
     border: none;
     border-right: 2px solid #ccc;
     background-color: #e0e0e0;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 15px;
     font-weight: bold;
     cursor: pointer;
@@ -684,7 +684,7 @@ watch(
     border: none;
     background: transparent;
     padding: 10px 8px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     outline: none;
 
@@ -724,7 +724,7 @@ watch(
     padding: 6px 14px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     font-weight: bold;
     cursor: pointer;
@@ -784,7 +784,7 @@ watch(
     padding: 5px 12px;
     border: 1px solid #000;
     background-color: #fff;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -866,7 +866,7 @@ watch(
     font-size: 20px;
     font-weight: bold;
     color: #000;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
   }
 
   .count {
@@ -908,7 +908,7 @@ watch(
     font-size: 16px;
     color: #999;
     margin-bottom: 20px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
   }
 
   .reset-btn {
@@ -921,7 +921,7 @@ watch(
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
 
     &:hover {
       background: #333;
@@ -958,7 +958,7 @@ watch(
     font-size: 14px;
     color: #666;
     margin: 0;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
   }
 }
 
@@ -991,7 +991,7 @@ watch(
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
 
     &:hover {
       background: #333;
@@ -1008,7 +1008,7 @@ watch(
     font-size: 13px;
     color: #666;
     font-weight: 500;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
   }
 }
 

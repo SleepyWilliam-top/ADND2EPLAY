@@ -408,7 +408,7 @@ function goToNextStep() {
 <style lang="scss" scoped>
 .step4-combat-stats {
   width: 100%;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 }
 
 // 顶部区域

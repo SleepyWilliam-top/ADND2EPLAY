@@ -9,8 +9,7 @@
         :class="{ active: currentMode === mode.value }"
         @click="switchMode(mode.value)"
         v-html="mode.label"
-      >
-      </button>
+      ></button>
       <div v-if="currentMode === 'point-buy'" class="points-display">
         <span class="points-label">剩余点数:</span>
         <span class="points-value" :class="{ negative: remainingPoints < 0 }">
@@ -74,7 +73,7 @@
                 class="ability-input"
                 :value="getAbilityValue(ability.key) ?? ''"
                 @change="e => setAbilityFromInput(ability.key, (e.target as HTMLInputElement).value)"
-                @blur="e => validateAndSetAbility(ability.key, (e.target as HTMLInputElement))"
+                @blur="e => validateAndSetAbility(ability.key, e.target as HTMLInputElement)"
                 placeholder="3-18"
               />
               <button
@@ -291,7 +290,7 @@ function setAbility(key: AbilityKey, value: number) {
 // 从输入框设置属性值（使用 @change 事件，仅在失去焦点或按回车时触发）
 function setAbilityFromInput(key: AbilityKey, valueStr: string) {
   const value = parseInt(valueStr);
-  
+
   if (valueStr === '' || isNaN(value)) {
     // 允许暂时为空，不立即重置
     return;
@@ -308,7 +307,7 @@ function setAbilityFromInput(key: AbilityKey, valueStr: string) {
 // 验证并设置属性值（在失去焦点时调用）
 function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
   const valueStr = input.value;
-  
+
   if (valueStr === '') {
     // 如果为空，恢复为当前值
     const current = getAbilityValue(key);
@@ -317,7 +316,7 @@ function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
   }
 
   const value = parseInt(valueStr);
-  
+
   if (isNaN(value) || value < 3 || value > 18) {
     toastr.warning('属性值必须在 3-18 之间');
     // 恢复为当前值
@@ -333,7 +332,7 @@ function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
 function adjustAbility(key: AbilityKey, delta: number) {
   const current = getAbilityValue(key) || 9; // 默认从9开始
   const newValue = current + delta;
-  
+
   if (newValue < 3 || newValue > 18) {
     return;
   }
@@ -351,7 +350,7 @@ function canDecreaseAbility(key: AbilityKey): boolean {
 function canIncreaseAbility(key: AbilityKey): boolean {
   const current = getAbilityValue(key);
   if (current === null || current >= 18) return false;
-  
+
   // 检查点数是否足够
   return remainingPoints.value >= 1;
 }
@@ -644,7 +643,7 @@ function generateCharismaTable(): string {
   padding: 10px 20px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -665,7 +664,7 @@ function generateCharismaTable(): string {
   align-items: center;
   gap: 10px;
   margin-left: auto;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -691,7 +690,7 @@ function generateCharismaTable(): string {
     padding: 5px 10px;
     border: 2px solid #000;
     background-color: #fff;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     cursor: pointer;
   }
@@ -739,7 +738,7 @@ function generateCharismaTable(): string {
   gap: 15px;
 
   h3 {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 20px;
     font-weight: bold;
     margin: 0;
@@ -750,7 +749,7 @@ function generateCharismaTable(): string {
   }
 
   .ability-abbr {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: bold;
     color: #666;
@@ -764,7 +763,7 @@ function generateCharismaTable(): string {
   padding: 6px 12px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -794,7 +793,7 @@ function generateCharismaTable(): string {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 
   .value-label {
     font-size: 16px;
@@ -804,7 +803,7 @@ function generateCharismaTable(): string {
   .value-number {
     font-size: 32px;
     font-weight: bold;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     color: #000;
     min-width: 50px;
     text-align: center;
@@ -812,7 +811,7 @@ function generateCharismaTable(): string {
 }
 
 .ability-bonuses {
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 13px;
   color: #333;
   flex: 1;
@@ -843,7 +842,7 @@ function generateCharismaTable(): string {
   padding: 0;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 24px;
   font-weight: bold;
   cursor: pointer;
@@ -898,7 +897,7 @@ function generateCharismaTable(): string {
   padding: 12px 20px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -920,7 +919,7 @@ function generateCharismaTable(): string {
   flex: 1;
   padding: 12px;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 20px;
   font-weight: bold;
   text-align: center;
@@ -940,7 +939,7 @@ function generateCharismaTable(): string {
 }
 
 .details-description {
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   line-height: 1.8;
   color: #333;
@@ -959,7 +958,7 @@ function generateCharismaTable(): string {
 :deep(.ability-table) {
   width: 100%;
   border-collapse: collapse;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 12px;
   background-color: #fff;
 
@@ -1045,7 +1044,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #666;
   color: #666;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1075,7 +1074,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #000;
   color: #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1105,7 +1104,7 @@ function generateCharismaTable(): string {
   background-color: #fff;
   border: 2px solid #d9534f;
   color: #d9534f;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1135,7 +1134,7 @@ function generateCharismaTable(): string {
   background-color: #000;
   border: 3px solid #000;
   color: #fff;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 16px;
   font-weight: bold;
   text-transform: uppercase;

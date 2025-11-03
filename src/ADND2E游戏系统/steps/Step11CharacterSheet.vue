@@ -775,7 +775,7 @@ function getAbilityKey(chineseName: string): keyof Abilities {
 .character-sheet {
   border: 3px solid #8b4513;
   background: #f9f6f0;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
   section {

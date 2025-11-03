@@ -47,12 +47,7 @@
 
         <div class="toolbar-right">
           <!-- 搜索框 -->
-          <input
-            v-model="searchKeyword"
-            type="text"
-            class="search-input"
-            placeholder="🔍 搜索图片..."
-          />
+          <input v-model="searchKeyword" type="text" class="search-input" placeholder="🔍 搜索图片..." />
 
           <!-- 统计信息 -->
           <div class="stats">
@@ -99,40 +94,22 @@
           <!-- 图片信息 -->
           <div class="image-info">
             <p class="image-name" :title="image.name">{{ image.name }}</p>
-            <p class="image-meta">
-              {{ image.width }}×{{ image.height }} · {{ formatSize(image.size) }}
-            </p>
+            <p class="image-meta">{{ image.width }}×{{ image.height }} · {{ formatSize(image.size) }}</p>
           </div>
 
           <!-- 操作按钮 -->
           <div class="image-actions">
-            <button
-              class="action-btn delete"
-              title="删除"
-              @click.stop="handleDeleteImage(image.id)"
-            >
-              🗑️
-            </button>
+            <button class="action-btn delete" title="删除" @click.stop="handleDeleteImage(image.id)">🗑️</button>
           </div>
         </div>
       </div>
 
       <!-- 底部操作 -->
       <div class="modal-footer">
-        <button class="footer-btn danger" @click="handleClearLibrary">
-          清空图库
-        </button>
+        <button class="footer-btn danger" @click="handleClearLibrary">清空图库</button>
         <div class="footer-right">
-          <button class="footer-btn secondary" @click="emit('update:modelValue', false)">
-            取消
-          </button>
-          <button
-            class="footer-btn primary"
-            :disabled="!selectedImageId"
-            @click="handleConfirmSelect"
-          >
-            确认选择
-          </button>
+          <button class="footer-btn secondary" @click="emit('update:modelValue', false)">取消</button>
+          <button class="footer-btn primary" :disabled="!selectedImageId" @click="handleConfirmSelect">确认选择</button>
         </div>
       </div>
     </div>
@@ -197,9 +174,7 @@ const filteredImages = computed(() => {
   if (searchKeyword.value.trim()) {
     const keyword = searchKeyword.value.toLowerCase();
     result = result.filter(
-      img =>
-        img.name.toLowerCase().includes(keyword) ||
-        img.tags?.some(tag => tag.toLowerCase().includes(keyword)),
+      img => img.name.toLowerCase().includes(keyword) || img.tags?.some(tag => tag.toLowerCase().includes(keyword)),
     );
   }
 
@@ -257,14 +232,10 @@ async function handleFileSelect(event: Event) {
 
   try {
     const fileArray = Array.from(files);
-    await addMultipleImages(
-      fileArray,
-      props.category,
-      (current, total) => {
-        uploadCurrent.value = current;
-        uploadTotal.value = total;
-      },
-    );
+    await addMultipleImages(fileArray, props.category, (current, total) => {
+      uploadCurrent.value = current;
+      uploadTotal.value = total;
+    });
 
     toastr.success(`成功上传 ${files.length} 张图片`);
     await loadImages();
@@ -902,4 +873,3 @@ watch(
   }
 }
 </style>
-

@@ -30,15 +30,9 @@
 
       <!-- 操作按钮 -->
       <div class="panel-actions">
-        <button class="action-btn" @click="clearMetrics">
-          <i class="fa-solid fa-broom"></i> 清空
-        </button>
-        <button class="action-btn" @click="downloadReport">
-          <i class="fa-solid fa-download"></i> 导出
-        </button>
-        <button class="action-btn danger" @click="closePanel">
-          <i class="fa-solid fa-times"></i> 关闭
-        </button>
+        <button class="action-btn" @click="clearMetrics"><i class="fa-solid fa-broom"></i> 清空</button>
+        <button class="action-btn" @click="downloadReport"><i class="fa-solid fa-download"></i> 导出</button>
+        <button class="action-btn danger" @click="closePanel"><i class="fa-solid fa-times"></i> 关闭</button>
       </div>
     </div>
   </div>
@@ -235,4 +229,3 @@ function closePanel() {
   }
 }
 </style>
-

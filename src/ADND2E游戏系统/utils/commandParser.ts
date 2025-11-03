@@ -641,13 +641,13 @@ function parseSpellCastingFromText(text: string): GameCommand[] {
 
 /**
  * 🔧 新增：从文本中解析任务变化（参考 lucklyjkop.html 的实现）
- * 
+ *
  * 支持的任务操作：
  * 1. 新任务：检测"接受任务"、"获得任务"、"任务：XXX"等模式
  * 2. 任务完成：检测"完成任务"、"任务完成"等模式
  * 3. 任务失败：检测"任务失败"、"失败了任务"等模式
  * 4. 任务进度更新：检测"任务进度"、"XXX任务的进度"等模式
- * 
+ *
  * 与 lucklyjkop.html 的差异：
  * - lucklyjkop.html 使用 currentState['6'] 存储任务（表格数据库）
  * - ADND2E 使用角色卡变量的 adnd2e.quests 数组存储任务

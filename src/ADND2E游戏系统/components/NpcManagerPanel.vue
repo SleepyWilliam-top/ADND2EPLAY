@@ -186,11 +186,11 @@ onMounted(() => {
     forceUpdateKey.value++;
     console.log('[NpcManager] 收到游戏数据更新事件，NPC 数量:', gameStateStore.gameState.npcs.length);
   };
-  
+
   // 监听旧系统事件（兼容）
   eventOn('adnd2e_game_data_updated', updateListener);
   eventOn('adnd2e_character_data_synced', updateListener);
-  
+
   // 🔧 监听新的双事件系统
   cleanupFunctions.push(
     eventBus.on('adnd2e:npc-added', detail => {
@@ -198,14 +198,14 @@ onMounted(() => {
       forceUpdateKey.value++;
     }),
   );
-  
+
   cleanupFunctions.push(
     eventBus.on('adnd2e:npc-updated', detail => {
       console.log(`[NpcManager] 🔵 NPC 更新事件: ${detail.npcName}`, detail.changes);
       forceUpdateKey.value++;
     }),
   );
-  
+
   cleanupFunctions.push(
     eventBus.on('adnd2e:npc-removed', detail => {
       console.log(`[NpcManager] 🔵 NPC 移除事件: ${detail.npcName}`);
@@ -363,7 +363,7 @@ async function confirmRemove() {
   background-color: #fff;
   border: 3px solid #000;
   margin-bottom: 20px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   position: relative;
 
   &::before {
@@ -507,7 +507,7 @@ async function confirmRemove() {
 .npc-basic-stats {
   display: flex;
   gap: 10px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 12px;
   font-weight: bold;
 
@@ -647,7 +647,7 @@ async function confirmRemove() {
   padding: 8px;
   background-color: #fff;
   border: 2px solid #000;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 
   .stat-label {
     font-weight: bold;
@@ -761,7 +761,7 @@ async function confirmRemove() {
   border: 2px solid #000;
   background-color: #fff;
   cursor: pointer;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 14px;
   font-weight: bold;
   transition: all 0.2s;

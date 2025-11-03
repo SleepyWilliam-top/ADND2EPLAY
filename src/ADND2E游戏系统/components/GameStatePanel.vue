@@ -153,7 +153,7 @@ const activeQuests = computed(() => {
   background-color: #fff;
   border: 3px solid #000;
   margin-bottom: 20px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 
   &::before {
     content: '';
@@ -245,7 +245,7 @@ const activeQuests = computed(() => {
 
   .value {
     font-weight: bold;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
 
     &.hp-healthy {
       color: #2e7d32;

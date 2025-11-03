@@ -221,7 +221,7 @@ watch(
   background-color: #fff;
   border: 4px solid #000;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   display: flex;
   flex-direction: column;
   z-index: 10000;

@@ -21,7 +21,9 @@
             掷3d4来确定初始法术数量，侦测魔法和阅读魔法会自动加入。
           </p>
           <div class="dice-roll-area">
-            <button class="adnd-button primary large" @click="rollSpellbook"><i class="fa-solid fa-dice-d20"></i> 掷骰确定法术书大小</button>
+            <button class="adnd-button primary large" @click="rollSpellbook">
+              <i class="fa-solid fa-dice-d20"></i> 掷骰确定法术书大小
+            </button>
           </div>
         </div>
       </div>
@@ -486,7 +488,7 @@ function confirmAndProceed() {
   width: 100%;
   min-height: 600px;
   padding: 30px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
 }
 
 .selection-header {
@@ -766,7 +768,7 @@ function confirmAndProceed() {
     gap: 8px;
     padding: 12px 32px;
     font-size: 16px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-weight: bold;
     border: 3px solid #000;
     cursor: pointer;

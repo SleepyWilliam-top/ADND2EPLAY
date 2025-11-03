@@ -1,6 +1,6 @@
 /**
  * 测试：验证 character 和 npcs 数据在聊天记录编辑/删除时的实时同步
- * 
+ *
  * 测试场景：
  * 1. 初始状态：创建角色，添加NPC
  * 2. 编辑AI消息：修改NPC数据
@@ -22,7 +22,7 @@ export async function testCharacterSync() {
     // 1. 初始状态
     console.log('步骤 1: 初始化游戏状态');
     gameStateStore.resetGameState();
-    
+
     const charVars = getVariables({ type: 'character' });
     if (!charVars?.adnd2e?.character) {
       console.error('❌ 测试失败：未找到角色数据');
@@ -160,4 +160,3 @@ export async function testCharacterSync() {
 // 在控制台中运行测试
 (window as any).testCharacterSync = testCharacterSync;
 console.log('测试函数已加载，在控制台运行: testCharacterSync()');
-

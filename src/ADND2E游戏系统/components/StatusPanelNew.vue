@@ -1129,7 +1129,7 @@ function markDataChanged() {
     xp: char.value.xp,
     level: char.value.level,
   });
-  
+
   if (lastViewedData.value && currentData !== lastViewedData.value) {
     dataChangedSinceLastView.value = true;
   }
@@ -1612,7 +1612,7 @@ const chaMods = computed(() => getCharismaModifiers(charisma.value));
 const translatedWeaponProfs = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   return (char.value.weaponProficiencies || []).map((id: string) => {
     const weapon = getWeaponById(id);
     return weapon?.name || id;
@@ -1622,7 +1622,7 @@ const translatedWeaponProfs = computed(() => {
 const translatedWeaponSpecs = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   return (char.value.weaponSpecializations || []).map((id: string) => {
     const weapon = getWeaponById(id);
     return weapon?.name || id;
@@ -1633,7 +1633,7 @@ const translatedWeaponSpecs = computed(() => {
 const translatedNonweaponProfs = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   return (char.value.nonweaponProficiencies || []).map((prof: any) => {
     const profData = getProficiencyById(prof.id);
     return {
@@ -1648,7 +1648,7 @@ const translatedNonweaponProfs = computed(() => {
 const racialAbilities = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   const abilities: Array<{ 名称: string; 描述: string }> = [];
   const sr = subrace.value;
   const r = race.value;
@@ -1665,7 +1665,7 @@ const racialAbilities = computed(() => {
 const classAbilities = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   const abilities: Array<{ 名称: string; 描述: string }> = [];
   const ci = classInfo.value;
   if (ci) {
@@ -1718,7 +1718,7 @@ const AMMUNITION_COMPATIBILITY: Record<string, string[]> = {
 const equippedWeapons = computed(() => {
   // 🔧 依赖更新键确保响应式
   void charUpdateKey.value;
-  
+
   const purchasedEquipment = char.value.purchasedEquipment || [];
   const weapons: Array<{
     id: string;
@@ -2013,7 +2013,7 @@ onBeforeUnmount(() => {
   border-right: 4px solid #000;
   display: flex;
   flex-direction: column;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   color: #000;
   box-shadow: inset 0 0 0 2px #666;
 
@@ -2116,7 +2116,7 @@ onBeforeUnmount(() => {
     color: #000;
     font-weight: bold;
     font-size: 14px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
 
     &.highlight {
       color: #d4af37;
@@ -2347,7 +2347,7 @@ onBeforeUnmount(() => {
       font-size: 16px;
       font-weight: bold;
       color: #8b4513;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
     }
   }
 }
@@ -2384,7 +2384,7 @@ onBeforeUnmount(() => {
     font-size: 24px;
     color: #d4af37;
     font-weight: bold;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   }
 }
@@ -2562,7 +2562,7 @@ onBeforeUnmount(() => {
         font-size: 11px;
         color: #999;
         font-style: italic;
-        font-family: "临海体", serif;
+        font-family: '临海体', serif;
       }
 
       .info-icon {
@@ -2643,7 +2643,7 @@ onBeforeUnmount(() => {
 }
 
 .ability-name {
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 13px;
   font-weight: bold;
   text-transform: uppercase;
@@ -2651,7 +2651,7 @@ onBeforeUnmount(() => {
 }
 
 .ability-score {
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 24px;
   font-weight: bold;
   min-width: 40px;
@@ -2670,7 +2670,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   padding: 4px 6px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 11px;
   border-bottom: 1px dashed #ddd;
 
@@ -2753,7 +2753,7 @@ onBeforeUnmount(() => {
     border: 2px solid #000;
     border-left: 4px solid #000;
     font-size: 13px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     position: relative;
 
     &.clickable-skill {
@@ -2900,7 +2900,7 @@ onBeforeUnmount(() => {
   }
 
   .weapon-name {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-weight: bold;
     text-transform: uppercase;
@@ -2909,7 +2909,7 @@ onBeforeUnmount(() => {
   }
 
   .weapon-quantity {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 12px;
     font-weight: bold;
     background-color: #fff;
@@ -2938,7 +2938,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 4px 6px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 11px;
   border-bottom: 1px dashed #ddd;
   gap: 8px;
@@ -3028,7 +3028,7 @@ onBeforeUnmount(() => {
     border-bottom: 2px solid #000;
 
     .skill-name {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 13px;
       font-weight: bold;
       text-transform: uppercase;
@@ -3037,7 +3037,7 @@ onBeforeUnmount(() => {
     }
 
     .skill-value {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 16px;
       font-weight: bold;
       color: #000;
@@ -3055,7 +3055,7 @@ onBeforeUnmount(() => {
   }
 
   .skill-breakdown {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 10px;
     color: #666;
     font-style: italic;
@@ -3136,7 +3136,7 @@ onBeforeUnmount(() => {
   h2 {
     margin: 0;
     font-size: 18px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -3179,14 +3179,14 @@ onBeforeUnmount(() => {
   .prof-label {
     font-weight: bold;
     font-size: 13px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     min-width: 100px;
     color: #000;
   }
 
   .prof-value {
     font-size: 13px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     color: #333;
   }
 }
@@ -3213,7 +3213,7 @@ onBeforeUnmount(() => {
   h3 {
     margin: 0 0 12px 0;
     font-size: 14px;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #000;
@@ -3227,7 +3227,7 @@ onBeforeUnmount(() => {
     line-height: 1.6;
     color: #333;
     white-space: pre-wrap;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
   }
 }
 
@@ -3265,7 +3265,7 @@ onBeforeUnmount(() => {
     h3 {
       margin: 0 0 15px 0;
       font-size: 16px;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #000;
@@ -3278,7 +3278,7 @@ onBeforeUnmount(() => {
       line-height: 1.7;
       color: #333;
       margin: 10px 0;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
     }
 
     ul {
@@ -3287,7 +3287,7 @@ onBeforeUnmount(() => {
       font-size: 13px;
       line-height: 1.7;
       color: #333;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
 
       li {
         margin: 8px 0;
@@ -3312,7 +3312,7 @@ onBeforeUnmount(() => {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 12px;
 
     thead {
@@ -3474,7 +3474,7 @@ onBeforeUnmount(() => {
       h3 {
         margin: 0 0 15px 0;
         font-size: 15px;
-        font-family: "临海体", serif;
+        font-family: '临海体', serif;
         text-transform: uppercase;
         letter-spacing: 1px;
         color: #000;

@@ -556,7 +556,7 @@ function exportRegexRules() {
   }
 
   h4 {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 22px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -610,7 +610,7 @@ function exportRegexRules() {
   margin-bottom: 15px;
 
   h5 {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 1px;
@@ -635,7 +635,7 @@ function exportRegexRules() {
   align-items: center;
 
   label {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     font-weight: bold;
   }
@@ -649,7 +649,7 @@ function exportRegexRules() {
 
   select,
   input[type='number'] {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     padding: 6px 10px;
     border: 2px solid #000;
@@ -667,7 +667,7 @@ function exportRegexRules() {
   }
 
   .range-value {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     font-weight: bold;
     min-width: 50px;
@@ -682,7 +682,7 @@ function exportRegexRules() {
   margin-bottom: 10px;
 
   label {
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     font-weight: bold;
   }
@@ -696,7 +696,7 @@ function exportRegexRules() {
   input[type='text'],
   input[type='number'] {
     flex: 1;
-    font-family: "临海体", serif;
+    font-family: '临海体', serif;
     font-size: 13px;
     padding: 6px 10px;
     border: 2px solid #000;
@@ -721,7 +721,7 @@ function exportRegexRules() {
 
     .rule-name-input {
       flex: 1;
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 14px;
       font-weight: bold;
       padding: 6px 10px;
@@ -755,7 +755,7 @@ function exportRegexRules() {
     margin-bottom: 8px;
 
     input {
-      font-family: "临海体", serif;
+      font-family: '临海体', serif;
       font-size: 12px;
       padding: 6px 10px;
       border: 2px solid #000;
@@ -836,7 +836,7 @@ function exportRegexRules() {
 .major-action-button {
   flex: 1;
   min-width: 150px;
-  font-family: "临海体", serif;
+  font-family: '临海体', serif;
   font-size: 13px;
   font-weight: bold;
   letter-spacing: 1px;
