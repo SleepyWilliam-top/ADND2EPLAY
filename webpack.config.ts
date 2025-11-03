@@ -108,7 +108,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
 
   return (_env, argv) => ({
     experiments: {
+<<<<<<< HEAD
       outputModule: entry.html === undefined, // 仅在脚本项目中使用模块输出
+=======
+      outputModule: true,
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
     },
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     watchOptions: {
@@ -134,11 +138,17 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
+<<<<<<< HEAD
       library: entry.html === undefined
         ? {
             type: 'module',
           }
         : undefined, // 前端界面使用普通输出格式
+=======
+      library: {
+        type: 'module',
+      },
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
     },
     module: {
       rules: [
@@ -330,10 +340,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(__dirname, entry.html),
             filename: path.parse(entry.html).base,
+<<<<<<< HEAD
             scriptLoading: 'blocking',
             cache: false,
             inject: 'body', // 将脚本注入到 body 底部
             minify: false, // 完全禁用 HTML 压缩，避免 srcdoc 解析问题
+=======
+            scriptLoading: 'module',
+            cache: false,
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
           }),
           new HtmlInlineScriptWebpackPlugin(),
           new MiniCssExtractPlugin(),
@@ -389,6 +404,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     optimization: {
       minimize: true,
       minimizer: [
+<<<<<<< HEAD
         argv.mode === 'production' && entry.html === undefined // 仅对脚本项目压缩
           ? new TerserPlugin({
               terserOptions: {
@@ -402,10 +418,16 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                   drop_debugger: false,
                 },
               },
+=======
+        argv.mode === 'production'
+          ? new TerserPlugin({
+              terserOptions: { format: { quote_style: 1 }, mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z'] } },
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
             })
           : new TerserPlugin({
               extractComments: false,
               terserOptions: {
+<<<<<<< HEAD
                 format: { 
                   beautify: true, 
                   indent_level: 2, 
@@ -416,6 +438,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 mangle: false,
                 keep_classnames: true,
                 keep_fnames: true,
+=======
+                format: { beautify: true, indent_level: 2 },
+                compress: false,
+                mangle: false,
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
               },
             }),
       ],
@@ -465,6 +492,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (argv.mode !== 'production' && ['vue', 'pixi'].some(key => request.includes(key))) {
         return callback();
       }
+<<<<<<< HEAD
       
       // 前端界面项目：使用 externals（从酒馆环境或自己的 CDN 加载）
       if (entry.html !== undefined) {
@@ -489,6 +517,8 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       }
       
       // 脚本项目：使用原有的 externals 配置
+=======
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
       const global = {
         jquery: '$',
         lodash: '_',
@@ -499,18 +529,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
+<<<<<<< HEAD
         pinia: 'Pinia',
         gsap: 'gsap',
+=======
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
       }
+<<<<<<< HEAD
       
       // 将某些库打包到文件中而不是使用 CDN
       const bundled = ['klona', '@vueuse/core', '@vueuse/shared', 'dexie', 'dedent'];
       if (bundled.some(key => request === key || request.startsWith(key + '/'))) {
         return callback();
       }
+=======
+>>>>>>> 63e1460f92c8fc4624135436a8608180d0266e7f
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
