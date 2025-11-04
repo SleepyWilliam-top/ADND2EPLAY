@@ -626,7 +626,7 @@ export function useNpcAutoDetection() {
       const npcs = parseNpcTags(content);
       if (npcs.length > 0) {
         console.log(`[NPC Auto] 在消息中检测到 ${npcs.length} 个 NPC`);
-        
+
         // 记录本次新增的NPC名称
         const newlyAddedNpcNames = new Set<string>();
         npcs.forEach(npc => {
@@ -664,26 +664,43 @@ export function useNpcAutoDetection() {
    * @param excludeNpcNames 排除的NPC名称集合（本次新增的NPC，避免秒删）
    */
   function autoCleanupAbsentNpcs(recentMessagesCount: number = 30, excludeNpcNames: Set<string> = new Set()) {
+    // 🔧 安全检查：如果NPC列表为空，直接返回
+    if (npcList.value.length === 0) {
+      return;
+    }
+
     // 获取最近的所有消息（包括用户和AI消息）
     const recentMessages = gameStore.messages.slice(-recentMessagesCount);
 
-    if (recentMessages.length === 0) {
-      console.log('[NPC Auto] 没有足够的消息用于判断 NPC 在场状态');
+    // 🔧 容错：如果消息数量太少（少于5条），不执行清理（避免误删）
+    if (recentMessages.length < 5) {
+      console.log('[NPC Auto] 消息历史太短（少于5条），跳过NPC清理以避免误删');
       return;
     }
 
     // 收集最近消息中所有提及的 NPC 名称（标签 + 文本提及）
     const recentNpcNames = new Set<string>();
+    
+    // 🔧 额外保护：最近3条消息中的NPC绝对不删除
+    const veryRecentNpcNames = new Set<string>();
+    const veryRecentMessages = gameStore.messages.slice(-3);
+    
     recentMessages.forEach(msg => {
       if (msg.content) {
+        const isVeryRecent = veryRecentMessages.includes(msg);
+        
         // 1. 解析 NPC 标签（完整的 NPC 数据）
         const npcsInMessage = parseNpcTags(msg.content);
-        npcsInMessage.forEach(npc => recentNpcNames.add(npc.name));
+        npcsInMessage.forEach(npc => {
+          recentNpcNames.add(npc.name);
+          if (isVeryRecent) veryRecentNpcNames.add(npc.name);
+        });
 
         // 2. 检查文本中是否提及现有 NPC 的名字（即使没有完整标签）
         npcList.value.forEach(npc => {
           if (msg.content.includes(npc.name)) {
             recentNpcNames.add(npc.name);
+            if (isVeryRecent) veryRecentNpcNames.add(npc.name);
           }
         });
       }
@@ -699,6 +716,12 @@ export function useNpcAutoDetection() {
       // 🔧 跳过本次新增的 NPC（避免秒删问题）
       if (excludeNpcNames.has(npc.name)) {
         console.log(`[NPC Auto] 跳过检查刚刚新增的 NPC: ${npc.name}`);
+        return;
+      }
+
+      // 🔧 额外保护：最近3条消息中的NPC绝对不删除
+      if (veryRecentNpcNames.has(npc.name)) {
+        console.log(`[NPC Auto] ${npc.name} 在最近3条消息中出现，受到保护`);
         return;
       }
 

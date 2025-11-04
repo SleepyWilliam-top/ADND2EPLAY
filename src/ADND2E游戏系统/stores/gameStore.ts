@@ -843,6 +843,39 @@ export const useGameStore = defineStore('adnd2e-game', () => {
         });
       }
 
+      // 3.1.5 注入当前场上的NPC列表（让AI知道当前有哪些NPC在场）
+      const currentNpcs = gameStateStore.gameState?.npcs || [];
+      if (currentNpcs.length > 0) {
+        const npcListText = `## 当前场上的NPC列表
+
+以下NPC当前在场，请在剧情中合理使用这些NPC，不要重复创建已存在的NPC：
+
+${currentNpcs
+  .map(
+    (npc, index) =>
+      `${index + 1}. **${npc.name}** ${npc.race ? `(${npc.race})` : ''}
+   - 生命值: ${npc.hp}${npc.maxHp ? `/${npc.maxHp}` : ''}
+   - 护甲等级: ${npc.ac}
+   - 态度: ${npc.attitude || '中立'}
+   - 状态: ${npc.status || '正常'}${npc.location ? `\n   - 位置: ${npc.location}` : ''}`,
+  )
+  .join('\n\n')}
+
+**重要提示**：
+- 如果需要更新已存在的NPC状态，使用 update_npc 命令
+- 如果NPC离场或死亡，使用 remove_npc 命令移除
+- 只有在引入新NPC时才使用 add_npc 或 NPC标签格式创建
+- 特别关心的NPC (⭐) 不会自动移除，需要手动管理
+`;
+
+        chatHistoryPrompts.push({
+          role: 'system',
+          content: npcListText,
+        });
+
+        console.log(`[Game] 已向AI注入 ${currentNpcs.length} 个当前在场NPC的信息`);
+      }
+
       // 3.2 然后注入历史对话消息（排除刚刚添加的用户输入）
       const historyMessages = messages.value.slice(0, -1); // 排除最后一条（刚添加的用户输入）
       for (const msg of historyMessages) {
