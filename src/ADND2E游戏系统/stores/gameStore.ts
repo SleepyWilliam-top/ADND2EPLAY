@@ -517,11 +517,12 @@ export const useGameStore = defineStore('adnd2e-game', () => {
 
         // 初始化角色卡消息，并保存初始游戏状态快照
         const initialSnapshot = JSON.stringify(gameStateStore.exportGameState());
+        const characterName = savedData.character?.characterName || '角色';
         messages.value = [
           {
             role: 'system',
             content: characterSheetText,
-            name: 'ADND 2E 角色卡',
+            name: characterName, // 使用角色名称而不是固定的"ADND 2E 角色卡"
             timestamp: Date.now(),
             stateSnapshot: initialSnapshot, // 保存初始状态快照
           },
@@ -827,8 +828,8 @@ export const useGameStore = defineStore('adnd2e-game', () => {
           // 使用保存的完整角色卡
           characterSheetText = charVars.adnd2e.messages[0].content;
         } else {
-          // 如果没有保存的角色卡（不应该发生），使用前端显示的角色卡
-          const firstMessage = messages.value.find(m => m.role === 'system' && m.name === 'ADND 2E 角色卡');
+          // 如果没有保存的角色卡（不应该发生），使用前端显示的角色卡（第一条system消息）
+          const firstMessage = messages.value.find(m => m.role === 'system');
           if (firstMessage) {
             characterSheetText = firstMessage.content;
           } else {
@@ -862,10 +863,10 @@ ${currentNpcs
   .join('\n\n')}
 
 **重要提示**：
-- 如果需要更新已存在的NPC状态，使用 update_npc 命令
-- 如果NPC离场或死亡，使用 remove_npc 命令移除
+- 如果需要更新已存在的NPC状态（如生命值、状态等），使用 update_npc 命令
+- **如果NPC离场、死亡或不再需要，必须使用 remove_npc 命令明确移除**
 - 只有在引入新NPC时才使用 add_npc 或 NPC标签格式创建
-- 特别关心的NPC (⭐) 不会自动移除，需要手动管理
+- NPC不会自动消失，你必须主动管理NPC的生命周期
 `;
 
         chatHistoryPrompts.push({
@@ -879,8 +880,9 @@ ${currentNpcs
       // 3.2 然后注入历史对话消息（排除刚刚添加的用户输入）
       const historyMessages = messages.value.slice(0, -1); // 排除最后一条（刚添加的用户输入）
       for (const msg of historyMessages) {
-        // 跳过角色卡消息（已经在上面注入了最新的角色卡）
-        if (msg.role === 'system' && msg.name === 'ADND 2E 角色卡') {
+        // 跳过第一条角色卡消息（已经在上面注入了最新的角色卡）
+        // 第一条消息总是角色卡，通过索引判断
+        if (msg === messages.value[0] && msg.role === 'system') {
           continue;
         }
         chatHistoryPrompts.push({

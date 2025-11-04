@@ -636,12 +636,10 @@ export function useNpcAutoDetection() {
           }
         });
 
-        // 🔧 每次处理完 AI 消息后，智能清理不在场的 NPC
-        // 但要排除刚刚新增的NPC（避免秒删）
-        autoCleanupAbsentNpcs(30, newlyAddedNpcNames);
-      } else {
-        // 如果本次没有检测到NPC，正常清理（不排除任何NPC）
-        autoCleanupAbsentNpcs();
+        // 🔧 禁用自动清理功能（避免误删NPC）
+        // 改为只能手动管理：用户需要在NPC管理器中手动移除不需要的NPC
+        // 或者通过 remove_npc 命令让AI主动移除离场的NPC
+        console.log('[NPC Auto] 自动清理已禁用，请手动管理NPC或使用 remove_npc 命令');
       }
     } catch (error) {
       console.error('[NPC Auto] 处理 AI 消息失败:', error);

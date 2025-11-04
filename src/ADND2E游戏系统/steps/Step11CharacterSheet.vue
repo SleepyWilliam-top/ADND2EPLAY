@@ -799,12 +799,14 @@ async function completeCreation() {
 
       // 无论聊天是否为空，都发送角色卡作为第一条可被 AI 读取的系统消息
       // 这样可以确保 AI 能够读取到角色的完整信息
+      const characterName = characterStore.characterData.characterName || '角色';
+
       if (lastMessageId < 0) {
         console.log('[Step11] 聊天为空，发送角色卡作为第一条消息');
         await createChatMessages([
           {
             role: 'system',
-            name: 'ADND 2E 角色卡',
+            name: characterName, // 使用角色名称而不是固定的"ADND 2E 角色卡"
             message: characterCardText,
             is_hidden: false,
           },
@@ -815,7 +817,8 @@ async function completeCreation() {
         // 即使聊天中已有消息，也在第一条消息前插入角色卡
         // 以确保 AI 能够在对话开始时就知道角色的完整信息
         const messages = getChatMessages('0-{{lastMessageId}}');
-        const hasCharacterCard = messages.some(msg => msg.name === 'ADND 2E 角色卡' || msg.name === '角色卡');
+        // 检查第一条消息是否是角色卡（role为system）
+        const hasCharacterCard = messages.length > 0 && messages[0].role === 'system';
 
         if (!hasCharacterCard) {
           console.log('[Step11] 未找到角色卡消息，在开头插入角色卡');
@@ -823,7 +826,7 @@ async function completeCreation() {
             [
               {
                 role: 'system',
-                name: 'ADND 2E 角色卡',
+                name: characterName, // 使用角色名称
                 message: characterCardText,
                 is_hidden: false,
               },
