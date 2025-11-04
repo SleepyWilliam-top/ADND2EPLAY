@@ -773,6 +773,9 @@ async function completeCreation() {
       movement: movement.value,
     };
 
+    // 获取角色名称（用于消息显示）
+    const characterName = characterStore.characterData.characterName || '角色';
+
     replaceVariables(
       {
         adnd2e: {
@@ -781,7 +784,7 @@ async function completeCreation() {
             {
               role: 'system',
               content: characterCardText,
-              name: '角色卡',
+              name: characterName, // 🔧 使用角色名称而不是固定的"角色卡"
             },
           ],
           lastSaved: new Date().toISOString(),
@@ -799,7 +802,6 @@ async function completeCreation() {
 
       // 无论聊天是否为空，都发送角色卡作为第一条可被 AI 读取的系统消息
       // 这样可以确保 AI 能够读取到角色的完整信息
-      const characterName = characterStore.characterData.characterName || '角色';
 
       if (lastMessageId < 0) {
         console.log('[Step11] 聊天为空，发送角色卡作为第一条消息');

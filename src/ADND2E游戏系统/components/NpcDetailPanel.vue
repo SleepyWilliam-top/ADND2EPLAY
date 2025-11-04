@@ -410,6 +410,7 @@ function formatDate(timestamp?: number): string {
 }
 
 .npc-header {
+  position: relative; // 🔧 为移动端的绝对定位按钮提供参考点
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
@@ -661,8 +662,6 @@ function formatDate(timestamp?: number): string {
 }
 
 .tab-content {
-  flex: 1;
-  overflow-y: auto;
   margin-bottom: 20px;
 }
 
@@ -696,16 +695,21 @@ function formatDate(timestamp?: number): string {
 .info-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
+  padding: 12px 14px;
   background-color: #f5f5f5;
   border: 1px solid #000;
 
   .label {
     font-weight: bold;
+    font-size: 14px;
+    color: #666;
   }
 
   .value {
     font-family: '临海体', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
   }
 }
 
@@ -991,17 +995,20 @@ function formatDate(timestamp?: number): string {
 
   .tab-button {
     flex: 1 1 calc(50% - 0.5px);
-    padding: 10px 8px;
-    font-size: 13px;
-    min-height: 44px; // 触摸友好
+    padding: 14px 12px; // 🔧 增加内边距
+    font-size: 15px; // 🔧 增加字体大小
+    min-height: 52px; // 🔧 增加最小高度，更触摸友好
+    font-weight: 600; // 🔧 加粗字体
 
     i {
-      margin-right: 5px;
+      margin-right: 6px;
+      font-size: 17px; // 🔧 增加图标大小
     }
 
     &.active {
-      border-bottom-width: 2px;
+      border-bottom-width: 3px; // 🔧 增加激活态的边框宽度
       margin-bottom: -2px;
+      font-weight: 700; // 🔧 激活态更粗
     }
   }
 
@@ -1014,50 +1021,76 @@ function formatDate(timestamp?: number): string {
   }
 
   .info-section h3 {
-    font-size: 16px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    font-size: 18px; // 🔧 增大标题字体
+    margin: 0 0 16px 0; // 🔧 增加下边距
+    padding-bottom: 12px;
     border-bottom-width: 2px;
   }
 
   .info-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 10px; // 🔧 减小项目间距，让内容更紧凑
   }
 
   .info-item {
-    padding: 8px 10px;
-    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 8px;
+    border-width: 2px;
+    min-height: 70px; // 确保有足够高度显示
 
     .label {
-      font-size: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #666;
+      width: 100%;
     }
 
     .value {
-      font-size: 13px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #000;
+      width: 100%;
+      word-break: break-word; // 防止长文本溢出
     }
   }
 
   .special-abilities,
   .description-text {
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 14px; // 🔧 增加字体大小
+    line-height: 1.7; // 🔧 增加行高
 
     p {
-      margin: 6px 0;
+      margin: 8px 0;
+
+      strong {
+        font-size: 13px;
+        display: block;
+        margin-bottom: 4px;
+        color: #666;
+      }
     }
   }
 
   .equipment-list {
-    gap: 10px;
+    gap: 12px;
   }
 
   .equipment-item {
-    padding: 8px 10px;
-    font-size: 13px;
+    padding: 12px 14px;
+    font-size: 14px; // 🔧 增加字体大小
+    line-height: 1.6;
 
     i {
-      font-size: 18px;
+      font-size: 20px; // 🔧 增加图标大小
+      margin-right: 8px;
+    }
+
+    strong {
+      font-size: 13px;
+      color: #666;
     }
   }
 
@@ -1067,27 +1100,30 @@ function formatDate(timestamp?: number): string {
   }
 
   .inventory-item {
-    padding: 10px;
+    padding: 12px;
     border-width: 2px;
 
     .item-name {
-      font-size: 13px;
+      font-size: 14px; // 🔧 增加字体大小
+      font-weight: 600;
     }
 
     .item-quantity {
-      font-size: 11px;
+      font-size: 13px; // 🔧 增加字体大小
     }
 
     .item-description {
-      font-size: 10px;
+      font-size: 12px; // 🔧 增加字体大小
+      line-height: 1.5;
     }
   }
 
   .notes-textarea {
-    min-height: 120px;
-    padding: 10px;
-    font-size: 13px;
+    min-height: 150px; // 🔧 增加高度
+    padding: 12px;
+    font-size: 14px; // 🔧 增加字体大小
     border-width: 2px;
+    line-height: 1.6;
   }
 
   .stats-grid {
@@ -1149,36 +1185,121 @@ function formatDate(timestamp?: number): string {
   }
 }
 
-// 极小屏幕适配
+// 极小屏幕适配（320px - 480px）
 @media (max-width: 480px) {
   .npc-detail-panel {
-    padding: 12px;
+    padding: 10px; // 🔧 减少外边距，留出更多显示空间
+  }
+
+  .back-button {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .npc-avatar-large {
+    width: 100px; // 🔧 减小头像，节省空间
+    height: 100px;
   }
 
   .npc-name {
-    font-size: 20px;
+    font-size: 20px; // 🔧 适当减小，给其他内容留空间
   }
 
   .npc-meta-info {
     font-size: 12px;
+    gap: 8px;
   }
 
   .tab-button {
-    flex: 1 1 100%;
-    font-size: 12px;
+    flex: 1 1 100%; // 🔧 每个标签占满一行
+    font-size: 14px;
+    padding: 12px 10px;
+    min-height: 48px; // 🔧 触摸友好
+
+    i {
+      font-size: 16px;
+    }
   }
 
   .info-section h3 {
+    font-size: 17px;
+    margin: 0 0 14px 0;
+    padding-bottom: 10px;
+  }
+
+  .info-grid {
+    gap: 8px; // 🔧 进一步减小间距
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    gap: 8px;
+    border-width: 2px;
+    min-height: 75px;
+
+    .label {
+      font-size: 15px;
+      font-weight: bold;
+      color: #666;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #000;
+      word-break: break-word;
+    }
+  }
+
+  .special-abilities,
+  .description-text {
+    font-size: 15px; // 🔧 增大文本字体
+    line-height: 1.8;
+
+    p {
+      margin: 10px 0;
+    }
+  }
+
+  .equipment-item {
+    padding: 14px 16px;
     font-size: 15px;
+
+    i {
+      font-size: 22px;
+    }
   }
 
   .action-btn {
     flex: 1 1 100%;
-    font-size: 12px;
+    font-size: 14px;
+    padding: 14px;
+    min-height: 50px; // 🔧 更大的触摸目标
   }
 
   .inventory-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .inventory-item {
+    padding: 14px;
+
+    .item-name {
+      font-size: 15px;
+    }
+
+    .item-quantity {
+      font-size: 14px;
+    }
+  }
+
+  .notes-textarea {
+    min-height: 180px;
+    font-size: 15px;
+    padding: 14px;
   }
 }
 </style>

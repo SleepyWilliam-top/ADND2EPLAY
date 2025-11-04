@@ -1,6 +1,7 @@
 import { klona } from 'klona';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { processMessageGameState } from '../composables/useGameStateParser';
 import {
   debouncedSaveToIndexedDB,
   exportMessagesToFile,
@@ -438,13 +439,28 @@ export const useGameStore = defineStore('adnd2e-game', () => {
         gameStateStore.loadGameState(persistedData.gameState);
 
         // 加载消息历史（第一条消息已经是最新的角色卡）
-        messages.value = persistedData.messages.map((msg: any) => ({
-          ...msg,
-          timestamp: msg.timestamp || Date.now(),
-        }));
+        let needsNameRepair = false; // 🔧 跟踪是否修复了 name 字段
+        messages.value = persistedData.messages.map((msg: any, index: number) => {
+          const mappedMsg = {
+            ...msg,
+            timestamp: msg.timestamp || Date.now(),
+          };
+
+          // 🔧 修复旧数据：确保第一条消息的 name 是角色名称，而不是"角色卡"或"ADND 2E 角色卡"
+          if (index === 0 && msg.role === 'system') {
+            const characterName = savedData.character?.characterName || '角色';
+            if (!mappedMsg.name || mappedMsg.name === '角色卡' || mappedMsg.name === 'ADND 2E 角色卡') {
+              mappedMsg.name = characterName;
+              needsNameRepair = true; // 标记需要保存
+              console.log(`[Game] 修复第一条消息的 name: "${msg.name}" -> "${characterName}"`);
+            }
+          }
+
+          return mappedMsg;
+        });
 
         // 修复旧数据：为没有快照的消息补充快照
-        let needsRepair = false;
+        let needsRepair = needsNameRepair; // 如果修复了 name，也需要保存
         const hasAnyMissingSnapshot = messages.value.some(msg => !msg.stateSnapshot);
 
         if (hasAnyMissingSnapshot) {
@@ -928,6 +944,15 @@ ${currentNpcs
       const cleanContent = parseResult.content || response;
       // AI 输出时保存状态快照，用于删除消息后的状态回溯
       addMessageToLog({ role: 'assistant', content: cleanContent, name: 'DM' }, true);
+
+      // 6.5. 🔧 处理 <gamestate> 变量思考指令
+      try {
+        const messageIndex = messages.value.length - 1;
+        processMessageGameState(response, messageIndex);
+        console.log('[Game] 已处理 <gamestate> 变量思考指令');
+      } catch (error) {
+        console.error('[Game] 处理 <gamestate> 指令失败:', error);
+      }
 
       // 7. 同层游玩：不调用 createChatMessages
       // 所有对话历史都保存在 IndexedDB 中，可通过导出功能手动导出到酒馆

@@ -239,6 +239,7 @@ import { useRouter } from 'vue-router';
 import type { NPC } from '../composables/useNpcAutoDetection';
 import { useNpcAutoDetection } from '../composables/useNpcAutoDetection';
 import { useCharacterStore } from '../stores/characterStore';
+import { useGameStateStore } from '../stores/gameStateStore';
 import { useGameStore } from '../stores/gameStore';
 import ChatRecordManager from './ChatRecordManager.vue';
 import ImageLibraryModal from './ImageLibraryModal.vue';
@@ -277,6 +278,7 @@ const selectedNpc = ref<NPC | null>(null);
 const defaultNpcAvatar = 'https://p.sda1.dev/28/26ccf8affeadc8c3e471a7176924b79e/icon_bed_happy.png';
 
 // 初始化 NPC 自动检测
+const gameStateStore = useGameStateStore();
 const npcAuto = useNpcAutoDetection();
 
 // 在组件挂载时加载角色数据
@@ -292,7 +294,35 @@ onMounted(() => {
 });
 
 // 使用 NPC 自动检测的列表
-const npcList = computed(() => npcAuto.npcList.value);
+// 🔧 修复：合并两套NPC系统的数据（autoDetection + gameState）
+const npcList = computed(() => {
+  // 从两个来源获取 NPC
+  const autoNpcs = npcAuto.npcList.value;
+  const gameStateNpcs = gameStateStore.gameState.npcs.map(npc => ({
+    ...npc,
+    favorite: npc.isBonded || false, // 🔧 从 isBonded 读取特别关心状态
+    lastSeen: Date.now(),
+  }));
+
+  // 合并并去重（以 id 为准）
+  const npcMap = new Map<string, NPC>();
+
+  // 先添加 autoDetection 的 NPC
+  autoNpcs.forEach(npc => npcMap.set(npc.id, npc));
+
+  // 再添加 gameState 的 NPC（会覆盖重复的）
+  gameStateNpcs.forEach(npc => {
+    if (!npcMap.has(npc.id)) {
+      npcMap.set(npc.id, npc as NPC);
+    } else {
+      // 如果已存在，合并数据（gameState 优先）
+      const existing = npcMap.get(npc.id)!;
+      npcMap.set(npc.id, { ...existing, ...npc, favorite: npc.favorite } as NPC);
+    }
+  });
+
+  return Array.from(npcMap.values());
+});
 
 // 排序后的 NPC 列表（特别关心的在前）
 const sortedNpcList = computed(() => {
@@ -485,6 +515,17 @@ function handleImageSelect(imageData: string, imageId: string) {
 
 // 切换特别关心状态
 function handleToggleFavorite(npc: NPC) {
+  // 切换前端状态
+  npc.favorite = !npc.favorite;
+
+  // 🔧 同步到 gameState.npcs 中的 isBonded 字段
+  const gameStateNpc = gameStateStore.gameState.npcs.find(n => n.id === npc.id);
+  if (gameStateNpc) {
+    gameStateNpc.isBonded = npc.favorite;
+    console.log(`[SettingsPanel] 已更新 NPC "${npc.name}" 的 isBonded 状态: ${npc.favorite}`);
+  }
+
+  // 也更新 autoDetection 系统的数据（保持兼容性）
   npcAuto.toggleNpcFavorite(npc.name);
 
   if (npc.favorite) {

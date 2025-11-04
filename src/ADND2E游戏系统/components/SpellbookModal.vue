@@ -262,8 +262,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useCharacterStore } from '../stores/characterStore';
+import { useGameStateStore } from '../stores/gameStateStore';
 import type { PriestSpell } from '../utils/priestSpellData';
 import { getPriestSpellById } from '../utils/priestSpellData';
 import type { WizardSpell } from '../utils/wizardSpellData';
@@ -293,8 +294,10 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const characterStore = useCharacterStore();
+const gameStateStore = useGameStateStore();
 const activeTab = ref<'spellbook' | 'memorize'>('memorize');
 const showLearnSpellDialog = ref(false);
+const forceUpdateKey = ref(0); // 🔧 用于强制刷新界面
 const showSpellSelector = ref(false);
 const showSpellDetailModal = ref(false);
 const selectedLearnLevel = ref(1);
@@ -341,6 +344,24 @@ const availableMemorizeLevels = computed(() => {
 });
 
 // 初始化法术数据
+// 🔧 监听游戏数据更新事件，自动刷新法术列表
+let cleanupFunctions: Array<() => void> = [];
+
+onMounted(() => {
+  // 监听游戏数据更新
+  eventOn('adnd2e_game_data_updated', () => {
+    console.log('[SpellbookModal] 收到游戏数据更新事件，刷新法术列表');
+    forceUpdateKey.value++;
+  });
+
+  console.log('[SpellbookModal] 已注册事件监听器');
+});
+
+onUnmounted(() => {
+  cleanupFunctions.forEach(cleanup => cleanup());
+  console.log('[SpellbookModal] 组件卸载，已清理事件监听器');
+});
+
 watch(
   () => props.visible,
   visible => {
@@ -475,10 +496,17 @@ function getMemorizedCount(level: number): number {
 }
 
 function getMemorizedSpells(level: number): string[] {
+  // 🔧 依赖 forceUpdateKey 确保响应式更新
+  void forceUpdateKey.value;
+
   const spells = characterStore.characterData.spells;
-  if (!spells) return [];
-  const levelKey = `level${level}` as keyof typeof spells.memorizedSpells;
-  return spells.memorizedSpells[levelKey] || [];
+  const charSpells = spells ? spells.memorizedSpells[`level${level}` as keyof typeof spells.memorizedSpells] || [] : [];
+
+  // 🔧 合并来自 gameStateStore 的已记忆法术
+  const stateSpells =
+    gameStateStore.gameState?.spells?.filter(s => s.level === level && s.memorized).map(s => s.id) || [];
+
+  return [...charSpells, ...stateSpells];
 }
 
 function getEmptySlots(level: number): number {

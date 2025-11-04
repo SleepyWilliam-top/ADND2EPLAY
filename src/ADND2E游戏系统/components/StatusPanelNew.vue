@@ -56,6 +56,32 @@
           <span class="value">{{ currentGold.toFixed(2) }} GP</span>
         </div>
 
+        <!-- 🔧 时间地点信息 -->
+        <div
+          v-if="gameState.gameState && gameState.gameState.time && gameState.gameState.location"
+          class="time-location-section"
+        >
+          <div class="info-row">
+            <span class="label">时间</span>
+            <span class="value">{{ gameState.gameState.time.date }} {{ gameState.gameState.time.current }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">地点</span>
+            <span class="value">{{ gameState.gameState.location.current }}</span>
+          </div>
+          <div
+            v-if="
+              gameState.gameState.weather &&
+              gameState.gameState.weather.current &&
+              gameState.gameState.weather.current !== '未知'
+            "
+            class="info-row"
+          >
+            <span class="label">天气</span>
+            <span class="value">{{ gameState.gameState.weather.current }}</span>
+          </div>
+        </div>
+
         <!-- 神祇数据（当角色标记为神祇或有神祇数据时显示） -->
         <div v-if="isDeityCharacter" class="deity-section">
           <div class="section-title">🌟 神祇本质</div>
@@ -672,37 +698,6 @@
         </div>
       </div>
 
-      <!-- 额外能力标签 -->
-      <div v-show="activeTab === 'extra'" class="tab-pane">
-        <div class="extra-abilities-section">
-          <div class="section-header">
-            <h3><i class="fas fa-magic"></i> 额外能力</h3>
-            <p class="section-hint">角色在冒险过程中获得的额外能力、天赋或特殊增强</p>
-          </div>
-
-          <div v-if="extraAbilities.length > 0" class="ability-list">
-            <div v-for="(ability, index) in extraAbilities" :key="index" class="extra-ability-card">
-              <div class="ability-header">
-                <span class="ability-name">{{ ability.name }}</span>
-                <span v-if="ability.source" class="ability-source">来源: {{ ability.source }}</span>
-              </div>
-              <div v-if="ability.description" class="ability-description">{{ ability.description }}</div>
-              <div v-if="ability.effect" class="ability-effect"><strong>效果：</strong>{{ ability.effect }}</div>
-              <div v-if="ability.conditions" class="ability-conditions">
-                <strong>使用条件：</strong>{{ ability.conditions }}
-              </div>
-              <div v-if="ability.uses" class="ability-uses"><strong>使用次数：</strong>{{ ability.uses }}</div>
-            </div>
-          </div>
-
-          <div v-else class="empty-state">
-            <i class="fas fa-wand-magic empty-icon"></i>
-            <p class="empty-text">暂无额外能力</p>
-            <p class="empty-hint">在冒险过程中，DM 可能会授予你特殊能力</p>
-          </div>
-        </div>
-      </div>
-
       <!-- 装备标签 -->
       <div v-show="activeTab === 'equipment'" class="tab-pane">
         <div class="collapsible-section" :class="{ collapsed: collapsedSections.currency }">
@@ -1139,7 +1134,6 @@ const tabs = [
   { id: 'combat', label: '战斗', icon: 'fas fa-shield-alt' },
   { id: 'skills', label: '技能', icon: 'fas fa-book' },
   { id: 'abilities', label: '特性', icon: 'fas fa-star' },
-  { id: 'extra', label: '额外能力', icon: 'fas fa-magic' },
   { id: 'equipment', label: '装备', icon: 'fas fa-shopping-bag' },
 ];
 
@@ -1716,15 +1710,6 @@ const classAbilities = computed(() => {
     const level1Abilities = ci.specialAbilities.filter(a => a.level === 1);
     abilities.push(...level1Abilities.map(a => ({ 名称: a.name, 描述: a.description })));
   }
-  return abilities;
-});
-
-// 额外能力（从角色卡变量中读取，需要响应式更新）
-const extraAbilities = computed(() => {
-  // 依赖 charUpdateKey 以确保响应式更新
-  const _updateKey = charUpdateKey.value;
-  const abilities = char.value.extraAbilities || [];
-  console.log('[StatusPanel] 读取额外能力（更新键:', _updateKey, '），数量:', abilities.length);
   return abilities;
 });
 
@@ -3624,140 +3609,6 @@ onBeforeUnmount(() => {
       }
     }
   }
-
-  // 额外能力样式
-  .extra-abilities-section {
-    .section-header {
-      margin-bottom: 16px;
-      padding: 12px;
-      background-color: #f8f8f8;
-      border: 2px solid #000;
-      border-radius: 4px;
-
-      h3 {
-        margin: 0 0 8px 0;
-        font-size: 16px;
-        font-weight: bold;
-        color: #000;
-
-        i {
-          margin-right: 8px;
-          color: #8b4513;
-        }
-      }
-
-      .section-hint {
-        margin: 0;
-        font-size: 12px;
-        color: #666;
-        font-style: italic;
-      }
-    }
-
-    .extra-ability-card {
-      padding: 12px;
-      margin-bottom: 12px;
-      background-color: #fff;
-      border: 2px solid #000;
-      border-radius: 4px;
-      transition: all 0.2s;
-
-      &:hover {
-        background-color: #f9f9f9;
-        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
-      }
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .ability-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #ddd;
-
-        .ability-name {
-          font-size: 14px;
-          font-weight: bold;
-          color: #8b4513;
-        }
-
-        .ability-source {
-          font-size: 11px;
-          color: #666;
-          font-style: italic;
-        }
-      }
-
-      .ability-description,
-      .ability-effect,
-      .ability-conditions,
-      .ability-uses {
-        margin-top: 6px;
-        font-size: 12px;
-        line-height: 1.5;
-        color: #333;
-
-        strong {
-          color: #000;
-          font-weight: bold;
-        }
-      }
-
-      .ability-description {
-        color: #555;
-      }
-
-      .ability-effect {
-        padding: 6px 8px;
-        background-color: #f0f8ff;
-        border-left: 3px solid #4682b4;
-        border-radius: 2px;
-      }
-
-      .ability-conditions {
-        padding: 6px 8px;
-        background-color: #fff8dc;
-        border-left: 3px solid #daa520;
-        border-radius: 2px;
-      }
-
-      .ability-uses {
-        padding: 6px 8px;
-        background-color: #f5f5f5;
-        border-left: 3px solid #696969;
-        border-radius: 2px;
-      }
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 32px 16px;
-      color: #999;
-
-      .empty-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        color: #ccc;
-      }
-
-      .empty-text {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 8px;
-        color: #666;
-      }
-
-      .empty-hint {
-        font-size: 12px;
-        color: #999;
-        font-style: italic;
-      }
-    }
-  }
 }
 
 // ==================== 移动端适配 ====================
@@ -4019,42 +3870,6 @@ onBeforeUnmount(() => {
 
         .ability-usage {
           font-size: 9px;
-        }
-      }
-    }
-
-    // 额外能力适配
-    .extra-abilities-section {
-      .section-header {
-        padding: 10px;
-
-        h3 {
-          font-size: 14px;
-        }
-
-        .section-hint {
-          font-size: 11px;
-        }
-      }
-
-      .extra-ability-card {
-        padding: 10px;
-
-        .ability-header {
-          .ability-name {
-            font-size: 13px;
-          }
-
-          .ability-source {
-            font-size: 10px;
-          }
-        }
-
-        .ability-description,
-        .ability-effect,
-        .ability-conditions,
-        .ability-uses {
-          font-size: 11px;
         }
       }
     }

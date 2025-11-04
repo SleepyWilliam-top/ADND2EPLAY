@@ -152,6 +152,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useGameStateStore } from '../stores/gameStateStore';
 
 interface Props {
   visible: boolean;
@@ -167,33 +168,16 @@ const emit = defineEmits<Emits>();
 const activeTab = ref<'active' | 'completed' | 'failed'>('active');
 const selectedQuest = ref<any>(null);
 
-// 从角色卡变量读取任务列表
-const questList = ref<any[]>([]);
+// 🔧 从 gameStateStore 读取任务列表（响应式）
+const gameStateStore = useGameStateStore();
 
-function loadQuests() {
-  const charVars = getVariables({ type: 'character' });
-  questList.value = charVars?.adnd2e?.quests || [];
-  console.log('[QuestManager] 任务列表已更新，共', questList.value.length, '个任务');
-}
-
-// 初始加载
-loadQuests();
-
-// 监听角色数据更新事件
-eventOn('adnd2e_character_data_synced', () => {
-  loadQuests();
-});
-
-// 监听消息接收事件
-eventOn(tavern_events.MESSAGE_RECEIVED, () => {
-  setTimeout(() => {
-    loadQuests();
-  }, 100);
+const questList = computed(() => {
+  return gameStateStore.gameState?.quests || [];
 });
 
 // 进行中的任务
 const activeQuests = computed(() => {
-  return questList.value.filter(q => q.status === 'active');
+  return questList.value.filter(q => q.status === 'active' || q.status === 'pending');
 });
 
 // 已完成的任务

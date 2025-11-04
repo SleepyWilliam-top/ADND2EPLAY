@@ -124,15 +124,50 @@ export interface GameState {
     // 关系系统
     relationship?: number; // 与玩家的关系值（-100 到 100）
     relationshipDescription?: string; // 关系描述
+
+    // 管理标记
+    isBonded?: boolean; // 是否为重要NPC（特别关心），防止自动删除
+    notes?: string; // 备注信息
   }>;
 
   // 任务
   quests: Array<{
     id: string;
-    title: string;
+    name: string; // 任务名称
+    title?: string; // 兼容旧字段
     description: string;
-    status: 'active' | 'completed' | 'failed';
+    objective?: string; // 目标
+    reward?: string; // 奖励
+    status: 'active' | 'completed' | 'failed' | 'pending'; // 添加 pending 状态
+    difficulty?: string; // 难度
+    giver?: string; // 任务发布者
+    location?: string; // 任务地点
+    notes?: string; // 备注
     progress?: string;
+  }>;
+
+  // 法术列表
+  spells: Array<{
+    id: string;
+    name: string; // 法术名称
+    level: number; // 法术等级
+    school?: string; // 法术学派（巫师）
+    sphere?: string; // 法术领域（牧师）
+    components: string; // 施法材料 (V/S/M)
+    castingTime: string; // 施法时间
+    range: string; // 距离
+    duration: string; // 持续时间
+    savingThrow: string; // 豁免检定
+    effect: string; // 效果描述
+    memorized: boolean; // 是否已记忆
+  }>;
+
+  // 总结记录
+  summaries: Array<{
+    timestamp: number; // 时间戳
+    smallSummary: string; // 小总结（50-100字）
+    largeSummary: string; // 大总结（50字内）
+    messageIndex: number; // 对应的消息索引
   }>;
 
   // 效果/状态
@@ -199,6 +234,8 @@ function createDefaultGameState(): GameState {
     inventory: [],
     npcs: [],
     quests: [],
+    spells: [],
+    summaries: [],
     effects: [],
     combat: {
       inCombat: false,
