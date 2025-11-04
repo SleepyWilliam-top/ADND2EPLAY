@@ -1964,7 +1964,7 @@ onMounted(() => {
 
       @media (max-width: 480px) {
         padding: 15px 10px;
-  }
+      }
     }
   }
 

@@ -524,22 +524,26 @@ export function getWisdomModifiers(wis: number | null): AbilityModifiers {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '4级，5级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术';
+    modifiers.immunity =
+      '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术';
   } else if (wis === 23) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '1级，6级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术';
+    modifiers.immunity =
+      '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术';
   } else if (wis === 24) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '5级，6级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖';
+    modifiers.immunity =
+      '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖';
   } else if (wis >= 25) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '6级，7级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖、厌恶/吸引术、死亡法咒、群体魅惑';
+    modifiers.immunity =
+      '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖、厌恶/吸引术、死亡法咒、群体魅惑';
   }
 
   return modifiers;

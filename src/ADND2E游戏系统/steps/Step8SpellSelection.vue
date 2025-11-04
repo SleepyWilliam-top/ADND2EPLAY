@@ -723,7 +723,7 @@ function confirmAndProceed() {
     gap: 16px;
 
     @media (max-width: 992px) {
-    grid-template-columns: 1fr;
+      grid-template-columns: 1fr;
       gap: 12px;
     }
   }
@@ -1081,7 +1081,7 @@ function confirmAndProceed() {
 
       @media (max-width: 992px) {
         font-size: 18px;
-  }
+      }
     }
   }
 }

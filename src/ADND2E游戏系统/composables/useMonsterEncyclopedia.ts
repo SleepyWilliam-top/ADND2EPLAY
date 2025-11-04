@@ -321,7 +321,7 @@ async function recordEncounterAuto(monsterId: string, context: string): Promise<
  */
 export async function deleteEncounterEntry(monsterId: string, entryIndex: number): Promise<void> {
   const record = await getEncounterRecord(monsterId);
-  
+
   if (!record) {
     throw new Error('未找到遭遇记录');
   }
@@ -332,10 +332,10 @@ export async function deleteEncounterEntry(monsterId: string, entryIndex: number
 
   // 删除指定的遭遇记录
   record.encounterHistory.splice(entryIndex, 1);
-  
+
   // 更新遭遇次数
   record.encounterCount = Math.max(0, record.encounterCount - 1);
-  
+
   // 如果还有遭遇记录，更新首次和最近遭遇时间
   if (record.encounterHistory.length > 0) {
     record.firstEncounteredAt = record.encounterHistory[0].timestamp;
@@ -343,8 +343,14 @@ export async function deleteEncounterEntry(monsterId: string, entryIndex: number
     await updateEncounterRecord(record);
   } else {
     // 如果没有遭遇记录了，删除整个记录（如果没有笔记）
-    if (!record.notes.general && !record.notes.status && !record.notes.appearance && 
-        !record.notes.personality && !record.notes.relationship && !record.customImageId) {
+    if (
+      !record.notes.general &&
+      !record.notes.status &&
+      !record.notes.appearance &&
+      !record.notes.personality &&
+      !record.notes.relationship &&
+      !record.customImageId
+    ) {
       await db.encounters.delete(monsterId);
     } else {
       // 保留记录但清空遭遇相关数据
