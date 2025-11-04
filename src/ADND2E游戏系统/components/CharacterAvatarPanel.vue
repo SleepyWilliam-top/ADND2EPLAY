@@ -1,6 +1,6 @@
 <template>
-  <div class="avatar-panel-wrapper" :class="$attrs.class">
-    <div class="avatar-panel">
+  <div class="avatar-panel-wrapper">
+    <div class="avatar-panel" :class="$attrs.class">
       <div class="panel-header">
         <h3 class="panel-title">角色</h3>
       </div>
@@ -108,7 +108,11 @@
     </div>
 
     <!-- 图片图库弹窗 -->
-    <ImageLibraryModal v-model="showImageLibraryModal" category="character" @select="handleImageSelect" />
+    <ImageLibraryModal
+      v-model="showImageLibraryModal"
+      category="character"
+      @select="handleImageSelect"
+    />
   </div>
 </template>
 
@@ -473,26 +477,22 @@ function handleImageSelect(imageData: string, imageId: string) {
   transition: width 0.3s ease;
   overflow: hidden;
 
-  .avatar-panel-wrapper.visible & {
-    // 移动端visible类应用到wrapper上
-    @media (max-width: 992px) {
-      left: 0 !important;
-    }
-  }
-
   &.collapsed {
     width: 50px;
   }
 
   @media (max-width: 992px) {
     position: fixed;
-    left: -300px;
+    left: 0;
     top: 0;
     bottom: 0;
+    height: 100%;
     width: 280px !important; // 覆盖collapsed的width
     z-index: 1200;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
-    transition: left 0.3s ease;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
 
     // 移动端不应用collapsed样式
     &.collapsed {
@@ -501,6 +501,11 @@ function handleImageSelect(imageData: string, imageId: string) {
       .panel-content {
         display: flex; // 覆盖collapsed隐藏内容的设置
       }
+    }
+
+    // 当父级添加visible类时显示
+    &.visible {
+      transform: translateX(0);
     }
   }
 }
@@ -525,7 +530,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .panel-title {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   font-weight: bold;
   letter-spacing: 2px;
@@ -615,7 +620,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 
 .avatar-hint {
   color: #fff;
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
@@ -624,7 +629,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 
 .character-name {
   margin-top: 12px;
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 18px;
   font-weight: bold;
   text-align: center;
@@ -635,7 +640,7 @@ function handleImageSelect(imageData: string, imageId: string) {
   font-size: 10px;
   color: #999;
   text-align: center;
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
 }
 
 .quick-info {
@@ -646,7 +651,7 @@ function handleImageSelect(imageData: string, imageId: string) {
   background-color: #fff;
   border: 3px solid #000;
   position: relative;
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
 
   &::before {
     content: '';
@@ -760,7 +765,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .info-label {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -770,7 +775,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .info-value {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 13px;
   font-weight: bold;
   color: #000;
@@ -785,7 +790,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .time-label {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase;
@@ -795,7 +800,7 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .time-value {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   font-weight: bold;
 }
@@ -848,7 +853,7 @@ function handleImageSelect(imageData: string, imageId: string) {
   align-items: center;
 
   h2 {
-    font-family: '临海体', serif;
+    font-family: "临海体", serif;
     font-size: 24px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -969,21 +974,21 @@ function handleImageSelect(imageData: string, imageId: string) {
 }
 
 .sheet-character-name {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 24px;
   font-weight: bold;
   margin: 0 0 8px 0;
 }
 
 .sheet-character-desc {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 16px;
   color: #666;
   margin: 0;
 }
 
 .default-avatar-credit {
-  font-family: '临海体', serif;
+  font-family: "临海体", serif;
   font-size: 12px;
   color: #999;
   margin: 8px 0 0 0;

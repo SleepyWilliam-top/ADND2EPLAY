@@ -776,32 +776,22 @@ watch([chapterSize, displayMode], () => {
 
 .modal-card {
   background-color: #fff;
-  border: 4px solid #000;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
   max-width: 1200px;
   width: 95%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
-    bottom: 6px;
-    border: 2px solid #666;
-    pointer-events: none;
-    z-index: 1;
-  }
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .modal-header {
   background-color: #fff;
-  border-bottom: 3px solid #000;
-  padding: 15px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px 8px 0 0;
+  padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -812,10 +802,11 @@ watch([chapterSize, displayMode], () => {
 
   h2 {
     font-family: '临海体', serif;
-    font-size: 22px;
-    font-weight: bold;
-    letter-spacing: 2px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
     margin: 0;
+    color: #333;
   }
 }
 
@@ -848,28 +839,30 @@ watch([chapterSize, displayMode], () => {
 }
 
 .close-button {
-  background: none;
-  border: 2px solid #000;
-  width: 40px;
-  height: 40px;
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: normal;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  color: #666;
+  border-radius: 4px;
 
   &:hover {
-    background-color: #000;
-    color: #fff;
+    background-color: #f5f5f5;
+    color: #333;
   }
 }
 
 .chapter-nav {
-  background-color: rgba(255, 255, 255, 0.8);
-  border-bottom: 2px solid #000;
-  padding: 12px 20px;
+  background-color: #fafafa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -903,69 +896,78 @@ watch([chapterSize, displayMode], () => {
 }
 
 .nav-btn {
-  width: 36px;
-  height: 36px;
-  border: 2px solid #000;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
   background-color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  color: #666;
 
   &:hover:not(:disabled) {
-    background-color: #000;
-    color: #fff;
+    background-color: #f5f5f5;
+    border-color: rgba(0, 0, 0, 0.25);
   }
 
   &:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
 
 .chapter-select {
   flex: 1;
-  padding: 8px 12px;
-  border: 2px solid #000;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
   background-color: #fff;
   font-family: '临海体', serif;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s;
 
   &:focus {
     outline: none;
     border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
   }
 }
 
 .bookmark-btn {
-  padding: 8px 16px;
-  border: 2px solid #000;
+  padding: 6px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
   background-color: #fff;
   cursor: pointer;
   font-family: '临海体', serif;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  color: #666;
 
   &:hover {
-    background-color: #ffd700;
-    border-color: #ffd700;
+    background-color: #f5f5f5;
+    border-color: rgba(0, 0, 0, 0.25);
+    color: #333;
   }
 
   i {
-    color: #ffd700;
+    font-size: 14px;
   }
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #f5f5f5;
+  padding: 24px;
+  background-color: #fff;
 
   &.continuous-mode {
     padding: 0;
@@ -976,22 +978,24 @@ watch([chapterSize, displayMode], () => {
   .chapter-header {
     text-align: center;
     margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #000;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
     h3 {
       font-family: '临海体', serif;
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 18px;
+      font-weight: 600;
       margin: 0 0 8px 0;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
+      color: #333;
     }
 
     .chapter-range {
       font-family: '临海体', serif;
-      font-size: 12px;
-      color: #666;
+      font-size: 13px;
+      color: #999;
       margin: 0;
+      font-weight: normal;
     }
   }
 }
@@ -1008,10 +1012,10 @@ watch([chapterSize, displayMode], () => {
 }
 
 .chapter-divider {
-  background-color: #fff;
-  padding: 30px 20px;
-  border-top: 3px solid #000;
-  border-bottom: 3px solid #000;
+  background-color: #fafafa;
+  padding: 24px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   margin: 20px 0;
 
   .divider-content {
@@ -1028,10 +1032,10 @@ watch([chapterSize, displayMode], () => {
   }
 
   .chapter-title {
-    font-size: 20px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: #000;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #333;
   }
 
   .chapter-info {
@@ -1050,44 +1054,31 @@ watch([chapterSize, displayMode], () => {
 }
 
 .message-item {
-  background-color: #fff;
-  border: 2px solid #000;
-  padding: 15px;
+  background-color: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 16px;
   position: relative;
   transition: all 0.2s;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    right: 4px;
-    bottom: 4px;
-    border: 1px solid #666;
-    pointer-events: none;
-  }
-
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #f5f5f5;
+    border-color: rgba(0, 0, 0, 0.12);
   }
 
   &.message-system {
-    background-color: #f5f5f5;
-    border-color: #8b4513;
-
-    &::before {
-      border-color: #8b4513;
-    }
+    background-color: #fafafa;
+    border-left: 3px solid #ff9800;
   }
 
   &.message-user {
-    background-color: #fff8f0;
-    border-left: 4px solid #4a90e2;
+    background-color: #fafafa;
+    border-left: 3px solid #4a90e2;
   }
 
   &.message-assistant {
-    background-color: #faf8f3;
-    border-left: 4px solid #8b4513;
+    background-color: #fafafa;
+    border-left: 3px solid #28a745;
   }
 }
 
@@ -1095,42 +1086,63 @@ watch([chapterSize, displayMode], () => {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .message-role {
   font-family: '临海体', serif;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 10px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #333;
+  letter-spacing: 0.5px;
 }
 
 .message-time {
   font-family: '临海体', serif;
   font-size: 11px;
   color: #999;
+  font-weight: normal;
 }
 
 .message-index {
   font-family: '临海体', serif;
   font-size: 11px;
-  color: #666;
+  color: #999;
+  font-weight: normal;
+}
+
+.message-user .message-role {
+  background-color: rgba(74, 144, 226, 0.15);
+  color: #4a90e2;
+}
+
+.message-assistant .message-role {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.message-system .message-role {
+  background-color: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
 }
 
 .snapshot-badge {
   margin-left: 8px;
-  color: #ffd700;
-  font-size: 12px;
+  padding: 3px 8px;
+  background-color: rgba(255, 215, 0, 0.2);
+  color: #d4a017;
+  font-size: 11px;
+  border-radius: 10px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  animation: pulse 2s ease-in-out infinite;
 
   i {
-    filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+    font-size: 12px;
   }
 }
 
@@ -1151,8 +1163,8 @@ watch([chapterSize, displayMode], () => {
 }
 
 .message-action-btn {
-  background: none;
-  border: 1px solid #000;
+  background: transparent;
+  border: none;
   width: 28px;
   height: 28px;
   cursor: pointer;
@@ -1160,21 +1172,23 @@ watch([chapterSize, displayMode], () => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  font-size: 12px;
+  font-size: 14px;
+  color: #999;
+  border-radius: 4px;
 
   &:hover {
-    background-color: #000;
-    color: #fff;
+    background-color: #f0f0f0;
+    color: #333;
   }
 
   &.edit-btn:hover {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background-color: rgba(74, 144, 226, 0.1);
+    color: #4a90e2;
   }
 
   &.delete-btn:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
   }
 }
 
@@ -1437,12 +1451,14 @@ watch([chapterSize, displayMode], () => {
 }
 
 // 响应式
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .modal-card {
     max-width: 100%;
     width: 100%;
     max-height: 100vh;
     height: 100vh;
+    border-radius: 0;
+    border: none;
   }
 
   .chapter-nav {

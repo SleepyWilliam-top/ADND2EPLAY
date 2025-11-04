@@ -30,9 +30,15 @@
 
       <!-- 操作按钮 -->
       <div class="panel-actions">
-        <button class="action-btn" @click="clearMetrics"><i class="fa-solid fa-broom"></i> 清空</button>
-        <button class="action-btn" @click="downloadReport"><i class="fa-solid fa-download"></i> 导出</button>
-        <button class="action-btn danger" @click="closePanel"><i class="fa-solid fa-times"></i> 关闭</button>
+        <button class="action-btn" @click="clearMetrics">
+          <i class="fa-solid fa-broom"></i> 清空
+        </button>
+        <button class="action-btn" @click="downloadReport">
+          <i class="fa-solid fa-download"></i> 导出
+        </button>
+        <button class="action-btn danger" @click="closePanel">
+          <i class="fa-solid fa-times"></i> 关闭
+        </button>
       </div>
     </div>
   </div>
@@ -228,4 +234,109 @@ function closePanel() {
     }
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .performance-panel {
+    width: 90%;
+    max-width: 90%;
+    right: 5%;
+    top: 80px;
+    max-height: 70vh;
+  }
+
+  .panel-header {
+    padding: 8px 10px;
+
+    h3 {
+      font-size: 12px;
+    }
+
+    .close-btn {
+      width: 24px;
+      height: 24px;
+      font-size: 16px;
+    }
+  }
+
+  .panel-content {
+    padding: 10px;
+  }
+
+  .perf-section {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+
+    h4 {
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+  }
+
+  .metric-item {
+    padding: 6px 8px;
+    font-size: 10px;
+
+    .metric-label {
+      font-size: 10px;
+    }
+
+    .metric-value {
+      font-size: 12px;
+    }
+  }
+
+  .chart-container {
+    height: 80px;
+  }
+
+  .panel-actions {
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    flex-wrap: wrap;
+
+    .action-btn {
+      flex: 1 1 calc(50% - 3px);
+      padding: 8px;
+      font-size: 10px;
+      min-height: 40px;
+
+      i {
+        margin-right: 3px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .performance-panel {
+    width: 95%;
+    max-width: 95%;
+    right: 2.5%;
+    top: 70px;
+  }
+
+  .panel-header h3 {
+    font-size: 11px;
+  }
+
+  .metric-item {
+    font-size: 9px;
+
+    .metric-value {
+      font-size: 11px;
+    }
+  }
+
+  .chart-container {
+    height: 60px;
+  }
+
+  .panel-actions .action-btn {
+    flex: 1 1 100%;
+    font-size: 9px;
+  }
+}
 </style>
+

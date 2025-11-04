@@ -133,6 +133,24 @@
         <h4>🙏 祭司法术记忆</h4>
         <p class="hint">从你的领域中选择要记忆的法术。</p>
 
+        <!-- 法术领域信息栏 -->
+        <div v-if="currentClass?.spellSpheres" class="spell-spheres-info">
+          <div class="spheres-header">
+            <span class="spheres-icon">✨</span>
+            <span class="spheres-title">法术领域权能</span>
+          </div>
+          <div class="spheres-content">
+            <div v-if="currentClass.spellSpheres.major.length > 0" class="sphere-group-info">
+              <span class="sphere-label">主要领域:</span>
+              <span class="sphere-list">{{ currentClass.spellSpheres.major.join('、') }}</span>
+            </div>
+            <div v-if="currentClass.spellSpheres.minor.length > 0" class="sphere-group-info">
+              <span class="sphere-label">次要领域:</span>
+              <span class="sphere-list minor">{{ currentClass.spellSpheres.minor.join('、') }}</span>
+            </div>
+          </div>
+        </div>
+
         <div v-if="spellFailureChance > 0" class="warning-box">
           ⚠️ 你的灵知较低（{{ characterStore.adjustedAbilities.wis }}），施法失败率：{{ spellFailureChance }}%
         </div>
@@ -489,6 +507,11 @@ function confirmAndProceed() {
   min-height: 600px;
   padding: 30px;
   font-family: '临海体', serif;
+
+  @media (max-width: 992px) {
+    padding: 15px 10px;
+    min-height: 400px;
+  }
 }
 
 .selection-header {
@@ -497,12 +520,24 @@ function confirmAndProceed() {
   padding-bottom: 20px;
   border-bottom: 3px solid #000;
 
+  @media (max-width: 992px) {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom-width: 2px;
+  }
+
   h3 {
     font-size: 28px;
     font-weight: bold;
     margin: 0 0 12px 0;
     text-transform: uppercase;
     letter-spacing: 2px;
+
+    @media (max-width: 992px) {
+      font-size: 20px;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
   }
 
   .character-info {
@@ -511,12 +546,22 @@ function confirmAndProceed() {
     gap: 20px;
     font-size: 16px;
     color: #666;
+    flex-wrap: wrap;
+
+    @media (max-width: 992px) {
+      gap: 10px;
+      font-size: 14px;
+    }
 
     span {
       padding: 6px 12px;
       background-color: #f5f5f5;
       border: 2px solid #ddd;
       border-radius: 4px;
+
+      @media (max-width: 992px) {
+        padding: 5px 10px;
+      }
     }
   }
 }
@@ -528,6 +573,12 @@ function confirmAndProceed() {
   margin-bottom: 20px;
   position: relative;
 
+  @media (max-width: 992px) {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-width: 2px;
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -537,22 +588,42 @@ function confirmAndProceed() {
     bottom: 6px;
     border: 1px solid #666;
     pointer-events: none;
+
+    @media (max-width: 992px) {
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+    }
   }
 }
 
 .phase-header {
   margin-bottom: 24px;
 
+  @media (max-width: 992px) {
+    margin-bottom: 16px;
+  }
+
   h4 {
     font-size: 24px;
     font-weight: bold;
     margin: 0 0 12px 0;
+
+    @media (max-width: 992px) {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
   }
 
   .hint {
     color: #666;
     font-size: 16px;
     line-height: 1.6;
+
+    @media (max-width: 992px) {
+      font-size: 14px;
+    }
   }
 
   .progress-info {
@@ -560,16 +631,32 @@ function confirmAndProceed() {
     align-items: center;
     gap: 12px;
     margin-top: 12px;
+    flex-wrap: wrap;
+
+    @media (max-width: 992px) {
+      gap: 8px;
+      margin-top: 10px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
 
     .count {
       font-size: 18px;
       font-weight: bold;
       color: #000;
+
+      @media (max-width: 992px) {
+        font-size: 16px;
+      }
     }
 
     .hint {
       font-size: 14px;
       color: #999;
+
+      @media (max-width: 992px) {
+        font-size: 13px;
+      }
     }
   }
 }
@@ -582,6 +669,11 @@ function confirmAndProceed() {
     h4 {
       font-size: 24px;
       margin-bottom: 20px;
+
+      @media (max-width: 992px) {
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
     }
 
     .instruction {
@@ -589,12 +681,26 @@ function confirmAndProceed() {
       line-height: 1.8;
       color: #666;
       margin-bottom: 30px;
+
+      @media (max-width: 992px) {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
     }
 
     .dice-roll-area {
       .large {
         padding: 16px 40px;
         font-size: 18px;
+
+        @media (max-width: 992px) {
+          padding: 12px 24px;
+          font-size: 16px;
+          min-height: 44px;
+          width: 100%;
+          max-width: 300px;
+        }
       }
     }
   }
@@ -606,13 +712,20 @@ function confirmAndProceed() {
   gap: 20px;
   margin-bottom: 20px;
 
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
   &.compact {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
-  }
 
-  @media (max-width: 768px) {
+    @media (max-width: 992px) {
     grid-template-columns: 1fr;
+      gap: 12px;
+    }
   }
 }
 
@@ -622,6 +735,19 @@ function confirmAndProceed() {
   margin-top: 30px;
   padding-top: 20px;
   border-top: 2px solid #ddd;
+  gap: 15px;
+
+  @media (max-width: 992px) {
+    margin-top: 20px;
+    padding-top: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    button {
+      flex: 1;
+      min-width: calc(50% - 5px);
+    }
+  }
 }
 
 .memorization-content {
@@ -629,8 +755,9 @@ function confirmAndProceed() {
   grid-template-columns: 350px 1fr;
   gap: 30px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
@@ -643,6 +770,12 @@ function confirmAndProceed() {
     margin: 0 0 16px 0;
     padding-bottom: 12px;
     border-bottom: 2px solid #000;
+
+    @media (max-width: 992px) {
+      font-size: 18px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+    }
   }
 }
 
@@ -650,6 +783,10 @@ function confirmAndProceed() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 992px) {
+    gap: 12px;
+  }
 }
 
 .slot-level {
@@ -657,6 +794,10 @@ function confirmAndProceed() {
   border: 2px solid #ddd;
   padding: 12px;
   border-radius: 4px;
+
+  @media (max-width: 992px) {
+    padding: 10px;
+  }
 
   &.has-slots {
     border-color: #000;
@@ -668,18 +809,37 @@ function confirmAndProceed() {
     align-items: center;
     margin-bottom: 12px;
 
+    @media (max-width: 992px) {
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
     .level-label {
       font-weight: bold;
       font-size: 16px;
+
+      @media (max-width: 992px) {
+        font-size: 15px;
+      }
     }
 
     .slot-count {
       font-size: 14px;
       color: #666;
 
+      @media (max-width: 992px) {
+        font-size: 13px;
+      }
+
       .bonus-indicator {
         color: #5cb85c;
         font-weight: bold;
+
+        @media (max-width: 992px) {
+          display: block;
+          font-size: 12px;
+        }
       }
     }
   }
@@ -688,6 +848,10 @@ function confirmAndProceed() {
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    @media (max-width: 992px) {
+      gap: 6px;
+    }
   }
 
   .memorized-spell-item {
@@ -699,9 +863,19 @@ function confirmAndProceed() {
     border: 1px solid #1976d2;
     border-radius: 4px;
 
+    @media (max-width: 992px) {
+      padding: 10px;
+    }
+
     .spell-name {
       font-size: 14px;
       font-weight: 500;
+      flex: 1;
+      word-break: break-word;
+
+      @media (max-width: 992px) {
+        font-size: 13px;
+      }
     }
 
     .remove-btn {
@@ -715,6 +889,14 @@ function confirmAndProceed() {
       font-size: 18px;
       line-height: 1;
       transition: background-color 0.2s;
+      flex-shrink: 0;
+      margin-left: 8px;
+
+      @media (max-width: 992px) {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+      }
 
       &:hover {
         background-color: #c9302c;
@@ -730,11 +912,20 @@ function confirmAndProceed() {
     text-align: center;
     color: #999;
     font-size: 14px;
+
+    @media (max-width: 992px) {
+      padding: 10px;
+      font-size: 13px;
+    }
   }
 }
 
 .sphere-group {
   margin-bottom: 30px;
+
+  @media (max-width: 992px) {
+    margin-bottom: 20px;
+  }
 
   .sphere-title {
     font-size: 18px;
@@ -743,6 +934,68 @@ function confirmAndProceed() {
     padding: 8px 12px;
     background-color: #fff3e0;
     border-left: 4px solid #e65100;
+
+    @media (max-width: 992px) {
+      font-size: 16px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+    }
+  }
+}
+
+// 法术领域信息栏
+.spell-spheres-info {
+  margin-top: 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  .spheres-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: bold;
+
+    .spheres-icon {
+      font-size: 20px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  .spheres-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sphere-group-info {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    line-height: 1.6;
+
+    .sphere-label {
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .sphere-list {
+      flex: 1;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.95);
+
+      &.minor {
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
   }
 }
 
@@ -754,6 +1007,12 @@ function confirmAndProceed() {
   border-radius: 4px;
   color: #856404;
   font-weight: 500;
+
+  @media (max-width: 992px) {
+    margin-top: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
 }
 
 .bottom-actions {
@@ -761,6 +1020,13 @@ function confirmAndProceed() {
   justify-content: space-between;
   padding-top: 30px;
   border-top: 3px solid #000;
+  gap: 15px;
+
+  @media (max-width: 992px) {
+    padding-top: 20px;
+    border-top-width: 2px;
+    gap: 10px;
+  }
 
   .adnd-button {
     display: flex;
@@ -775,6 +1041,15 @@ function confirmAndProceed() {
     transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+
+    @media (max-width: 992px) {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 14px;
+      border-width: 2px;
+      min-height: 44px;
+      justify-content: center;
+    }
 
     &.primary {
       background-color: #000;
@@ -803,25 +1078,11 @@ function confirmAndProceed() {
 
     .button-icon {
       font-size: 20px;
+
+      @media (max-width: 992px) {
+        font-size: 18px;
+  }
     }
-  }
-}
-
-@media (max-width: 768px) {
-  .step8-spell-selection {
-    padding: 20px;
-  }
-
-  .selection-header h3 {
-    font-size: 22px;
-  }
-
-  .phase-container {
-    padding: 20px;
-  }
-
-  .memorization-content {
-    grid-template-columns: 1fr;
   }
 }
 </style>

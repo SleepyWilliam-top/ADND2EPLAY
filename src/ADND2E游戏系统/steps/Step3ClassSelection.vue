@@ -867,8 +867,33 @@ function getMaxSpellLevel(): number {
   }
 }
 
-// 响应式
-@media (max-width: 968px) {
+// 响应式 - 统一使用 992px 和 480px 断点
+@media (max-width: 992px) {
+  .step3-class-selection {
+    padding: 20px 15px;
+  }
+
+  .selection-header {
+    padding: 20px 15px;
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .abilities-display {
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+
+      span {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+    }
+  }
+
   .selection-content {
     flex-direction: column;
 
@@ -877,21 +902,264 @@ function getMaxSpellLevel(): number {
       border-right: none;
       border-bottom: 2px solid #000;
       max-height: 300px;
+      padding: 10px;
+
+      .class-card {
+        padding: 12px;
+        margin-bottom: 8px;
+
+        .class-icon {
+          font-size: 28px;
+        }
+
+        .class-info {
+          .class-name {
+            font-size: 15px;
+          }
+
+          .class-category {
+            font-size: 11px;
+          }
+        }
+      }
     }
-  }
-}
 
-@media (max-width: 768px) {
-  .class-details {
-    padding: 20px;
+    .class-details {
+      padding: 20px 15px;
 
-    .detail-section .ability-requirements {
-      grid-template-columns: 1fr;
+      .detail-header {
+        h2 {
+          font-size: 20px;
+        }
+
+        .level-limit {
+          font-size: 13px;
+        }
+      }
+
+      .detail-section {
+        margin-bottom: 20px;
+
+        h4 {
+          font-size: 16px;
+          margin-bottom: 10px;
+        }
+
+        .description {
+          font-size: 14px;
+          line-height: 1.7;
+        }
+
+        .ability-requirements {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+
+          .ability-requirement {
+            padding: 6px;
+
+            .ability-label {
+              font-size: 13px;
+              min-width: 35px;
+            }
+
+            .requirement-value {
+              font-size: 13px;
+            }
+
+            .requirement-status {
+              font-size: 14px;
+            }
+          }
+        }
+
+        .prime-requisites {
+          font-size: 14px;
+
+          .hint {
+            font-size: 13px;
+          }
+        }
+
+        .xp-table,
+        .spell-table {
+          font-size: 13px;
+
+          th,
+          td {
+            padding: 6px 4px;
+          }
+        }
+
+        .abilities-list {
+          li {
+            font-size: 14px;
+            margin-bottom: 10px;
+          }
+        }
+
+        &.exceptional-strength-section {
+          padding: 15px;
+
+          .exceptional-strength-content {
+            .hint {
+              font-size: 13px;
+              padding: 10px;
+            }
+
+            .exceptional-strength-roll {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 10px;
+
+              .roll-result {
+                justify-content: center;
+
+                .result-value {
+                  font-size: 20px;
+                }
+              }
+
+              button {
+                width: 100%;
+                padding: 12px;
+                font-size: 15px;
+                min-height: 44px;
+              }
+            }
+          }
+        }
+      }
     }
   }
 
   .bottom-actions {
+    padding: 15px;
     flex-wrap: wrap;
+    gap: 10px;
+
+    button {
+      flex: 1;
+      justify-content: center;
+      min-height: 44px;
+
+      &.primary {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .step3-class-selection {
+    padding: 15px 10px;
+  }
+
+  .selection-header {
+    padding: 15px 10px;
+
+    h3 {
+      font-size: 18px;
+    }
+
+    .abilities-display {
+      span {
+        font-size: 12px;
+        padding: 5px 8px;
+      }
+    }
+  }
+
+  .selection-content {
+    .class-list {
+      max-height: 250px;
+
+      .class-card {
+        padding: 10px;
+
+        .class-icon {
+          font-size: 24px;
+        }
+
+        .class-info {
+          .class-name {
+            font-size: 14px;
+          }
+
+          .class-category {
+            font-size: 10px;
+          }
+        }
+      }
+    }
+
+    .class-details {
+      padding: 15px 10px;
+
+      .detail-header {
+        h2 {
+          font-size: 18px;
+        }
+
+        .level-limit {
+          font-size: 12px;
+        }
+      }
+
+      .detail-section {
+        h4 {
+          font-size: 15px;
+        }
+
+        .description {
+          font-size: 13px;
+        }
+
+        .ability-requirements {
+          grid-template-columns: 1fr;
+          gap: 6px;
+
+          .ability-requirement {
+            padding: 5px;
+          }
+        }
+
+        .xp-table,
+        .spell-table {
+          font-size: 11px;
+
+          th,
+          td {
+            padding: 4px 2px;
+          }
+        }
+
+        &.exceptional-strength-section {
+          padding: 12px;
+
+          .exceptional-strength-content {
+            .hint {
+              font-size: 12px;
+            }
+
+            .exceptional-strength-roll {
+              button {
+                font-size: 14px;
+                padding: 10px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .bottom-actions {
+    padding: 12px 10px;
+
+    button {
+      font-size: 14px;
+      padding: 10px 15px;
+    }
   }
 }
 </style>

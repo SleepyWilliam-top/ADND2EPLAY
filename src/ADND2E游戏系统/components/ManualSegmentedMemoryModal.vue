@@ -251,4 +251,129 @@ function saveAndClose() {
     font-size: 16px;
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .segmented-memory-overlay {
+    padding: 15px;
+  }
+
+  .segmented-memory-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    padding: 20px 15px;
+    border-radius: 8px;
+
+    h4 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      padding-right: 30px; // 为关闭按钮留出空间
+    }
+
+    .hint-text {
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
+
+    .modal-close-btn {
+      top: 12px;
+      right: 12px;
+      font-size: 28px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      padding: 8px 0;
+    }
+  }
+
+  .settings-section {
+    margin-bottom: 18px;
+
+    label {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .help-text {
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      font-size: 16px !important; // 防止iOS自动缩放
+      padding: 12px;
+      border-width: 2px;
+    }
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .major-action-button {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 14px;
+    justify-content: center;
+    min-height: 44px; // 触摸友好
+    border-width: 2px;
+
+    i {
+      font-size: 15px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .segmented-memory-modal {
+    padding: 15px 12px;
+    border-radius: 6px;
+
+    h4 {
+      font-size: 18px;
+    }
+
+    .hint-text {
+      font-size: 12px;
+    }
+
+    .modal-close-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 24px;
+    }
+  }
+
+  .settings-section {
+    label {
+      font-size: 13px;
+    }
+
+    .help-text {
+      font-size: 10px;
+    }
+
+    textarea {
+      font-size: 15px !important;
+      padding: 10px;
+    }
+  }
+
+  .major-action-button {
+    font-size: 13px;
+    padding: 10px 12px;
+
+    i {
+      font-size: 14px;
+    }
+  }
+}
 </style>

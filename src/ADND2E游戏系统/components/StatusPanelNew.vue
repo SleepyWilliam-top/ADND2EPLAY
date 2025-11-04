@@ -356,7 +356,19 @@
         <div class="info-row">
           <span class="label">护甲等级(AC)</span>
           <span v-if="isDeityCharacter" class="value deity-na">不适用</span>
-          <span v-else class="value">{{ char.armorClass?.total ?? 10 }}</span>
+          <span v-else class="value">
+            {{ char.armorClass?.total ?? 10 }}
+            <span v-if="char.armorClass" class="ac-detail">
+              (基础{{ char.armorClass.fromArmor }}
+              <template v-if="char.armorClass.fromShield !== 0"> + 盾牌{{ char.armorClass.fromShield }} </template>
+              <template v-if="char.armorClass.dexterityBonus !== 0">
+                + 敏捷{{ char.armorClass.dexterityBonus }} </template
+              >)
+            </span>
+          </span>
+        </div>
+        <div v-if="!isDeityCharacter && char.armorClass?.dexterityBonus" class="info-row ac-note-row">
+          <span class="ac-note">※ 敏捷加成在某些情况不生效（背后攻击、行动受限等）</span>
         </div>
         <div class="info-row">
           <span class="label">THAC0</span>
@@ -367,6 +379,33 @@
           <span class="label">移动力</span>
           <span v-if="isDeityCharacter" class="value deity-na">不适用</span>
           <span v-else class="value">{{ char.movement ?? 12 }}</span>
+        </div>
+        <!-- 攻击奖励 -->
+        <div v-if="!isDeityCharacter" class="info-row section-divider">
+          <span class="label section-title-small">攻击奖励</span>
+        </div>
+        <div v-if="!isDeityCharacter" class="info-row">
+          <span class="label sub-label">近战攻击</span>
+          <span class="value bonus-value">{{ meleeAttackBonus }} <span class="bonus-source">(力量)</span></span>
+        </div>
+        <div v-if="!isDeityCharacter" class="info-row">
+          <span class="label sub-label">远程攻击</span>
+          <span class="value bonus-value">{{ rangedAttackBonus }} <span class="bonus-source">(敏捷)</span></span>
+        </div>
+        <!-- 伤害奖励 -->
+        <div v-if="!isDeityCharacter" class="info-row section-divider">
+          <span class="label section-title-small">伤害奖励</span>
+        </div>
+        <div v-if="!isDeityCharacter" class="info-row">
+          <span class="label sub-label">近战武器</span>
+          <span class="value bonus-value">{{ damageBonus }} <span class="bonus-source">(力量)</span></span>
+        </div>
+        <div v-if="!isDeityCharacter" class="info-row">
+          <span class="label sub-label">远程武器</span>
+          <span class="value bonus-value">{{ damageBonus }} <span class="bonus-source">(仅弓类)</span></span>
+        </div>
+        <div v-if="!isDeityCharacter" class="info-row damage-note-row">
+          <span class="damage-note">※ 伤害调整值同样适用于远程武器，但获得奖励的弓必须是特制的</span>
         </div>
         <!-- 魔法抗力（仅当有魔法抗力时显示） -->
         <div v-if="totalMagicResistance > 0" class="info-row magic-resistance-row">
@@ -928,6 +967,7 @@ import type { DeityAbility } from '../utils/deityAbilitiesData';
 import { getFullDeityAbilities } from '../utils/deityAbilitiesData';
 import type { Weapon } from '../utils/equipmentData';
 import { getEquipmentById } from '../utils/equipmentData';
+import { eventBus } from '../utils/eventBus';
 import { getGroupName, getProficiencyById, type NonweaponProficiency } from '../utils/proficiencyData';
 import { getRaceById, getSubraceById } from '../utils/raceData';
 import {
@@ -937,8 +977,7 @@ import {
   thiefSkillsData,
 } from '../utils/thiefSkillsData';
 import { turnUndeadRules, turnUndeadTable } from '../utils/turnUndeadData';
-import { getWeaponById } from '../utils/weaponData';
-import { eventBus } from '../utils/eventBus';
+import { getWeaponById, RELATED_WEAPON_CATEGORIES } from '../utils/weaponData';
 
 const gameState = useGameStateStore();
 
@@ -1608,6 +1647,11 @@ const intMods = computed(() => getIntelligenceModifiers(intelligence.value));
 const wisMods = computed(() => getWisdomModifiers(wisdom.value));
 const chaMods = computed(() => getCharismaModifiers(charisma.value));
 
+// 攻击奖励和伤害奖励
+const meleeAttackBonus = computed(() => strMods.value.hitProb || '0');
+const rangedAttackBonus = computed(() => dexMods.value.missile || '0');
+const damageBonus = computed(() => strMods.value.damage || '0');
+
 // 翻译武器熟练（🔧 实时读取，技能数据不变但需要响应式更新键）
 const translatedWeaponProfs = computed(() => {
   // 🔧 依赖更新键确保响应式
@@ -1796,12 +1840,22 @@ const equippedWeapons = computed(() => {
 
     // 计算伤害加值（力量）
     let damageBonus = 0;
+
+    // 近战武器使用力量伤害加值
     if (!weaponData.range) {
-      // 近战武器使用力量伤害加值
       const strDamageBonus =
         typeof strMods.value.damage === 'number' ? strMods.value.damage : parseInt(strMods.value.damage) || 0;
       damageBonus += strDamageBonus;
+    } else {
+      // 远程武器：只有弓类武器可以获得力量伤害加值
+      const isBow = RELATED_WEAPON_CATEGORIES.bows.includes(item.id);
+      if (isBow) {
+        const strDamageBonus =
+          typeof strMods.value.damage === 'number' ? strMods.value.damage : parseInt(strMods.value.damage) || 0;
+        damageBonus += strDamageBonus;
+      }
     }
+
     if (isSpecialized) {
       damageBonus += 2; // 专精获得+2伤害
     }
@@ -2104,12 +2158,38 @@ onBeforeUnmount(() => {
   background-color: #fff;
   margin-bottom: 2px;
 
+  &.section-divider {
+    background-color: #f5f5f5;
+    border-bottom: 3px solid #8b4513;
+    padding: 6px 12px;
+    margin-top: 8px;
+  }
+
+  &.ac-note-row,
+  &.damage-note-row {
+    background-color: #fffdf7;
+    border-color: #daa520;
+    padding: 4px 12px;
+  }
+
   .label {
     color: #000;
     font-size: 13px;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    &.section-title-small {
+      font-size: 14px;
+      color: #8b4513;
+      font-weight: bold;
+    }
+
+    &.sub-label {
+      font-size: 12px;
+      padding-left: 16px;
+      color: #666;
+    }
   }
 
   .value {
@@ -2128,6 +2208,14 @@ onBeforeUnmount(() => {
       font-size: 15px;
     }
 
+    &.bonus-value {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #8b4513;
+      font-size: 16px;
+    }
+
     // HP 低血量警告
     &.hp-low {
       color: #ff9800;
@@ -2138,6 +2226,28 @@ onBeforeUnmount(() => {
       color: #f44336;
       animation: pulse-critical 1s ease-in-out infinite;
     }
+  }
+
+  .ac-detail {
+    font-size: 11px;
+    color: #888;
+    margin-left: 6px;
+    font-weight: normal;
+  }
+
+  .ac-note,
+  .damage-note {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    font-weight: normal;
+  }
+
+  .bonus-source {
+    font-size: 11px;
+    color: #888;
+    font-weight: normal;
+    font-style: italic;
   }
 }
 
@@ -3645,6 +3755,566 @@ onBeforeUnmount(() => {
         font-size: 12px;
         color: #999;
         font-style: italic;
+      }
+    }
+  }
+}
+
+// ==================== 移动端适配 ====================
+@media (max-width: 992px) {
+  .adnd-status-panel {
+    // 标签页导航适配
+    .panel-tabs {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px;
+
+      .tab-item {
+        flex: 1 1 calc(50% - 3px);
+        min-width: calc(50% - 3px);
+        padding: 10px 8px;
+        font-size: 12px;
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+
+    // 内容区域适配
+    .panel-content {
+      padding: 12px;
+    }
+
+    // 信息行适配
+    .info-row {
+      padding: 8px 10px;
+      font-size: 12px;
+
+      .label {
+        font-size: 12px;
+      }
+
+      .value {
+        font-size: 12px;
+      }
+    }
+
+    // 属性面板适配
+    .ability-section {
+      border-width: 2px;
+
+      &::before {
+        display: none;
+      }
+
+      .ability-header {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .ability-name {
+        font-size: 12px;
+      }
+
+      .ability-score {
+        font-size: 20px;
+        min-width: 35px;
+      }
+
+      .ability-modifiers {
+        padding: 6px 10px;
+      }
+
+      .modifier-row {
+        padding: 3px 4px;
+        font-size: 10px;
+      }
+    }
+
+    // 区块标题适配
+    .section-title {
+      font-size: 12px;
+      padding: 6px 10px;
+      margin: 12px 0 8px 0;
+      letter-spacing: 0.5px;
+      box-shadow: 2px 2px 0 #000;
+
+      .skill-note {
+        font-size: 9px;
+        margin-left: 6px;
+      }
+    }
+
+    // 技能列表适配
+    .skill-list,
+    .equipment-list {
+      gap: 6px;
+
+      .skill-item,
+      .equipment-item {
+        padding: 8px 10px;
+        border-width: 2px;
+        font-size: 12px;
+
+        &.clickable-skill {
+          .info-icon {
+            right: 10px;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    // 能力列表适配
+    .ability-list {
+      gap: 6px;
+
+      .ability-item {
+        padding: 8px;
+        border-width: 2px;
+
+        &::before {
+          border-width: 1px;
+        }
+
+        .ability-name {
+          font-size: 11px;
+        }
+
+        .ability-desc {
+          font-size: 10px;
+        }
+      }
+    }
+
+    // 武器详情适配
+    .weapon-list {
+      gap: 10px;
+    }
+
+    .weapon-detail {
+      border-width: 2px;
+
+      &::before {
+        display: none;
+      }
+
+      .weapon-header {
+        padding: 8px 10px;
+
+        .weapon-name {
+          font-size: 12px;
+        }
+
+        .weapon-quantity {
+          font-size: 11px;
+          padding: 2px 6px;
+        }
+      }
+
+      .weapon-stats {
+        padding: 8px 10px;
+      }
+
+      .weapon-stat-row {
+        padding: 3px 4px;
+        font-size: 10px;
+
+        .stat-label {
+          min-width: 70px;
+          font-size: 10px;
+        }
+
+        .stat-value {
+          font-size: 10px;
+        }
+      }
+    }
+
+    // 盗贼技能适配
+    .thief-skill-item {
+      padding: 8px;
+      border-width: 2px;
+
+      &::before {
+        display: none;
+      }
+
+      .skill-name-row {
+        .skill-name {
+          font-size: 12px;
+        }
+
+        .skill-value {
+          font-size: 14px;
+          padding: 2px 6px;
+        }
+      }
+
+      .skill-description {
+        font-size: 10px;
+      }
+
+      .skill-breakdown {
+        font-size: 9px;
+      }
+    }
+
+    // 豁免检定网格适配
+    .saving-throws-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 8px 10px;
+
+      .saving-throw-item {
+        padding: 6px;
+
+        .st-label {
+          font-size: 10px;
+        }
+
+        .st-value {
+          font-size: 14px;
+        }
+      }
+    }
+
+    // 神祇相关适配
+    .deity-st-value-display {
+      padding: 10px;
+      margin: 10px;
+
+      .st-unified-label {
+        font-size: 10px;
+      }
+
+      .st-unified-value {
+        font-size: 20px;
+      }
+    }
+
+    .deity-section {
+      .section-subtitle {
+        font-size: 12px;
+        padding: 6px;
+      }
+
+      .deity-ability-card {
+        padding: 8px;
+
+        .ability-header {
+          .ability-name {
+            font-size: 12px;
+          }
+
+          .ability-name-en {
+            font-size: 10px;
+          }
+        }
+
+        .ability-desc {
+          font-size: 10px;
+        }
+
+        .ability-usage {
+          font-size: 9px;
+        }
+      }
+    }
+
+    // 额外能力适配
+    .extra-abilities-section {
+      .section-header {
+        padding: 10px;
+
+        h3 {
+          font-size: 14px;
+        }
+
+        .section-hint {
+          font-size: 11px;
+        }
+      }
+
+      .extra-ability-card {
+        padding: 10px;
+
+        .ability-header {
+          .ability-name {
+            font-size: 13px;
+          }
+
+          .ability-source {
+            font-size: 10px;
+          }
+        }
+
+        .ability-description,
+        .ability-effect,
+        .ability-conditions,
+        .ability-uses {
+          font-size: 11px;
+        }
+      }
+    }
+
+    // 模态框适配
+    .proficiency-modal-content,
+    .turn-undead-content,
+    .deity-ability-content {
+      width: 95%;
+      max-width: 95%;
+      max-height: 90vh;
+
+      .modal-header {
+        padding: 12px 15px;
+
+        h2 {
+          font-size: 16px;
+        }
+
+        .close-button {
+          width: 30px;
+          height: 30px;
+          font-size: 18px;
+        }
+      }
+
+      .modal-body {
+        padding: 15px;
+      }
+    }
+
+    .prof-info-row {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 6px 10px;
+
+      .prof-label {
+        min-width: auto;
+        margin-bottom: 4px;
+        font-size: 12px;
+      }
+
+      .prof-value {
+        font-size: 12px;
+      }
+    }
+
+    .prof-description {
+      padding: 12px;
+
+      h3 {
+        font-size: 13px;
+      }
+
+      p {
+        font-size: 12px;
+      }
+    }
+
+    // 斥退亡灵表格适配
+    .turn-undead-table {
+      font-size: 10px;
+
+      thead th {
+        padding: 6px 4px;
+        font-size: 10px;
+      }
+
+      tbody td {
+        padding: 4px 6px;
+        font-size: 10px;
+      }
+    }
+
+    .turn-table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .turn-section {
+      padding: 12px;
+      margin-bottom: 16px;
+
+      h3 {
+        font-size: 14px;
+      }
+
+      p {
+        font-size: 12px;
+      }
+
+      ul {
+        font-size: 12px;
+      }
+    }
+
+    // 神祇属性提示适配
+    .deity-attributes-notice {
+      flex-direction: column;
+      padding: 10px;
+
+      .notice-icon {
+        font-size: 20px;
+      }
+
+      .notice-text {
+        strong {
+          font-size: 12px;
+        }
+
+        p {
+          font-size: 10px;
+        }
+      }
+    }
+
+    // 通用提示框适配
+    .deity-st-notice,
+    .deity-st-failure-note {
+      padding: 6px 10px;
+      margin: 6px 10px;
+      font-size: 10px;
+    }
+
+    .deity-section .deity-pending-notice {
+      padding: 10px;
+
+      p {
+        font-size: 12px;
+
+        &:first-child {
+          font-size: 13px;
+        }
+      }
+
+      .notice-hint {
+        font-size: 11px;
+      }
+
+      .notice-example {
+        font-size: 10px;
+      }
+    }
+
+    // 魔法抗力来源提示适配
+    .mr-sources,
+    .mr-sources-combat {
+      font-size: 10px;
+    }
+
+    // 神祇能力详情模态框适配
+    .deity-ability-modal {
+      .deity-ability-info-section {
+        padding: 12px;
+
+        .info-item {
+          .info-label {
+            font-size: 12px;
+            min-width: 70px;
+          }
+
+          .info-value {
+            font-size: 12px;
+          }
+        }
+      }
+
+      .deity-ability-details,
+      .deity-ability-limitations {
+        padding: 12px;
+
+        h3 {
+          font-size: 14px;
+        }
+
+        ul {
+          font-size: 12px;
+        }
+      }
+    }
+
+    // 空状态适配
+    .empty-text {
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .empty-state {
+      padding: 24px 12px;
+
+      .empty-icon {
+        font-size: 36px;
+      }
+
+      .empty-text {
+        font-size: 13px;
+      }
+
+      .empty-hint {
+        font-size: 11px;
+      }
+    }
+
+    // 弹药行适配
+    .ammunition-row {
+      padding: 5px;
+
+      .stat-label,
+      .stat-value {
+        font-size: 10px;
+      }
+    }
+  }
+
+  // 在模态框中显示的状态面板额外适配
+  .adnd-status-panel.in-modal {
+    .panel-tabs .tab-item {
+      flex: 1 1 calc(33.33% - 4px);
+      min-width: calc(33.33% - 4px);
+    }
+  }
+}
+
+// 极小屏幕适配（480px以下）
+@media (max-width: 480px) {
+  .adnd-status-panel {
+    .panel-tabs .tab-item {
+      flex: 1 1 100%;
+      min-width: 100%;
+      padding: 8px 6px;
+      font-size: 11px;
+    }
+
+    .ability-score {
+      font-size: 18px !important;
+    }
+
+    .section-title {
+      font-size: 11px;
+      padding: 5px 8px;
+    }
+
+    .proficiency-modal-content,
+    .turn-undead-content,
+    .deity-ability-content {
+      .modal-header h2 {
+        font-size: 14px;
+      }
+
+      .modal-body {
+        padding: 12px;
+      }
+    }
+
+    .turn-undead-table {
+      font-size: 9px;
+
+      thead th,
+      tbody td {
+        padding: 3px 2px;
       }
     }
   }

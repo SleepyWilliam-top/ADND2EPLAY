@@ -370,8 +370,9 @@ function confirmAndProceed() {
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -493,18 +494,197 @@ function confirmAndProceed() {
   }
 }
 
-@media (max-width: 768px) {
+// 响应式 - 统一使用 992px 和 480px 断点
+@media (max-width: 992px) {
   .step10-basic-info {
-    padding: 20px;
+    padding: 20px 15px;
   }
 
-  .info-header h3 {
-    font-size: 22px;
+  .info-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+
+    h3 {
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .character-summary {
+      flex-wrap: wrap;
+      gap: 8px;
+
+      span {
+        font-size: 13px;
+        padding: 5px 10px;
+      }
+    }
   }
 
-  .character-summary {
+  .info-content {
+    max-width: 100%;
+  }
+
+  .form-section {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-size: 15px;
+
+    .label-hint {
+      font-size: 13px;
+    }
+
+    .label-required {
+      font-size: 16px;
+    }
+  }
+
+  .form-input,
+  .form-select {
+    padding: 10px 14px;
+    font-size: 16px !important; // 防止 iOS 自动缩放
+  }
+
+  .form-textarea {
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  .gender-option {
+    padding: 15px;
+
+    .gender-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .gender-label {
+      font-size: 15px;
+    }
+  }
+
+  .info-notice {
+    padding: 15px;
+    gap: 12px;
+
+    .notice-icon {
+      font-size: 28px;
+    }
+
+    .notice-content p {
+      font-size: 14px;
+    }
+  }
+
+  .bottom-actions {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    padding-top: 20px;
+
+    .adnd-button {
+      width: 100%;
+      justify-content: center;
+      min-height: 44px;
+      padding: 12px 20px;
+      font-size: 15px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .step10-basic-info {
+    padding: 15px 10px;
+    min-height: 500px;
+  }
+
+  .info-header {
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    border-width: 2px;
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .character-summary {
+      flex-direction: column;
+      gap: 6px;
+
+      span {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+    }
+  }
+
+  .form-section {
+    margin-bottom: 18px;
+  }
+
+  .form-label {
+    font-size: 14px;
+
+    .label-hint {
+      font-size: 12px;
+    }
+  }
+
+  .form-input,
+  .form-select {
+    padding: 10px 12px;
+    font-size: 16px !important;
+  }
+
+  .form-textarea {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .char-count {
+    font-size: 11px;
+  }
+
+  .gender-option {
+    padding: 12px;
+
+    .gender-icon {
+      font-size: 24px;
+    }
+
+    .gender-label {
+      font-size: 14px;
+    }
+  }
+
+  .info-notice {
+    padding: 12px;
+    gap: 10px;
+    border-width: 2px;
+
+    .notice-icon {
+      font-size: 24px;
+    }
+
+    .notice-content p {
+      font-size: 13px;
+    }
+  }
+
+  .bottom-actions {
+    padding-top: 15px;
+    border-width: 2px;
+
+    .adnd-button {
+      padding: 10px 15px;
+      font-size: 14px;
+      border-width: 2px;
+
+      .button-icon {
+        font-size: 18px;
+      }
+    }
   }
 }
 </style>

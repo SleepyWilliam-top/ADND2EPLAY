@@ -11,6 +11,14 @@ import {
   startAutoSync,
   stopAutoSync,
 } from '../composables/usePersistence';
+import {
+  getCharismaModifiers,
+  getConstitutionModifiers,
+  getDexterityModifiers,
+  getIntelligenceModifiers,
+  getStrengthModifiers,
+  getWisdomModifiers,
+} from '../utils/abilityCalculator';
 import { getClassById } from '../utils/classData';
 import { parseAiResponse } from '../utils/commandParser';
 import { removeNpcTags } from '../utils/npcTagRemover';
@@ -131,6 +139,55 @@ export const useGameStore = defineStore('adnd2e-game', () => {
     for (const [key, name] of Object.entries(abilityNames)) {
       const value = character.abilities[key as keyof typeof character.abilities];
       lines.push(`${name}: ${value !== null ? value : '?'}`);
+
+      // 添加属性详细加成信息（仅当值存在且有效时）
+      if (value !== null && value > 0) {
+        const abilityKey = key as keyof typeof character.abilities;
+        switch (abilityKey) {
+          case 'str': {
+            const mods = getStrengthModifiers(value);
+            lines.push(`  命中率: ${mods.hitProb}  伤害: ${mods.damage}  负重: ${mods.weight}磅`);
+            lines.push(`  最大负重: ${mods.maxPress}磅  开门: ${mods.openDoors}  弯杆/举门: ${mods.bendBars}`);
+            break;
+          }
+          case 'dex': {
+            const mods = getDexterityModifiers(value);
+            lines.push(`  突袭反应: ${mods.surprise}  远程攻击: ${mods.missile}  防御调整(AC): ${mods.defense}`);
+            break;
+          }
+          case 'con': {
+            const mods = getConstitutionModifiers(value);
+            lines.push(`  生命值调整: ${mods.hpAdj}  毒素豁免: ${mods.poisonSave}`);
+            lines.push(`  身体休克: ${mods.systemShock}  复生存活: ${mods.resurrection}  再生: ${mods.regeneration}`);
+            break;
+          }
+          case 'int': {
+            const mods = getIntelligenceModifiers(value);
+            lines.push(`  语言数量: ${mods.languages}  法术习得率: ${mods.learnSpell}`);
+            let intLine = `  法术等级上限: ${mods.spellLevel}  每级法术上限: ${mods.maxSpells}`;
+            if (mods.immunity && mods.immunity !== '--') {
+              intLine += `  法术免疫: ${mods.immunity}`;
+            }
+            lines.push(intLine);
+            break;
+          }
+          case 'wis': {
+            const mods = getWisdomModifiers(value);
+            lines.push(`  魔法防御: ${mods.magicDefense}  施法失败率: ${mods.spellFailure}`);
+            let wisLine = `  奖励法术: ${mods.bonusSpells}`;
+            if (mods.immunity && mods.immunity !== '--') {
+              wisLine += `  法术免疫: ${mods.immunity}`;
+            }
+            lines.push(wisLine);
+            break;
+          }
+          case 'cha': {
+            const mods = getCharismaModifiers(value);
+            lines.push(`  追随者上限: ${mods.maxHenchmen}  基础忠诚: ${mods.loyalty}  反应调整: ${mods.reaction}`);
+            break;
+          }
+        }
+      }
     }
     if (character.exceptionalStrength) {
       lines.push(`超凡力量: 18/${character.exceptionalStrength}`);

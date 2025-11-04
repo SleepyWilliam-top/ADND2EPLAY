@@ -395,4 +395,141 @@ const activeQuests = computed(() => {
     }
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .game-state-panel {
+    .panel-header {
+      padding: 10px 12px;
+
+      h3 {
+        font-size: 14px;
+      }
+
+      .toggle-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+    }
+
+    .panel-content {
+      padding: 12px;
+    }
+
+    .state-section {
+      margin-bottom: 12px;
+
+      h4 {
+        font-size: 13px;
+        gap: 6px;
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .state-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .state-item {
+      padding: 6px 8px;
+      font-size: 12px;
+
+      .label {
+        font-size: 12px;
+      }
+
+      .value {
+        font-size: 12px;
+      }
+    }
+
+    .location-display {
+      padding: 8px;
+      font-size: 13px;
+      border-width: 2px;
+    }
+
+    .time-item,
+    .weather-item {
+      padding: 5px 8px;
+      font-size: 11px;
+
+      .time-label,
+      .weather-label {
+        font-size: 11px;
+      }
+
+      .time-value,
+      .weather-value {
+        font-size: 11px;
+      }
+    }
+
+    .effect-item {
+      padding: 6px 8px;
+      font-size: 11px;
+      border-width: 2px;
+    }
+
+    .inventory-item {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
+    .quest-item {
+      padding: 8px;
+      font-size: 11px;
+      border-width: 2px;
+
+      .quest-title {
+        font-size: 12px;
+      }
+    }
+
+    .combat-section {
+      padding: 8px;
+      margin: -12px -12px 0 -12px;
+      border-width: 2px;
+
+      h4 {
+        font-size: 13px;
+      }
+
+      .combat-info {
+        font-size: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    }
+  }
+}
+
+// 极小屏幕适配
+@media (max-width: 480px) {
+  .game-state-panel {
+    .panel-header h3 {
+      font-size: 13px;
+    }
+
+    .state-section h4 {
+      font-size: 12px;
+    }
+
+    .state-item,
+    .time-item,
+    .weather-item,
+    .inventory-item {
+      font-size: 10px;
+    }
+
+    .combat-info {
+      font-size: 11px;
+    }
+  }
+}
 </style>

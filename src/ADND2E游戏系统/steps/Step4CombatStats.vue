@@ -831,31 +831,291 @@ function goToNextStep() {
   }
 }
 
-// 响应式
-@media (max-width: 768px) {
+// 响应式 - 统一使用 992px 和 480px 断点
+@media (max-width: 992px) {
+  .step4-combat-stats {
+    padding: 20px 15px;
+  }
+
   .stats-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+    padding: 20px 15px;
+
+    h3 {
+      font-size: 20px;
+    }
+
+    .character-info {
+      flex-wrap: wrap;
+      gap: 8px;
+
+      span {
+        font-size: 13px;
+        padding: 5px 10px;
+      }
+    }
   }
 
   .stats-content {
-    padding: 20px;
-  }
+    padding: 20px 15px;
 
-  .thac0-card {
-    flex-direction: column !important;
+    .hp-section {
+      .hp-roll-section {
+        padding: 15px;
 
-    .thac0-value {
-      border-right: none !important;
-      border-bottom: 2px solid #ccc;
-      padding-right: 0 !important;
-      padding-bottom: 20px;
+        .hp-info {
+          flex-direction: column;
+          gap: 10px;
+
+          .hp-item {
+            font-size: 14px;
+
+            span:first-child {
+              min-width: 100px;
+            }
+          }
+        }
+
+        .roll-controls {
+          flex-direction: column;
+          gap: 10px;
+
+          button {
+            width: 100%;
+            min-height: 44px;
+            font-size: 14px;
+          }
+        }
+      }
+
+      .hp-result {
+        flex-direction: column;
+        gap: 15px;
+
+        .result-item {
+          flex: 1;
+          text-align: center;
+
+          .label {
+            font-size: 13px;
+          }
+
+          .value {
+            font-size: 32px;
+          }
+        }
+      }
+
+      .hp-confirm {
+        padding: 15px;
+
+        button {
+          width: 100%;
+          min-height: 44px;
+          font-size: 15px;
+        }
+      }
+    }
+
+    .thac0-section,
+    .ac-section {
+      .thac0-card,
+      .ac-card {
+        flex-direction: column;
+        gap: 15px;
+
+        .thac0-value,
+        .ac-value {
+          border-right: none;
+          border-bottom: 2px solid #ccc;
+          padding-right: 0;
+          padding-bottom: 15px;
+          text-align: center;
+
+          .value {
+            font-size: 40px;
+          }
+        }
+
+        .thac0-info,
+        .ac-info {
+          padding: 15px;
+
+          .info-item {
+            font-size: 14px;
+            margin-bottom: 10px;
+          }
+        }
+      }
+    }
+
+    .saving-throws-section {
+      .saving-throws-card {
+        padding: 15px;
+
+        .saves-table {
+          font-size: 13px;
+
+          th,
+          td {
+            padding: 8px 6px;
+          }
+
+          .save-value {
+            font-size: 16px;
+          }
+        }
+
+        .saves-explanation {
+          padding: 12px;
+          font-size: 13px;
+        }
+      }
     }
   }
 
   .bottom-actions {
+    padding: 15px;
     flex-wrap: wrap;
+    gap: 10px;
+
+    button {
+      flex: 1;
+      justify-content: center;
+      min-height: 44px;
+
+      &.primary {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .step4-combat-stats {
+    padding: 15px 10px;
+  }
+
+  .stats-header {
+    padding: 15px 10px;
+
+    h3 {
+      font-size: 18px;
+    }
+
+    .character-info {
+      span {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+    }
+  }
+
+  .stats-content {
+    padding: 15px 10px;
+
+    .hp-section {
+      .hp-roll-section {
+        padding: 12px;
+
+        .hp-info {
+          .hp-item {
+            font-size: 13px;
+          }
+        }
+
+        .roll-controls {
+          button {
+            font-size: 13px;
+            padding: 10px;
+          }
+        }
+      }
+
+      .hp-result {
+        .result-item {
+          .label {
+            font-size: 12px;
+          }
+
+          .value {
+            font-size: 28px;
+          }
+        }
+      }
+
+      .hp-confirm {
+        padding: 12px;
+
+        button {
+          font-size: 14px;
+          padding: 10px;
+        }
+      }
+    }
+
+    .thac0-section,
+    .ac-section {
+      .thac0-card,
+      .ac-card {
+        .thac0-value,
+        .ac-value {
+          padding-bottom: 12px;
+
+          .label {
+            font-size: 13px;
+          }
+
+          .value {
+            font-size: 36px;
+          }
+        }
+
+        .thac0-info,
+        .ac-info {
+          padding: 12px;
+
+          .info-item {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+
+    .saving-throws-section {
+      .saving-throws-card {
+        padding: 12px;
+
+        .saves-table {
+          font-size: 11px;
+
+          th,
+          td {
+            padding: 6px 4px;
+          }
+
+          .save-value {
+            font-size: 14px;
+          }
+        }
+
+        .saves-explanation {
+          padding: 10px;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  .bottom-actions {
+    padding: 12px 10px;
+
+    button {
+      font-size: 14px;
+      padding: 10px 15px;
+    }
   }
 }
 </style>

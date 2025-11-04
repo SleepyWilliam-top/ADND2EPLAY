@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
+import {
+  getCharismaModifiers,
+  getConstitutionModifiers,
+  getDexterityModifiers,
+  getIntelligenceModifiers,
+  getStrengthModifiers,
+  getWisdomModifiers,
+} from '../utils/abilityCalculator';
 import { getAlignmentById } from '../utils/alignmentData';
 import { canRaceSelectClass, getClassById } from '../utils/classData';
 import { getClassCategory, getSavingThrows, getTHAC0 } from '../utils/combatData';
@@ -215,11 +223,13 @@ export const useCharacterStore = defineStore('character', () => {
       }
     }
 
-    // 应用属性调整
+    // 应用属性调整，并确保属性值不超过25的上限
     for (const [key, adjustment] of Object.entries(adjustments)) {
       const abilityKey = abilityMap[key];
       if (abilityKey && adjusted[abilityKey] !== null) {
-        adjusted[abilityKey] = (adjusted[abilityKey] as number) + adjustment;
+        const newValue = (adjusted[abilityKey] as number) + adjustment;
+        // ADND2E规则：属性值上限为25
+        adjusted[abilityKey] = Math.min(newValue, 25);
       }
     }
 
@@ -1683,6 +1693,55 @@ export const useCharacterStore = defineStore('character', () => {
         text += ` (原始${original} ${diff > 0 ? '+' : ''}${diff})`;
       }
       text += '\n';
+
+      // 添加属性详细加成信息
+      const abilityKey = key as keyof Abilities;
+      if (adjusted > 0) {
+        switch (abilityKey) {
+          case 'str': {
+            const mods = getStrengthModifiers(adjusted);
+            text += `  命中率: ${mods.hitProb}  伤害: ${mods.damage}  负重: ${mods.weight}磅\n`;
+            text += `  最大负重: ${mods.maxPress}磅  开门: ${mods.openDoors}  弯杆/举门: ${mods.bendBars}\n`;
+            break;
+          }
+          case 'dex': {
+            const mods = getDexterityModifiers(adjusted);
+            text += `  突袭反应: ${mods.surprise}  远程攻击: ${mods.missile}  防御调整(AC): ${mods.defense}\n`;
+            break;
+          }
+          case 'con': {
+            const mods = getConstitutionModifiers(adjusted);
+            text += `  生命值调整: ${mods.hpAdj}  毒素豁免: ${mods.poisonSave}\n`;
+            text += `  身体休克: ${mods.systemShock}  复生存活: ${mods.resurrection}  再生: ${mods.regeneration}\n`;
+            break;
+          }
+          case 'int': {
+            const mods = getIntelligenceModifiers(adjusted);
+            text += `  语言数量: ${mods.languages}  法术习得率: ${mods.learnSpell}\n`;
+            text += `  法术等级上限: ${mods.spellLevel}  每级法术上限: ${mods.maxSpells}`;
+            if (mods.immunity && mods.immunity !== '--') {
+              text += `  法术免疫: ${mods.immunity}`;
+            }
+            text += '\n';
+            break;
+          }
+          case 'wis': {
+            const mods = getWisdomModifiers(adjusted);
+            text += `  魔法防御: ${mods.magicDefense}  施法失败率: ${mods.spellFailure}\n`;
+            text += `  奖励法术: ${mods.bonusSpells}`;
+            if (mods.immunity && mods.immunity !== '--') {
+              text += `  法术免疫: ${mods.immunity}`;
+            }
+            text += '\n';
+            break;
+          }
+          case 'cha': {
+            const mods = getCharismaModifiers(adjusted);
+            text += `  追随者上限: ${mods.maxHenchmen}  基础忠诚: ${mods.loyalty}  反应调整: ${mods.reaction}\n`;
+            break;
+          }
+        }
+      }
     });
     if (data.exceptionalStrength) {
       text += `超凡力量: ${data.exceptionalStrength}\n`;
@@ -1691,21 +1750,54 @@ export const useCharacterStore = defineStore('character', () => {
 
     // 战斗数据
     text += '【战斗数据】\n';
+
+    // AC详细信息
     const ac = data.armorClass?.total || 10;
-    text += `护甲等级 (AC): ${ac}\n`;
+    const dexMods = getDexterityModifiers(adjustedAbilities.value.dex || 10);
+    text += `护甲等级 (AC): ${ac}`;
+    if (data.armorClass) {
+      text += ` (基础${data.armorClass.fromArmor}`;
+      if (data.armorClass.fromShield !== 0) {
+        text += ` + 盾牌${data.armorClass.fromShield}`;
+      }
+      if (data.armorClass.dexterityBonus !== 0) {
+        text += ` + 敏捷${data.armorClass.dexterityBonus}`;
+      }
+      text += ')';
+    }
+    text += '\n';
+    text += `  注意: 敏捷对AC的加成在以下情况不生效：\n`;
+    text += `  被从背后攻击、行动受限（俯卧、被绑、在窄台、爬绳等）\n`;
+
     const raceData = subrace || race;
     const movement = raceData?.movement?.ground || 12;
     const hp = data.hitPoints?.max || '[待掷骰]';
     const currentHp = data.hitPoints?.current !== undefined ? data.hitPoints.current : hp;
     text += `生命值 (HP): ${currentHp}/${hp}\n`;
     text += `移动力: ${movement}\n`;
+
     const classCategory = cls ? getClassCategory(cls.name) : 'warrior';
     const thac0 = getTHAC0(classCategory, 1);
     text += `THAC0: ${thac0}\n`;
 
+    // 攻击奖励
+    text += '\n攻击奖励:\n';
+    const strMods = getStrengthModifiers(adjustedAbilities.value.str || 10);
+    const meleeAttackBonus = strMods.hitProb || '0';
+    const rangedAttackBonus = dexMods.missile || '0';
+    text += `  近战攻击: ${meleeAttackBonus} (力量)\n`;
+    text += `  远程攻击: ${rangedAttackBonus} (敏捷)\n`;
+
+    // 伤害奖励
+    text += '\n伤害奖励:\n';
+    const damageBonus = strMods.damage || '0';
+    text += `  近战武器: ${damageBonus} (力量)\n`;
+    text += `  远程武器: ${damageBonus} (力量，伤害调整值同样适用于远程武器，但获得奖励的弓必须是特制的)\n`;
+    text += `  注意: 弩不受力量影响\n`;
+
     // 豁免检定
+    text += '\n豁免检定:\n';
     const savingThrows = getSavingThrows(classCategory, 1);
-    text += `豁免检定:\n`;
     text += `  - 麻痹/毒素/死亡魔法: ${savingThrows.paralyzation}\n`;
     text += `  - 权杖/法杖/魔杖: ${savingThrows.rod}\n`;
     text += `  - 石化/变形: ${savingThrows.petrification}\n`;

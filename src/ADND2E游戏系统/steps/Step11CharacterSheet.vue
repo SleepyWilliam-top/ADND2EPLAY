@@ -61,6 +61,12 @@
                 (原始: {{ originalAbilities[key] }} {{ abilityAdjustments[key] > 0 ? '+' : ''
                 }}{{ abilityAdjustments[key] }})
               </div>
+              <div v-if="getAbilityModifiers(key as keyof Abilities)" class="ability-modifiers">
+                <div class="modifier-line primary">{{ getAbilityModifiers(key as keyof Abilities)!.primary }}</div>
+                <div v-if="getAbilityModifiers(key as keyof Abilities)!.secondary" class="modifier-line secondary">
+                  {{ getAbilityModifiers(key as keyof Abilities)!.secondary }}
+                </div>
+              </div>
             </div>
           </div>
           <div v-if="exceptionalStrength" class="exceptional-strength">超凡力量: {{ exceptionalStrength }}</div>
@@ -73,6 +79,12 @@
             <div class="combat-item">
               <span class="label">护甲等级 (AC):</span>
               <span class="value">{{ armorClass }}</span>
+              <span v-if="armorClassDetail" class="detail">{{ armorClassDetail }}</span>
+            </div>
+            <div class="combat-item full-width">
+              <span class="ac-note"
+                >※ 敏捷对AC的加成在以下情况不生效：被从背后攻击、行动受限（俯卧、被绑、在窄台、爬绳等）</span
+              >
             </div>
             <div class="combat-item">
               <span class="label">生命值 (HP):</span>
@@ -87,6 +99,40 @@
               <span class="value">{{ thac0 }}</span>
             </div>
           </div>
+
+          <div class="attack-bonuses">
+            <h4>攻击奖励</h4>
+            <div class="bonus-grid">
+              <div class="bonus-item">
+                <span class="bonus-label">近战攻击:</span>
+                <span class="bonus-value">{{ meleeAttackBonus }}</span>
+                <span class="bonus-source">(力量)</span>
+              </div>
+              <div class="bonus-item">
+                <span class="bonus-label">远程攻击:</span>
+                <span class="bonus-value">{{ rangedAttackBonus }}</span>
+                <span class="bonus-source">(敏捷)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="damage-bonuses">
+            <h4>伤害奖励</h4>
+            <div class="bonus-grid">
+              <div class="bonus-item">
+                <span class="bonus-label">近战武器:</span>
+                <span class="bonus-value">{{ damageBonus }}</span>
+                <span class="bonus-source">(力量)</span>
+              </div>
+              <div class="bonus-item">
+                <span class="bonus-label">远程武器:</span>
+                <span class="bonus-value">{{ damageBonus }}</span>
+                <span class="bonus-source">(力量，害调整值同样适用于远程武器，但获得奖励的弓必须是特制的)</span>
+              </div>
+            </div>
+            <div class="damage-note">※ 弩不受力量影响</div>
+          </div>
+
           <div class="saving-throws">
             <h4>豁免检定</h4>
             <div class="throws-grid">
@@ -271,6 +317,14 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Abilities } from '../stores/characterStore';
 import { useCharacterStore } from '../stores/characterStore';
+import {
+  getCharismaModifiers,
+  getConstitutionModifiers,
+  getDexterityModifiers,
+  getIntelligenceModifiers,
+  getStrengthModifiers,
+  getWisdomModifiers,
+} from '../utils/abilityCalculator';
 import { getAlignmentById } from '../utils/alignmentData';
 import { getClassById } from '../utils/classData';
 import { getClassCategory, getSavingThrows, getTHAC0 } from '../utils/combatData';
@@ -402,6 +456,59 @@ const abilityAdjustments = computed(() => {
 
 const exceptionalStrength = computed(() => characterStore.characterData.exceptionalStrength);
 
+// 获取属性的详细加成信息
+function getAbilityModifiers(key: keyof Abilities) {
+  const value = finalAbilities.value[key];
+  if (value === null) return null;
+
+  switch (key) {
+    case 'str': {
+      const mods = getStrengthModifiers(value);
+      return {
+        primary: `命中率: ${mods.hitProb}  伤害: ${mods.damage}`,
+        secondary: `负重: ${mods.weight}磅  最大负重: ${mods.maxPress}磅  开门: ${mods.openDoors}  弯杆/举门: ${mods.bendBars}`,
+      };
+    }
+    case 'dex': {
+      const mods = getDexterityModifiers(value);
+      return {
+        primary: `突袭反应: ${mods.surprise}  远程攻击: ${mods.missile}  防御调整(AC): ${mods.defense}`,
+        secondary: null,
+      };
+    }
+    case 'con': {
+      const mods = getConstitutionModifiers(value);
+      return {
+        primary: `生命值调整: ${mods.hpAdj}  毒素豁免: ${mods.poisonSave}`,
+        secondary: `身体休克: ${mods.systemShock}  复生存活: ${mods.resurrection}  再生: ${mods.regeneration}`,
+      };
+    }
+    case 'int': {
+      const mods = getIntelligenceModifiers(value);
+      return {
+        primary: `语言数量: ${mods.languages}  法术习得率: ${mods.learnSpell}`,
+        secondary: `法术等级上限: ${mods.spellLevel}  每级法术上限: ${mods.maxSpells}${mods.immunity ? `  法术免疫: ${mods.immunity}` : ''}`,
+      };
+    }
+    case 'wis': {
+      const mods = getWisdomModifiers(value);
+      return {
+        primary: `魔法防御: ${mods.magicDefense}  施法失败率: ${mods.spellFailure}`,
+        secondary: `奖励法术: ${mods.bonusSpells}${mods.immunity ? `  法术免疫: ${mods.immunity}` : ''}`,
+      };
+    }
+    case 'cha': {
+      const mods = getCharismaModifiers(value);
+      return {
+        primary: `追随者上限: ${mods.maxHenchmen}  基础忠诚: ${mods.loyalty}  反应调整: ${mods.reaction}`,
+        secondary: null,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
 // 战斗数据
 const hitPoints = computed(() => {
   // 使用实际掷骰的生命值
@@ -411,6 +518,21 @@ const hitPoints = computed(() => {
 const armorClass = computed(() => {
   // 基础AC为10，如果有护甲数据则使用
   return characterStore.characterData.armorClass?.total || 10;
+});
+
+const armorClassDetail = computed(() => {
+  const acData = characterStore.characterData.armorClass;
+  if (!acData) return '';
+
+  const parts = [`基础${acData.fromArmor}`];
+  if (acData.fromShield !== 0) {
+    parts.push(`盾牌${acData.fromShield}`);
+  }
+  if (acData.dexterityBonus !== 0) {
+    parts.push(`敏捷${acData.dexterityBonus}`);
+  }
+
+  return `(${parts.join(' + ')})`;
 });
 
 const movement = computed(() => {
@@ -432,6 +554,26 @@ const thac0 = computed(() => {
 
 const savingThrows = computed(() => {
   return getSavingThrows(classCategory.value, 1);
+});
+
+// 攻击奖励
+const meleeAttackBonus = computed(() => {
+  const str = characterStore.adjustedAbilities.str || 10;
+  const mods = getStrengthModifiers(str);
+  return mods.hitProb || '0';
+});
+
+const rangedAttackBonus = computed(() => {
+  const dex = characterStore.adjustedAbilities.dex || 10;
+  const mods = getDexterityModifiers(dex);
+  return mods.missile || '0';
+});
+
+// 伤害奖励
+const damageBonus = computed(() => {
+  const str = characterStore.adjustedAbilities.str || 10;
+  const mods = getStrengthModifiers(str);
+  return mods.damage || '0';
 });
 
 // 熟练
@@ -748,11 +890,19 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
+
+  @media (max-width: 992px) {
+    padding: 15px 10px;
+  }
 }
 
 .sheet-header {
   text-align: center;
   margin-bottom: 32px;
+
+  @media (max-width: 992px) {
+    margin-bottom: 20px;
+  }
 
   h2 {
     font-size: 32px;
@@ -760,11 +910,21 @@ function getAbilityKey(chineseName: string): keyof Abilities {
     color: #8b4513;
     text-transform: uppercase;
     letter-spacing: 2px;
+
+    @media (max-width: 992px) {
+      font-size: 24px;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
   }
 
   .subtitle {
     font-size: 16px;
     color: #666;
+
+    @media (max-width: 992px) {
+      font-size: 14px;
+    }
   }
 }
 
@@ -778,12 +938,21 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   font-family: '临海体', serif;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
+  @media (max-width: 992px) {
+    border-width: 2px;
+  }
+
   section {
     border: 2px solid #8b4513;
     padding: 20px;
     margin: 16px;
     background: linear-gradient(to bottom, #fffef8, #f5f2e8);
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 992px) {
+      padding: 15px;
+      margin: 10px;
+    }
 
     h3 {
       border-bottom: 2px solid #8b4513;
@@ -794,6 +963,13 @@ function getAbilityKey(chineseName: string): keyof Abilities {
       font-size: 20px;
       color: #8b4513;
       font-weight: bold;
+
+      @media (max-width: 992px) {
+        font-size: 18px;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+      }
     }
 
     h4 {
@@ -801,6 +977,11 @@ function getAbilityKey(chineseName: string): keyof Abilities {
       margin: 16px 0 8px 0;
       text-decoration: underline;
       color: #8b4513;
+
+      @media (max-width: 992px) {
+        font-size: 15px;
+        margin: 12px 0 6px 0;
+      }
     }
   }
 }
@@ -810,6 +991,11 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 12px;
 
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
   .info-item {
     display: flex;
     justify-content: space-between;
@@ -817,6 +1003,11 @@ function getAbilityKey(chineseName: string): keyof Abilities {
     background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
+
+    @media (max-width: 992px) {
+      padding: 6px 10px;
+      font-size: 14px;
+    }
 
     &.full-width {
       grid-column: 1 / -1;
@@ -845,8 +1036,13 @@ function getAbilityKey(chineseName: string): keyof Abilities {
 
 .abilities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 
   .ability-box {
     border: 2px solid #8b4513;
@@ -855,11 +1051,20 @@ function getAbilityKey(chineseName: string): keyof Abilities {
     background: #fff;
     border-radius: 8px;
 
+    @media (max-width: 992px) {
+      padding: 12px;
+    }
+
     .ability-name {
       font-size: 14px;
       font-weight: bold;
       color: #666;
       margin-bottom: 8px;
+
+      @media (max-width: 992px) {
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
     }
 
     .ability-value {
@@ -867,11 +1072,54 @@ function getAbilityKey(chineseName: string): keyof Abilities {
       font-weight: bold;
       color: #8b4513;
       margin-bottom: 4px;
+
+      @media (max-width: 992px) {
+        font-size: 24px;
+      }
     }
 
     .ability-adjust {
       font-size: 12px;
       color: #666;
+      margin-bottom: 8px;
+
+      @media (max-width: 992px) {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+    }
+
+    .ability-modifiers {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+      text-align: left;
+
+      @media (max-width: 992px) {
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+
+      .modifier-line {
+        font-size: 11px;
+        line-height: 1.6;
+        color: #333;
+        margin-bottom: 4px;
+
+        @media (max-width: 992px) {
+          font-size: 10px;
+          line-height: 1.5;
+        }
+
+        &.primary {
+          font-weight: bold;
+          color: #8b4513;
+        }
+
+        &.secondary {
+          color: #666;
+        }
+      }
     }
   }
 }
@@ -890,6 +1138,16 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   gap: 12px;
   margin-bottom: 16px;
 
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+
   .combat-item {
     display: flex;
     justify-content: space-between;
@@ -898,14 +1156,144 @@ function getAbilityKey(chineseName: string): keyof Abilities {
     border: 1px solid #ddd;
     border-radius: 4px;
 
+    @media (max-width: 992px) {
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+
+    &.full-width {
+      grid-column: 1 / -1;
+      background: #fffdf7;
+      border-color: #daa520;
+      padding: 6px 12px;
+
+      @media (max-width: 992px) {
+        padding: 5px 10px;
+      }
+    }
+
     .label {
       font-weight: bold;
       color: #666;
     }
 
+    .detail {
+      font-size: 14px;
+      color: #888;
+      margin-left: 8px;
+
+      @media (max-width: 992px) {
+        font-size: 12px;
+      }
+    }
+
+    .ac-note {
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+
+      @media (max-width: 992px) {
+        font-size: 12px;
+      }
+    }
+
     .value {
       color: #000;
       font-weight: bold;
+    }
+  }
+}
+
+.attack-bonuses,
+.damage-bonuses {
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-bottom: 16px;
+
+  @media (max-width: 992px) {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  h4 {
+    margin: 0 0 12px 0 !important;
+    font-size: 16px !important;
+    color: #8b4513;
+    text-decoration: none !important;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+
+    @media (max-width: 992px) {
+      font-size: 15px !important;
+      margin-bottom: 10px !important;
+      padding-bottom: 6px;
+    }
+  }
+
+  .bonus-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    @media (max-width: 992px) {
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .bonus-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+
+    @media (max-width: 992px) {
+      padding: 6px;
+      font-size: 14px;
+    }
+
+    .bonus-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .bonus-value {
+      font-weight: bold;
+      color: #8b4513;
+      font-size: 18px;
+
+      @media (max-width: 992px) {
+        font-size: 16px;
+      }
+    }
+
+    .bonus-source {
+      color: #888;
+      font-size: 13px;
+      font-style: italic;
+
+      @media (max-width: 992px) {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .damage-note {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+
+    @media (max-width: 992px) {
+      font-size: 12px;
+      margin-top: 6px;
     }
   }
 }
@@ -916,11 +1304,21 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   border-radius: 4px;
   border: 1px solid #ddd;
 
+  @media (max-width: 992px) {
+    padding: 10px;
+  }
+
   .throws-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 8px;
     font-size: 14px;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+      gap: 6px;
+      font-size: 13px;
+    }
   }
 }
 
@@ -1038,6 +1436,11 @@ function getAbilityKey(chineseName: string): keyof Abilities {
   gap: 16px;
   padding: 0 16px;
 
+  @media (max-width: 992px) {
+    gap: 10px;
+    padding: 0 10px;
+  }
+
   .adnd-button {
     flex: 1;
     max-width: 300px;
@@ -1053,8 +1456,19 @@ function getAbilityKey(chineseName: string): keyof Abilities {
     justify-content: center;
     gap: 8px;
 
+    @media (max-width: 992px) {
+      max-width: none;
+      padding: 14px 24px;
+      font-size: 16px;
+      min-height: 44px;
+    }
+
     .button-icon {
       font-size: 20px;
+
+      @media (max-width: 992px) {
+        font-size: 18px;
+      }
     }
 
     &.primary {
@@ -1062,10 +1476,15 @@ function getAbilityKey(chineseName: string): keyof Abilities {
       color: white;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: linear-gradient(135deg, #e0bb44, #d4af37);
         transform: translateY(-2px);
         box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     }
 

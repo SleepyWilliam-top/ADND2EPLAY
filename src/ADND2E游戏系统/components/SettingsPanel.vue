@@ -10,17 +10,17 @@
         <h4 class="section-title">游戏管理</h4>
 
         <button class="action-button chat-button" @click="showChatRecordManager">
-          <span class="button-icon">💬</span>
+          <span class="button-icon"><i class="fa-solid fa-comments"></i></span>
           <span>聊天记录管理</span>
         </button>
 
         <button class="action-button npc-button" @click="showNpcManager">
-          <span class="button-icon">👥</span>
+          <span class="button-icon"><i class="fa-solid fa-users"></i></span>
           <span>在场NPC管理</span>
         </button>
 
         <button class="action-button quest-button" @click="showQuestManager">
-          <span class="button-icon">📋</span>
+          <span class="button-icon"><i class="fa-solid fa-clipboard-list"></i></span>
           <span>任务管理</span>
         </button>
       </div>
@@ -42,9 +42,9 @@
           <span>世界书管理</span>
         </button>
 
-        <button class="action-button image-button" @click="openImageLibrary">
-          <span class="button-icon">🖼️</span>
-          <span>图片图库</span>
+        <button class="action-button monster-button" @click="showMonsterEncyclopedia">
+          <span class="button-icon"><i class="fa-solid fa-dragon"></i></span>
+          <span>怪物图鉴</span>
         </button>
       </div>
 
@@ -81,7 +81,7 @@
         <h4 class="section-title">数据导出</h4>
 
         <button class="action-button export-button" @click="handleExportToFile">
-          <span class="button-icon"><i class="fa-solid fa-floppy-disk"></i></span>
+          <span class="button-icon"><i class="fa-solid fa-file-export"></i></span>
           <span>导出为文件</span>
         </button>
       </div>
@@ -94,7 +94,7 @@
         <h4 class="section-title">系统操作</h4>
 
         <button class="action-button" @click="returnToMenu">
-          <span class="button-icon">🏠</span>
+          <span class="button-icon"><i class="fa-solid fa-house"></i></span>
           <span>返回主菜单</span>
         </button>
       </div>
@@ -172,7 +172,7 @@
                   • <strong>增强标签：</strong>支持更多属性如 gender, race, class, location, status, relationship,
                   attitude 等
                 </p>
-                <p>• <strong>自动清理：</strong>超过24小时未出现的NPC会自动离场</p>
+                <p>• <strong>自动清理：</strong>连续30条消息中未提及的NPC会自动离场</p>
                 <p>• <strong>永久保留：</strong>标记为特别关心的NPC永不离场</p>
                 <p>• <strong>交互系统：</strong>点击NPC可查看详情并进行交互</p>
               </div>
@@ -228,6 +228,9 @@
 
   <!-- 世界书管理弹窗 -->
   <WorldbookManager :visible="showWorldbookModal" @close="closeWorldbookManager" />
+
+  <!-- 怪物图鉴弹窗 -->
+  <MonsterEncyclopediaModal v-model="showMonsterEncyclopediaModal" />
 </template>
 
 <script setup lang="ts">
@@ -239,6 +242,7 @@ import { useCharacterStore } from '../stores/characterStore';
 import { useGameStore } from '../stores/gameStore';
 import ChatRecordManager from './ChatRecordManager.vue';
 import ImageLibraryModal from './ImageLibraryModal.vue';
+import MonsterEncyclopediaModal from './MonsterEncyclopediaModal.vue';
 import NpcDetailPanel from './NpcDetailPanel.vue';
 import QuestManagerPanel from './QuestManagerPanel.vue';
 import SpellCompendium from './SpellCompendium.vue';
@@ -266,6 +270,7 @@ const showSummaryModal = ref(false);
 const showQuestModal = ref(false);
 const showWorldbookModal = ref(false);
 const showImageLibraryModal = ref(false);
+const showMonsterEncyclopediaModal = ref(false);
 const imageLibraryCategory = ref<'character' | 'npc' | 'other'>('npc');
 const selectedNpc = ref<NPC | null>(null);
 
@@ -404,12 +409,6 @@ function openGameplaySettings() {
   toastr.info('游戏玩法设置功能开发中...');
 }
 
-// 打开图库（用于管理，不选择图片）
-function openImageLibrary() {
-  imageLibraryCategory.value = 'other';
-  showImageLibraryModal.value = true;
-}
-
 // 法术书功能
 function showSpellbook() {
   showSpellbookModal.value = true;
@@ -426,6 +425,11 @@ function showWorldbookManager() {
 
 function closeWorldbookManager() {
   showWorldbookModal.value = false;
+}
+
+// 怪物图鉴功能
+function showMonsterEncyclopedia() {
+  showMonsterEncyclopediaModal.value = true;
 }
 
 // 选择 NPC 查看详情
@@ -538,26 +542,36 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   width: 220px;
   flex-shrink: 0;
   height: 100%;
+  max-height: 100vh;
   background-color: #fff;
   border-left: 4px solid #000;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
+  overflow: hidden; // 防止整个面板滚动
 
   @media (max-width: 992px) {
     position: fixed;
     right: 0;
     top: 0;
-    height: 100%;
+    bottom: 0;
+    height: 100vh;
+    max-height: 100vh;
     width: 220px !important; // 确保移动端也有宽度
     transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
     z-index: 1200;
     background: #fff;
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.3);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.5);
+    overflow: hidden; // 面板本身不滚动
 
     &.visible {
       transform: translateX(0);
     }
+  }
+
+  @media (max-width: 480px) {
+    width: 200px !important; // 小屏幕稍微窄一点
   }
 }
 
@@ -568,6 +582,15 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   padding: 15px;
   border-bottom: 3px solid #000;
   background-color: #f5f5f5;
+  flex-shrink: 0; // 防止头部被压缩
+
+  @media (max-width: 992px) {
+    padding: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 }
 
 .panel-title {
@@ -576,12 +599,32 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   font-weight: bold;
   letter-spacing: 1px;
   margin: 0;
+
+  @media (max-width: 992px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
 }
 
 .panel-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 15px;
+  min-height: 0; // 重要：确保 flex 容器可以正确滚动
+  -webkit-overflow-scrolling: touch; // iOS 平滑滚动
+
+  @media (max-width: 992px) {
+    padding: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 }
 
 .settings-section {
@@ -589,6 +632,10 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   flex-direction: column;
   gap: 10px;
   margin-bottom: 5px;
+
+  @media (max-width: 992px) {
+    gap: 8px;
+  }
 }
 
 .section-title {
@@ -601,6 +648,17 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   margin: 0 0 10px 0;
   padding-bottom: 5px;
   border-bottom: 2px solid #ddd;
+
+  @media (max-width: 992px) {
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+  }
 }
 
 .divider {
@@ -619,6 +677,14 @@ function handleUpdateNotes(npc: NPC, notes: string) {
     height: 6px;
     background-color: #fff;
   }
+
+  @media (max-width: 992px) {
+    margin: 15px 0;
+  }
+
+  @media (max-width: 480px) {
+    margin: 12px 0;
+  }
 }
 
 .action-button {
@@ -629,30 +695,30 @@ function handleUpdateNotes(npc: NPC, notes: string) {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 10px 14px;
-  border: 2px solid #000;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   background-color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
   &:last-child {
     margin-bottom: 0;
   }
 
   &:hover {
-    background-color: #000;
-    color: #fff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   &:active {
     transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
   &.danger {
@@ -665,56 +731,93 @@ function handleUpdateNotes(npc: NPC, notes: string) {
       border-color: #dc3545;
     }
   }
+
+  @media (max-width: 992px) {
+    min-height: 44px; // 触摸友好的最小高度
+    padding: 12px 14px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 10px;
+    gap: 6px;
+  }
 }
 
 .button-icon {
   font-size: 15px;
+
+  @media (max-width: 992px) {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }
 
 .chat-button {
   &:hover {
-    background-color: #4a90e2;
-    border-color: #4a90e2;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    border-color: rgba(74, 144, 226, 0.3);
     color: #fff;
   }
 }
 
 .npc-button {
   &:hover {
-    background-color: #28a745;
-    border-color: #28a745;
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border-color: rgba(40, 167, 69, 0.3);
     color: #fff;
   }
 }
 
 .quest-button {
   &:hover {
-    background-color: #ff9800;
-    border-color: #ff9800;
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    border-color: rgba(108, 117, 125, 0.3);
     color: #fff;
   }
 }
 
 .spell-button {
   &:hover {
-    background-color: #9370db;
-    border-color: #9370db;
+    background: linear-gradient(135deg, #9370db 0%, #7b5fc9 100%);
+    border-color: rgba(147, 112, 219, 0.3);
     color: #fff;
   }
 }
 
 .worldbook-button {
   &:hover {
-    background-color: #20b2aa;
-    border-color: #20b2aa;
+    background: linear-gradient(135deg, #20b2aa 0%, #178f88 100%);
+    border-color: rgba(32, 178, 170, 0.3);
     color: #fff;
   }
 }
 
 .system-button {
   &:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    border-color: rgba(108, 117, 125, 0.3);
+    color: #fff;
+  }
+}
+
+.export-button {
+  &:hover {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    border-color: rgba(23, 162, 184, 0.3);
+    color: #fff;
+  }
+}
+
+.monster-button {
+  &:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border-color: rgba(220, 53, 69, 0.3);
     color: #fff;
   }
 }
@@ -1054,7 +1157,7 @@ function handleUpdateNotes(npc: NPC, notes: string) {
       }
 
       i {
-        color: #ffd700;
+        color: #3b3b36;
         margin: 0 2px;
       }
     }

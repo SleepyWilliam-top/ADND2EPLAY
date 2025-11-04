@@ -31,14 +31,16 @@
       i.fab,
       i.fal,
       i.fad,
+      i.fat,
       .fa,
       .fas,
       .far,
       .fab,
       .fal,
-      .fad {
+      .fad,
+      .fat {
         font-family:
-          'Font Awesome 6 Free', 'Font Awesome 6 Pro', 'Font Awesome 5 Free', 'Font Awesome 5 Pro' !important;
+          'Font Awesome 7 Free', 'Font Awesome 7 Pro', 'Font Awesome 6 Free', 'Font Awesome 6 Pro' !important;
       }
 
       html,
@@ -68,8 +70,8 @@
         flex-direction: column;
       }
 
-      /* 移动端优化 */
-      @media (max-width: 768px) {
+      /* 移动端优化 - 采用 992px 作为主断点 */
+      @media (max-width: 992px) {
         html,
         body {
           font-size: 14px;

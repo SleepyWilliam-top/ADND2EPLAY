@@ -362,6 +362,10 @@ function goNext() {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+
+  @media (max-width: 992px) {
+    padding: 15px 10px;
+  }
 }
 
 .info-panel {
@@ -370,6 +374,12 @@ function goNext() {
   padding: 20px;
   margin-bottom: 20px;
   position: relative;
+
+  @media (max-width: 992px) {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-width: 3px;
+  }
 
   &::before {
     content: '';
@@ -380,6 +390,13 @@ function goNext() {
     bottom: 4px;
     border: 1px solid #666;
     pointer-events: none;
+
+    @media (max-width: 992px) {
+      top: 3px;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+    }
   }
 
   h2 {
@@ -391,18 +408,41 @@ function goNext() {
     text-align: center;
     margin: 0 0 15px 0;
     text-transform: uppercase;
+
+    @media (max-width: 992px) {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
   }
 
   .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
+
+    @media (max-width: 992px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
   }
 
   .info-item {
+    @media (max-width: 992px) {
+      font-size: 14px;
+    }
+
     .label {
       font-weight: bold;
       margin-right: 8px;
+
+      @media (max-width: 992px) {
+        margin-right: 5px;
+      }
     }
 
     .value {
@@ -425,26 +465,51 @@ function goNext() {
   padding: 15px;
   margin-bottom: 20px;
 
+  @media (max-width: 992px) {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
   h3 {
     font-size: 20px;
     margin: 0 0 10px 0;
+
+    @media (max-width: 992px) {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
   }
 
   .help-text {
     color: #666;
     margin: 0 0 10px 0;
+
+    @media (max-width: 992px) {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
   }
 
   .converter {
     display: flex;
     align-items: center;
     gap: 15px;
+    justify-content: center;
+
+    @media (max-width: 992px) {
+      gap: 20px;
+    }
 
     .convert-value {
       font-size: 18px;
       font-weight: bold;
       min-width: 60px;
       text-align: center;
+
+      @media (max-width: 992px) {
+        font-size: 20px;
+        min-width: 80px;
+      }
     }
   }
 }
@@ -455,20 +520,50 @@ function goNext() {
   padding: 15px;
   margin-bottom: 20px;
 
+  @media (max-width: 992px) {
+    padding: 12px;
+    margin-bottom: 15px;
+    border-width: 2px;
+  }
+
   h3 {
     font-size: 20px;
     margin: 0 0 10px 0;
     color: #d4af37;
+
+    @media (max-width: 992px) {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
   }
 
   .spec-details {
+    @media (max-width: 992px) {
+      font-size: 14px;
+    }
+
     p {
       margin: 10px 0 5px 0;
+
+      @media (max-width: 992px) {
+        margin: 8px 0 4px 0;
+      }
     }
 
     ul {
       margin: 5px 0;
       padding-left: 25px;
+
+      @media (max-width: 992px) {
+        margin: 4px 0;
+        padding-left: 20px;
+      }
+
+      li {
+        @media (max-width: 992px) {
+          margin-bottom: 3px;
+        }
+      }
     }
   }
 }
@@ -476,10 +571,18 @@ function goNext() {
 .weapon-categories {
   margin-bottom: 20px;
 
+  @media (max-width: 992px) {
+    margin-bottom: 15px;
+  }
+
   .tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+
+    @media (max-width: 992px) {
+      gap: 8px;
+    }
   }
 
   .tab-button {
@@ -489,6 +592,18 @@ function goNext() {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
+
+    @media (max-width: 992px) {
+      padding: 10px 16px;
+      font-size: 14px;
+      min-height: 44px;
+      flex: 1 1 auto;
+      min-width: calc(33.333% - 6px);
+    }
+
+    @media (max-width: 480px) {
+      min-width: calc(50% - 4px);
+    }
 
     &:hover {
       background-color: #f0f0f0;
@@ -506,6 +621,12 @@ function goNext() {
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
 }
 
 .weapon-card {
@@ -514,6 +635,11 @@ function goNext() {
   padding: 15px;
   cursor: pointer;
   transition: all 0.2s;
+
+  @media (max-width: 992px) {
+    padding: 12px;
+    border-width: 2px;
+  }
 
   &:hover {
     border-color: #000;
@@ -535,29 +661,59 @@ function goNext() {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    gap: 10px;
+
+    @media (max-width: 992px) {
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
   }
 
   .weapon-name {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
+
+    @media (max-width: 992px) {
+      gap: 6px;
+      flex-wrap: wrap;
+    }
 
     .icon {
       font-size: 24px;
+      flex-shrink: 0;
+
+      @media (max-width: 992px) {
+        font-size: 20px;
+      }
     }
 
     .name {
       font-size: 18px;
       font-weight: bold;
+
+      @media (max-width: 992px) {
+        font-size: 16px;
+      }
     }
 
     .english {
       font-size: 14px;
       color: #666;
+
+      @media (max-width: 992px) {
+        font-size: 13px;
+        flex-basis: 100%;
+        margin-left: 26px;
+      }
     }
   }
 
   .weapon-status {
+    flex-shrink: 0;
+
     .specialized-badge {
       background-color: #d4af37;
       color: #fff;
@@ -565,6 +721,11 @@ function goNext() {
       border-radius: 12px;
       font-weight: bold;
       font-size: 12px;
+
+      @media (max-width: 992px) {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
     }
 
     .selected-badge {
@@ -574,6 +735,11 @@ function goNext() {
       border-radius: 12px;
       font-weight: bold;
       font-size: 12px;
+
+      @media (max-width: 992px) {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
     }
   }
 
@@ -581,22 +747,41 @@ function goNext() {
     font-size: 14px;
     line-height: 1.6;
 
+    @media (max-width: 992px) {
+      font-size: 13px;
+    }
+
     .stat-row {
       display: flex;
       gap: 15px;
       margin-bottom: 5px;
+      flex-wrap: wrap;
+
+      @media (max-width: 992px) {
+        gap: 10px;
+        margin-bottom: 4px;
+      }
 
       span {
         &:not(:last-child)::after {
           content: '|';
           margin-left: 15px;
           color: #ccc;
+
+          @media (max-width: 992px) {
+            margin-left: 10px;
+          }
         }
       }
 
       .special-note {
         color: #d4af37;
         font-style: italic;
+        flex-basis: 100%;
+
+        &::after {
+          display: none;
+        }
       }
     }
   }
@@ -605,6 +790,16 @@ function goNext() {
     margin-top: 10px;
     display: flex;
     gap: 10px;
+
+    @media (max-width: 992px) {
+      margin-top: 8px;
+      gap: 8px;
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
   }
 
   .related-weapons {
@@ -613,8 +808,18 @@ function goNext() {
     border-top: 1px solid #ddd;
     font-size: 13px;
 
+    @media (max-width: 992px) {
+      margin-top: 8px;
+      padding-top: 8px;
+      font-size: 12px;
+    }
+
     p {
       margin: 5px 0;
+
+      @media (max-width: 992px) {
+        margin: 4px 0;
+      }
     }
 
     .help-text {
@@ -629,6 +834,11 @@ function goNext() {
   justify-content: space-between;
   gap: 20px;
   margin-top: 30px;
+
+  @media (max-width: 992px) {
+    gap: 10px;
+    margin-top: 20px;
+  }
 }
 
 .adnd-button {
@@ -640,6 +850,14 @@ function goNext() {
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
+
+  @media (max-width: 992px) {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-width: 2px;
+    min-height: 44px;
+  }
 
   &:hover:not(:disabled) {
     background-color: #f0f0f0;

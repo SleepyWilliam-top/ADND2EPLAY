@@ -248,20 +248,21 @@ function statusText(status: string): string {
   max-width: 900px;
   max-height: 90vh;
   background-color: #fff;
-  border: 4px solid #000;
-  border-radius: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background-color: #000;
-  border-bottom: 3px solid #000;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%); // 黑色渐变
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
 
   h2 {
     margin: 0;
@@ -278,19 +279,18 @@ function statusText(status: string): string {
   .close-btn {
     width: 36px;
     height: 36px;
-    border: 2px solid #fff;
-    background-color: #000;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.2);
     color: #fff;
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 0;
-    transition: all 0.2s;
+    border-radius: 8px;
+    transition: all 0.3s ease;
 
     &:hover {
-      background-color: #fff;
-      color: #000;
-      border-color: #fff;
+      background-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
     }
   }
 }
@@ -311,27 +311,21 @@ function statusText(status: string): string {
   .stat-item {
     padding: 16px;
     background-color: #fff;
-    border: 3px solid #000;
-    border-radius: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
     &:hover {
-      background-color: #000;
-
-      .stat-label {
-        color: #fff;
-      }
-
-      .stat-value {
-        color: #fff !important;
-      }
+      transform: translateY(-4px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     }
 
     .stat-label {
       display: block;
       font-size: 13px;
-      color: #000;
+      color: #666;
       margin-bottom: 8px;
       font-weight: bold;
       text-transform: uppercase;
@@ -341,7 +335,18 @@ function statusText(status: string): string {
       display: block;
       font-size: 32px;
       font-weight: bold;
-      color: #000;
+
+      &.active {
+        color: #333; // 深灰色（进行中）
+      }
+
+      &.completed {
+        color: #666; // 中灰色（已完成）
+      }
+
+      &.failed {
+        color: #999; // 浅灰色（已失败）
+      }
     }
   }
 }
@@ -357,24 +362,25 @@ function statusText(status: string): string {
   .tab-btn {
     flex: 1;
     padding: 10px 16px;
-    border: 3px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     background-color: #fff;
-    color: #000;
+    color: #666;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 0;
-    transition: all 0.2s;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     text-transform: uppercase;
 
     &:hover {
-      background-color: #e0e0e0;
+      background-color: #f5f5f5;
+      transform: translateY(-2px);
     }
 
     &.active {
-      background-color: #000;
+      background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%); // 黑色渐变
       color: #fff;
-      border-color: #000;
+      border-color: transparent;
     }
   }
 }
@@ -402,14 +408,15 @@ function statusText(status: string): string {
     padding: 16px;
     margin-bottom: 12px;
     background-color: #fff;
-    border: 3px solid #000;
-    border-radius: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
     &:hover {
-      background-color: #f5f5f5;
-      border-width: 4px;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     }
 
     &:last-child {
@@ -417,15 +424,17 @@ function statusText(status: string): string {
     }
 
     &.active-quest {
-      border-left-width: 6px;
+      border-left: 4px solid #333; // 深灰色（进行中）
     }
 
     &.completed-quest {
-      opacity: 0.6;
+      opacity: 0.7;
+      border-left: 4px solid #666; // 中灰色（已完成）
     }
 
     &.failed-quest {
-      opacity: 0.5;
+      opacity: 0.6;
+      border-left: 4px solid #999; // 浅灰色（已失败）
       text-decoration: line-through;
     }
 
@@ -446,24 +455,23 @@ function statusText(status: string): string {
         padding: 4px 12px;
         font-size: 11px;
         font-weight: bold;
-        border-radius: 0;
-        border: 2px solid #000;
+        border-radius: 12px;
+        border: none;
         text-transform: uppercase;
 
         &.status-active {
-          background-color: #000;
+          background-color: #333; // 深灰色（进行中）
           color: #fff;
         }
 
         &.status-completed {
-          background-color: #fff;
-          color: #000;
+          background-color: #666; // 中灰色（已完成）
+          color: #fff;
         }
 
         &.status-failed {
-          background-color: #666;
+          background-color: #999; // 浅灰色（已失败）
           color: #fff;
-          border-color: #666;
         }
       }
     }
@@ -479,11 +487,11 @@ function statusText(status: string): string {
       display: flex;
       align-items: center;
       font-size: 13px;
-      color: #000;
+      color: #666;
       padding: 8px;
-      background-color: #f5f5f5;
-      border-left: 4px solid #000;
-      border-radius: 0;
+      background-color: #f9f9f9;
+      border-left: 3px solid #333; // 深灰色
+      border-radius: 4px;
 
       .progress-label {
         font-weight: bold;
@@ -517,18 +525,20 @@ function statusText(status: string): string {
   max-width: 600px;
   max-height: 80vh;
   background-color: #fff;
-  border: 4px solid #000;
-  border-radius: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 
   .detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    background-color: #000;
-    border-bottom: 3px solid #000;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%); // 黑色渐变
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
 
     h2 {
       margin: 0;
@@ -540,19 +550,18 @@ function statusText(status: string): string {
     .close-btn {
       width: 32px;
       height: 32px;
-      border: 2px solid #fff;
-      background-color: #000;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.2);
       color: #fff;
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      border-radius: 0;
-      transition: all 0.2s;
+      border-radius: 8px;
+      transition: all 0.3s ease;
 
       &:hover {
-        background-color: #fff;
-        color: #000;
-        border-color: #fff;
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
       }
     }
   }
@@ -573,9 +582,9 @@ function statusText(status: string): string {
         margin: 0 0 12px 0;
         font-size: 16px;
         font-weight: bold;
-        color: #000;
+        color: #333; // 深灰色
         padding-bottom: 8px;
-        border-bottom: 3px solid #000;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1); // 黑色半透明
         text-transform: uppercase;
       }
 
@@ -591,6 +600,203 @@ function statusText(status: string): string {
         line-height: 1.8;
         color: #333;
         white-space: pre-wrap;
+      }
+    }
+  }
+}
+
+// 移动端适配
+@media (max-width: 992px) {
+  .quest-manager-panel {
+    padding: 15px;
+
+    .panel-header {
+      padding: 12px 0;
+
+      h3 {
+        font-size: 16px;
+
+        i {
+          font-size: 16px;
+        }
+      }
+
+      .action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+    }
+
+    .quest-tabs {
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+
+      .tab-btn {
+        flex: 1 1 calc(50% - 3px);
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        min-height: 44px; // 触摸友好
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+      }
+    }
+
+    .quest-list {
+      .empty-state {
+        padding: 40px 15px;
+
+        i {
+          font-size: 48px;
+        }
+
+        p {
+          font-size: 14px;
+        }
+      }
+
+      .quest-card {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+
+        .quest-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+          margin-bottom: 10px;
+
+          .quest-title {
+            font-size: 15px;
+          }
+
+          .quest-status {
+            padding: 3px 10px;
+            font-size: 10px;
+            border-radius: 10px;
+          }
+        }
+
+        .quest-description {
+          font-size: 13px;
+          margin-bottom: 10px;
+        }
+
+        .quest-progress {
+          font-size: 12px;
+          padding: 6px 8px;
+          border-radius: 3px;
+
+          .progress-label {
+            margin-right: 6px;
+            font-size: 11px;
+          }
+
+          .progress-text {
+            font-size: 11px;
+          }
+        }
+      }
+    }
+
+    .quest-detail-modal {
+      padding: 15px;
+    }
+
+    .quest-detail-content {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: 8px;
+
+      .detail-header {
+        padding: 15px 18px;
+        border-radius: 8px 8px 0 0;
+
+        h2 {
+          font-size: 18px;
+        }
+
+        .close-btn {
+          width: 30px;
+          height: 30px;
+          font-size: 16px;
+          border-radius: 6px;
+        }
+      }
+
+      .detail-body {
+        padding: 15px;
+
+        .detail-section {
+          margin-bottom: 16px;
+
+          h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+          }
+
+          .detail-label {
+            font-size: 12px;
+            margin-right: 6px;
+          }
+
+          .detail-text {
+            font-size: 13px;
+            line-height: 1.6;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 极小屏幕适配
+@media (max-width: 480px) {
+  .quest-manager-panel {
+    padding: 12px;
+
+    .panel-header h3 {
+      font-size: 15px;
+    }
+
+    .quest-tabs .tab-btn {
+      flex: 1 1 100%;
+      font-size: 11px;
+      padding: 8px 10px;
+    }
+
+    .quest-card {
+      .quest-header .quest-title {
+        font-size: 14px;
+      }
+
+      .quest-description {
+        font-size: 12px;
+      }
+    }
+
+    .quest-detail-content {
+      .detail-header h2 {
+        font-size: 16px;
+      }
+
+      .detail-body .detail-section {
+        h3 {
+          font-size: 13px;
+        }
+
+        .detail-text {
+          font-size: 12px;
+        }
       }
     }
   }

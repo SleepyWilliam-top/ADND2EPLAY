@@ -1,10 +1,8 @@
 <template>
   <div class="custom-race-creator">
     <div class="creator-header">
-      <h2>自定义种族创建器</h2>
-      <p class="rules-summary">
-        根据ADND2E规则创建新种族。种族必须：类人形态、陆行、有智慧、无过强能力、乐于交际。职业等级最高12级（由首要属性决定）。
-      </p>
+      <h2>自定义种族创建器（无限制版）</h2>
+      <p class="rules-summary">自由创建任何种族，无任何限制。你可以设置任意的属性调整、职业限制、特殊能力等。</p>
     </div>
 
     <div class="creator-content">
@@ -38,7 +36,7 @@
         <h3>体型</h3>
         <div class="size-options">
           <label v-for="size in sizeOptions" :key="size.id" class="size-option">
-            <input type="radio" v-model="customRace.size" :value="size.id" />
+            <input v-model="customRace.size" type="radio" :value="size.id" />
             <span class="size-label">
               {{ size.name }} ({{ size.id }})
               <span class="size-desc">{{ size.description }}</span>
@@ -51,46 +49,46 @@
       <!-- 属性调整 -->
       <section class="creator-section">
         <h3>属性调整</h3>
-        <p class="section-note">增减必须平衡。除力量外，任何属性调整不超过±2。力量调整由体型决定。</p>
+        <p class="section-note">可设置任意属性调整值（范围：-10到+10）。</p>
         <div class="ability-adjustments">
           <div v-for="ability in abilities" :key="ability.key" class="adjustment-item">
             <label>{{ ability.name }}：</label>
-            <select v-model.number="customRace.abilityAdjustments[ability.key]" :disabled="ability.key === 'str'">
-              <option :value="0">无调整 (0)</option>
-              <option :value="-2">-2</option>
-              <option :value="-1">-1</option>
-              <option :value="1">+1</option>
-              <option :value="2">+2</option>
-            </select>
+            <input
+              v-model.number="customRace.abilityAdjustments![ability.key]"
+              type="number"
+              min="-10"
+              max="10"
+              placeholder="0"
+            />
           </div>
         </div>
-        <div class="adjustment-balance" :class="{ balanced: isAdjustmentBalanced, unbalanced: !isAdjustmentBalanced }">
-          <strong>平衡状态：</strong>
-          总和 = {{ adjustmentSum }} ({{ isAdjustmentBalanced ? '✓ 平衡' : '✗ 未平衡' }})
+        <div class="adjustment-balance-info">
+          <strong>当前总和：</strong> {{ adjustmentSum }}
+          <span class="hint">（提示：传统ADND2E规则建议平衡到0，但这里不强制）</span>
         </div>
       </section>
 
       <!-- 属性要求 -->
       <section class="creator-section">
         <h3>属性要求</h3>
-        <p class="section-note">设置该种族的属性最小值和最大值。大型生物力量最低11，敏捷最高17。</p>
+        <p class="section-note">设置该种族的属性最小值和最大值（范围：1-25）。</p>
         <div class="ability-requirements">
           <div v-for="ability in abilities" :key="ability.key" class="requirement-item">
             <label>{{ ability.name }}：</label>
             <div class="min-max-inputs">
               <input
+                v-model.number="customRace.abilityRequirements![ability.key].min"
                 type="number"
-                v-model.number="customRace.abilityRequirements[ability.key].min"
-                min="3"
-                max="18"
+                min="0"
+                max="30"
                 placeholder="最小"
               />
               <span>-</span>
               <input
+                v-model.number="customRace.abilityRequirements![ability.key].max"
                 type="number"
-                v-model.number="customRace.abilityRequirements[ability.key].max"
-                min="3"
-                max="20"
+                min="0"
+                max="30"
                 placeholder="最大"
               />
             </div>
@@ -101,33 +99,40 @@
       <!-- 职业限制 -->
       <section class="creator-section">
         <h3>职业限制</h3>
-        <p class="section-note">
-          选择该种族可选的职业。等级上限由首要属性决定（3-12级）。兼职需要在每个职业的首要属性上都有14+。
-        </p>
-        <div class="class-limits">
-          <div v-for="cls in availableClasses" :key="cls" class="class-item">
-            <label>
-              <input type="checkbox" v-model="selectedClasses" :value="cls" />
+        <p class="section-note">选择该种族可选的职业，并设置每个职业的等级上限（可选，留空则无限制）。</p>
+        <div class="class-limits-advanced">
+          <div v-for="cls in availableClasses" :key="cls" class="class-item-advanced">
+            <label class="class-checkbox">
+              <input v-model="selectedClasses" type="checkbox" :value="cls" />
               {{ cls }}
             </label>
+            <input
+              v-if="selectedClasses.includes(cls)"
+              v-model.number="classLevelLimits[cls]"
+              type="number"
+              min="1"
+              max="99"
+              placeholder="无限制"
+              class="level-limit-input"
+            />
           </div>
         </div>
       </section>
 
       <!-- 特殊能力 -->
       <section class="creator-section">
-        <h3>特殊能力</h3>
-        <p class="section-note">添加种族特殊能力。不要添加过强的能力（如天生施法、魔法抗力等）。</p>
+        <h3>特殊能力（可选）</h3>
+        <p class="section-note">添加种族特殊能力，可以添加任何你想要的能力。</p>
         <div class="abilities-list">
           <div v-for="(ability, index) in customRace.abilities" :key="index" class="ability-item">
             <div class="ability-inputs">
               <input v-model="ability.name" type="text" placeholder="能力名称" />
               <input v-model="ability.description" type="text" placeholder="能力描述" />
-              <button @click="removeAbility(index)" class="btn-remove">删除</button>
+              <button class="btn-remove" @click="removeAbility(index)">删除</button>
             </div>
             <div class="ability-tooltip">
               <label>
-                <input type="checkbox" v-model="ability.hasTooltip" />
+                <input v-model="ability.hasTooltip" type="checkbox" />
                 添加详细说明
               </label>
               <textarea
@@ -139,19 +144,19 @@
             </div>
           </div>
         </div>
-        <button @click="addAbility" class="btn-add">+ 添加能力</button>
+        <button class="btn-add" @click="addAbility">+ 添加能力</button>
       </section>
 
       <!-- 语言 -->
       <section class="creator-section">
-        <h3>语言</h3>
+        <h3>语言（可选）</h3>
         <div class="languages-list">
-          <div v-for="(lang, index) in customRace.languages" :key="index" class="language-item">
-            <input v-model="customRace.languages[index]" type="text" placeholder="语言名称" />
-            <button @click="removeLanguage(index)" class="btn-remove">删除</button>
+          <div v-for="(_lang, index) in customRace.languages" :key="index" class="language-item">
+            <input v-model="customRace.languages![index]" type="text" placeholder="语言名称" />
+            <button class="btn-remove" @click="removeLanguage(index)">删除</button>
           </div>
         </div>
-        <button @click="addLanguage" class="btn-add">+ 添加语言</button>
+        <button class="btn-add" @click="addLanguage">+ 添加语言</button>
       </section>
 
       <!-- 优势与劣势 -->
@@ -170,8 +175,8 @@
 
     <!-- 底部按钮 -->
     <div class="creator-footer">
-      <button @click="validateAndSave" class="btn-primary" :disabled="!canSave">保存种族</button>
-      <button @click="cancel" class="btn-secondary">取消</button>
+      <button class="btn-primary" :disabled="!canSave" @click="validateAndSave">保存种族</button>
+      <button class="btn-secondary" @click="cancel">取消</button>
     </div>
 
     <!-- 验证错误提示 -->
@@ -200,9 +205,9 @@ const sizeOptions = [
   { id: 'T', name: '微型', description: '2英尺或更小，力量-3' },
   { id: 'S', name: '小型', description: '2-4英尺，力量-1' },
   { id: 'M', name: '中型', description: '4-7英尺，无调整' },
-  { id: 'L', name: '大型', description: '7-12英尺，力量+1，敏捷上限17' },
-  { id: 'H', name: '巨型', description: '12-25英尺，力量+2，敏捷上限17' },
-  { id: 'G', name: '超巨型', description: '25英尺以上，力量+4，敏捷上限17' },
+  { id: 'L', name: '大型', description: '7-12英尺，力量+1' },
+  { id: 'H', name: '巨型', description: '12-25英尺，力量+2' },
+  { id: 'G', name: '超巨型', description: '25英尺以上，力量+4' },
 ];
 
 // 属性列表
@@ -211,7 +216,7 @@ const abilities = [
   { key: 'dex', name: '敏捷' },
   { key: 'con', name: '体质' },
   { key: 'int', name: '智力' },
-  { key: 'wis', name: '感知' },
+  { key: 'wis', name: '灵知' },
   { key: 'cha', name: '魅力' },
 ];
 
@@ -268,6 +273,7 @@ const customRace = ref<Partial<Race> & { size: string }>({
 });
 
 const selectedClasses = ref<string[]>([]);
+const classLevelLimits = ref<Record<string, number | undefined>>({});
 const validationErrors = ref<string[]>([]);
 
 // 根据体型自动设置力量调整
@@ -299,7 +305,6 @@ watch(
     }
   },
 );
-
 // 体型调整说明
 const sizeAdjustment = computed(() => {
   const size = customRace.value.size;
@@ -307,25 +312,15 @@ const sizeAdjustment = computed(() => {
   return option ? option.description : '';
 });
 
-// 计算调整总和（不包括力量，因为力量由体型决定）
+// 计算调整总和
 const adjustmentSum = computed(() => {
   const adjustments = customRace.value.abilityAdjustments!;
-  return Object.entries(adjustments).reduce((sum, [key, value]) => sum + value, 0);
+  return Object.entries(adjustments).reduce((sum, [_key, value]) => sum + value, 0);
 });
 
-// 检查调整是否平衡
-const isAdjustmentBalanced = computed(() => {
-  return adjustmentSum.value === 0;
-});
-
-// 检查是否可以保存
+// 检查是否可以保存（只需要有名称即可）
 const canSave = computed(() => {
-  return (
-    customRace.value.name &&
-    customRace.value.englishName &&
-    isAdjustmentBalanced.value &&
-    selectedClasses.value.length > 0
-  );
+  return !!customRace.value.name;
 });
 
 // 添加能力
@@ -357,77 +352,44 @@ function removeLanguage(index: number) {
 function validateAndSave() {
   validationErrors.value = [];
 
-  // 验证基本信息
-  if (!customRace.value.name) validationErrors.value.push('请输入种族名称');
-  if (!customRace.value.englishName) validationErrors.value.push('请输入英文名称');
-  if (!customRace.value.icon) validationErrors.value.push('请输入图标');
-  if (!customRace.value.description) validationErrors.value.push('请输入种族描述');
-  if (!customRace.value.lifespan) validationErrors.value.push('请输入寿命');
-
-  // 验证属性调整平衡
-  if (!isAdjustmentBalanced.value) {
-    validationErrors.value.push('属性调整必须平衡（总和为0）');
+  // 只验证必填项
+  if (!customRace.value.name) {
+    validationErrors.value.push('请输入种族名称');
   }
 
-  // 验证属性调整范围
-  const adjustments = customRace.value.abilityAdjustments!;
-  for (const [key, value] of Object.entries(adjustments)) {
-    if (key !== 'str' && Math.abs(value) > 2) {
-      validationErrors.value.push(`${abilities.find(a => a.key === key)?.name}调整超出范围（±2）`);
-    }
-  }
-
-  // 验证属性要求
+  // 验证属性要求的最小值不大于最大值
   const requirements = customRace.value.abilityRequirements!;
-  for (const [key, range] of Object.entries(requirements)) {
+  for (const [abilityKey, range] of Object.entries(requirements)) {
     if (range.min > range.max) {
-      validationErrors.value.push(`${abilities.find(a => a.key === key)?.name}的最小值不能大于最大值`);
+      validationErrors.value.push(`${abilities.find(a => a.key === abilityKey)?.name}的最小值不能大于最大值`);
     }
-  }
-
-  // 验证职业选择
-  if (selectedClasses.value.length === 0) {
-    validationErrors.value.push('请至少选择一个职业');
-  }
-
-  // 验证能力
-  if (customRace.value.abilities!.length === 0) {
-    validationErrors.value.push('请至少添加一个特殊能力');
-  } else {
-    customRace.value.abilities!.forEach((ability, index) => {
-      if (!ability.name || !ability.description) {
-        validationErrors.value.push(`第${index + 1}个能力的名称和描述不能为空`);
-      }
-    });
-  }
-
-  // 验证语言
-  if (customRace.value.languages!.length === 0) {
-    validationErrors.value.push('请至少添加一个语言');
   }
 
   if (validationErrors.value.length > 0) {
     return;
   }
 
-  // 生成ID（使用名称的拼音或英文名的小写）
-  const id = customRace.value.englishName!.toLowerCase().replace(/\s+/g, '-');
+  // 生成ID（使用英文名或中文名）
+  const id = (customRace.value.englishName || customRace.value.name)!.toLowerCase().replace(/\s+/g, '-');
 
-  // 生成职业限制（所有职业等级上限都是12）
-  const classLimits = selectedClasses.value.map(className => ({
-    className,
-    levelLimit: 12 as const,
-  }));
+  // 生成职业限制（使用自定义等级上限，如果未设置或为99则使用'U'表示无限制）
+  const classLimits = selectedClasses.value.map(className => {
+    const limit = classLevelLimits.value[className];
+    return {
+      className,
+      levelLimit: !limit || limit >= 99 ? ('U' as const) : limit,
+    };
+  });
 
   // 构建完整的Race对象
   const race: Race = {
     id,
     name: customRace.value.name!,
-    englishName: customRace.value.englishName!,
-    icon: customRace.value.icon!,
+    englishName: customRace.value.englishName || customRace.value.name!,
+    icon: customRace.value.icon || '🎭',
     category: 'custom',
-    description: customRace.value.description!,
-    lifespan: customRace.value.lifespan!,
+    description: customRace.value.description || '自定义种族',
+    lifespan: customRace.value.lifespan || '未知',
     abilityRequirements: customRace.value.abilityRequirements!,
     abilityAdjustments: customRace.value.abilityAdjustments!,
     classLimits,
@@ -577,7 +539,8 @@ function cancel() {
     min-width: 60px;
   }
 
-  select {
+  select,
+  input[type='number'] {
     flex: 1;
     padding: 6px;
     border: 1px solid #ccc;
@@ -606,28 +569,26 @@ function cancel() {
   }
 }
 
-.adjustment-balance {
+.adjustment-balance-info {
   margin-top: 15px;
   padding: 10px;
   border-radius: 4px;
   font-size: 14px;
+  background: #e7f3ff;
+  border: 1px solid #2196f3;
+  color: #0d47a1;
 
-  &.balanced {
-    background: #d4edda;
-    border: 1px solid #28a745;
-    color: #155724;
-  }
-
-  &.unbalanced {
-    background: #f8d7da;
-    border: 1px solid #dc3545;
-    color: #721c24;
+  .hint {
+    font-size: 12px;
+    color: #666;
+    margin-left: 10px;
   }
 }
 
-.class-limits {
+.class-limits,
+.class-limits-advanced {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 
   .class-item {
@@ -639,6 +600,41 @@ function cancel() {
 
       input[type='checkbox'] {
         cursor: pointer;
+      }
+    }
+  }
+
+  .class-item-advanced {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+
+    .class-checkbox {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+
+      input[type='checkbox'] {
+        cursor: pointer;
+      }
+    }
+
+    .level-limit-input {
+      width: 80px;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
+
+      &::placeholder {
+        font-size: 11px;
       }
     }
   }
@@ -807,8 +803,9 @@ function cancel() {
     grid-template-columns: 1fr;
   }
 
-  .class-limits {
-    grid-template-columns: repeat(2, 1fr);
+  .class-limits,
+  .class-limits-advanced {
+    grid-template-columns: 1fr;
   }
 }
 </style>

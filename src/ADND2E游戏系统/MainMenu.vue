@@ -391,7 +391,7 @@ function copyQQGroup() {
   overflow-x: hidden;
   box-sizing: border-box;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 20px 15px;
     min-height: 100vh;
     align-items: center;
@@ -430,7 +430,7 @@ function copyQQGroup() {
     pointer-events: none;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 40px 25px;
     border-width: 4px;
     max-width: 100%;
@@ -460,7 +460,7 @@ function copyQQGroup() {
   text-align: center;
   margin-bottom: 60px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     margin-bottom: 40px;
   }
 }
@@ -484,7 +484,7 @@ function copyQQGroup() {
     letter-spacing: 3px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     font-size: 22px;
     letter-spacing: 2px;
     gap: 8px;
@@ -503,7 +503,7 @@ function copyQQGroup() {
     font-style: italic;
     margin-top: 5px;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 0.65em;
       letter-spacing: 2px;
     }
@@ -574,7 +574,7 @@ function copyQQGroup() {
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     max-width: 100%;
   }
 }
@@ -608,7 +608,7 @@ function copyQQGroup() {
     left: -2px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 25px 20px;
     margin: 6px;
   }
@@ -635,7 +635,7 @@ function copyQQGroup() {
     margin: 0;
     text-transform: uppercase;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 20px;
     }
   }
@@ -661,7 +661,7 @@ function copyQQGroup() {
     margin: 0;
     text-align: center;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 14px;
     }
   }
@@ -690,9 +690,10 @@ function copyQQGroup() {
     background-color: #fff;
     transition: all 0.2s ease;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 12px;
       padding: 8px 16px;
+      min-height: 44px; // 触摸友好的最小高度
     }
   }
 }
@@ -714,7 +715,7 @@ function copyQQGroup() {
     letter-spacing: 2px;
     margin-bottom: 15px;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 12px;
     }
   }
@@ -770,7 +771,7 @@ function copyQQGroup() {
   z-index: 2000;
   padding: 20px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 15px;
   }
 
@@ -801,7 +802,7 @@ function copyQQGroup() {
     pointer-events: none;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     border-width: 3px;
     box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
     max-width: 100%;
@@ -845,7 +846,7 @@ function copyQQGroup() {
     margin: 0;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 15px 20px;
     border-bottom-width: 2px;
 
@@ -888,7 +889,7 @@ function copyQQGroup() {
   padding: 40px 30px;
   text-align: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 30px 20px;
   }
 
@@ -901,7 +902,7 @@ function copyQQGroup() {
   font-size: 64px;
   margin-bottom: 20px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     font-size: 56px;
     margin-bottom: 15px;
   }
@@ -919,7 +920,7 @@ function copyQQGroup() {
   color: #333;
   margin-bottom: 20px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     font-size: 15px;
     line-height: 1.6;
   }
@@ -1155,7 +1156,7 @@ function copyQQGroup() {
   margin-top: 25px;
   text-align: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 15px;
     margin-top: 20px;
   }
@@ -1201,7 +1202,7 @@ function copyQQGroup() {
     background-color: #fff;
     border: 2px solid #000;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 24px;
       padding: 8px 16px;
       letter-spacing: 1.5px;
@@ -1224,6 +1225,7 @@ function copyQQGroup() {
     font-family: '临海体', serif;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-height: 44px; // 触摸友好的最小高度
 
     &:hover {
       background-color: #000;
@@ -1236,7 +1238,7 @@ function copyQQGroup() {
       transform: translateY(0);
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       padding: 6px 14px;
       font-size: 13px;
     }

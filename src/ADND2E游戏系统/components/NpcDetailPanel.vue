@@ -879,4 +879,306 @@ function formatDate(timestamp?: number): string {
     }
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .npc-detail-panel {
+    padding: 15px;
+  }
+
+  .back-button {
+    padding: 8px 14px;
+    font-size: 13px;
+    margin-bottom: 15px;
+    min-height: 44px; // 触摸友好
+  }
+
+  .npc-header {
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom-width: 2px;
+  }
+
+  .npc-avatar-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .npc-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-width: 2px;
+
+    .avatar-overlay i {
+      font-size: 24px;
+    }
+  }
+
+  .avatar-credit {
+    font-size: 9px;
+  }
+
+  .npc-header-info {
+    gap: 10px;
+    width: 100%;
+  }
+
+  .npc-name-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .npc-name {
+    font-size: 22px;
+  }
+
+  .favorite-button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+  }
+
+  .npc-meta-info {
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .meta-item {
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .relationship-label {
+    font-size: 13px;
+  }
+
+  .attitude-badge {
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  .relationship-bar {
+    height: 18px;
+    border-width: 2px;
+  }
+
+  .status-badge {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-width: 2px;
+  }
+
+  .tag {
+    padding: 3px 8px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  .tab-navigation {
+    border-bottom-width: 2px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .tab-button {
+    flex: 1 1 calc(50% - 0.5px);
+    padding: 10px 8px;
+    font-size: 13px;
+    min-height: 44px; // 触摸友好
+
+    i {
+      margin-right: 5px;
+    }
+
+    &.active {
+      border-bottom-width: 2px;
+      margin-bottom: -2px;
+    }
+  }
+
+  .tab-content {
+    margin-bottom: 15px;
+  }
+
+  .tab-pane {
+    gap: 15px;
+  }
+
+  .info-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom-width: 2px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .info-item {
+    padding: 8px 10px;
+    font-size: 13px;
+
+    .label {
+      font-size: 12px;
+    }
+
+    .value {
+      font-size: 13px;
+    }
+  }
+
+  .special-abilities,
+  .description-text {
+    font-size: 13px;
+    line-height: 1.6;
+
+    p {
+      margin: 6px 0;
+    }
+  }
+
+  .equipment-list {
+    gap: 10px;
+  }
+
+  .equipment-item {
+    padding: 8px 10px;
+    font-size: 13px;
+
+    i {
+      font-size: 18px;
+    }
+  }
+
+  .inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .inventory-item {
+    padding: 10px;
+    border-width: 2px;
+
+    .item-name {
+      font-size: 13px;
+    }
+
+    .item-quantity {
+      font-size: 11px;
+    }
+
+    .item-description {
+      font-size: 10px;
+    }
+  }
+
+  .notes-textarea {
+    min-height: 120px;
+    padding: 10px;
+    font-size: 13px;
+    border-width: 2px;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-item {
+    gap: 12px;
+    padding: 10px;
+    font-size: 13px;
+
+    i {
+      font-size: 20px;
+    }
+
+    div {
+      strong {
+        font-size: 13px;
+      }
+
+      span {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 30px 15px;
+
+    i {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+
+  .action-buttons {
+    gap: 8px;
+    padding-top: 15px;
+    border-top-width: 2px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: auto;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-width: 2px;
+    gap: 6px;
+    min-height: 44px; // 触摸友好
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// 极小屏幕适配
+@media (max-width: 480px) {
+  .npc-detail-panel {
+    padding: 12px;
+  }
+
+  .npc-name {
+    font-size: 20px;
+  }
+
+  .npc-meta-info {
+    font-size: 12px;
+  }
+
+  .tab-button {
+    flex: 1 1 100%;
+    font-size: 12px;
+  }
+
+  .info-section h3 {
+    font-size: 15px;
+  }
+
+  .action-btn {
+    flex: 1 1 100%;
+    font-size: 12px;
+  }
+
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

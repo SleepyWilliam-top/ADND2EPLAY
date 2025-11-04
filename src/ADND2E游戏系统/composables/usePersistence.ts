@@ -99,7 +99,7 @@ export function getCurrentArchiveName(): string {
   try {
     // 使用角色卡ID作为唯一标识（酒馆的角色卡ID）
     const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
-
+    
     // 🔧 修复：使用固定格式，不包含角色名称
     // 这样即使角色名称改变，也不会创建新的存档
     return `ADND2E_${characterId}`;

@@ -21,6 +21,9 @@
     </div>
 
     <div class="input-area">
+      <button v-if="gameStore.isGenerating" class="stop-button-icon" title="停止生成" @click="handleStop">
+        <i class="fas fa-stop"></i>
+      </button>
       <textarea
         v-model="userInput"
         class="input-textarea"
@@ -29,12 +32,14 @@
         @keydown.enter.exact="handleSend"
         @keydown.enter.shift.prevent="userInput += '\n'"
       ></textarea>
-      <div class="input-buttons">
-        <button v-if="!gameStore.isGenerating" class="send-button" :disabled="!userInput.trim()" @click="handleSend">
-          发送
-        </button>
-        <button v-else class="stop-button" @click="handleStop">停止</button>
-      </div>
+      <button
+        class="send-button-icon"
+        title="发送"
+        :disabled="!userInput.trim() || gameStore.isGenerating"
+        @click="handleSend"
+      >
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
   </div>
 </template>
@@ -251,56 +256,87 @@ function handleStop() {
   display: flex;
   gap: 10px;
   flex-shrink: 0;
-  min-height: 130px;
+  align-items: flex-end;
   position: relative;
   z-index: 10;
 }
 
+.stop-button-icon {
+  flex-shrink: 0;
+  width: 45px;
+  height: 45px;
+  border: 3px solid #dc3545;
+  background-color: #dc3545;
+  color: #fff;
+  font-size: 1.2em;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &:hover {
+    background-color: #a71d2a;
+    border-color: #a71d2a;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
 .input-textarea {
   flex: 1;
-  min-height: 80px;
-  max-height: 200px;
-  padding: 10px;
+  min-height: 45px;
+  max-height: 150px;
+  padding: 12px;
   font-family: '临海体', serif;
   font-size: 14px;
+  line-height: 1.4;
   border: 2px solid #000;
   background-color: #fff;
   resize: vertical;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: #333;
+    border-color: #8b4513;
+    box-shadow: 0 0 8px rgba(139, 69, 19, 0.3);
   }
 
   &:disabled {
     background-color: #f5f5f5;
     cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  &::placeholder {
+    color: #999;
   }
 }
 
-.input-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.send-button,
-.stop-button {
-  font-family: '临海体', serif;
-  font-size: 14px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 10px 20px;
+.send-button-icon {
+  flex-shrink: 0;
+  width: 50px;
+  height: 45px;
   border: 3px solid #000;
-  background-color: #fff;
+  background-color: #8b4513;
+  color: #fff;
+  font-size: 1.2em;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   &:hover:not(:disabled) {
-    background-color: #000;
-    color: #fff;
+    background-color: #a0522d;
+    border-color: #8b4513;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
@@ -311,19 +347,11 @@ function handleStop() {
   }
 
   &:disabled {
-    opacity: 0.5;
+    background-color: #ccc;
+    border-color: #999;
+    color: #666;
     cursor: not-allowed;
-  }
-}
-
-.stop-button {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: #fff;
-
-  &:hover {
-    background-color: #a71d2a;
-    border-color: #a71d2a;
+    opacity: 0.6;
   }
 }
 

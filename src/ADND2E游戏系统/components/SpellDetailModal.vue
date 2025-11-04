@@ -298,4 +298,162 @@ function getComponents() {
     white-space: pre-wrap;
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .spell-detail-overlay {
+    padding: 10px;
+  }
+
+  .spell-detail-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-width: 3px;
+
+    &::before {
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+    }
+  }
+
+  .modal-header {
+    padding: 12px 15px;
+    border-bottom-width: 2px;
+
+    h3 {
+      font-size: 18px;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      border-width: 2px;
+    }
+  }
+
+  .modal-body {
+    padding: 15px;
+  }
+
+  .no-spell-selected {
+    padding: 40px 15px;
+
+    i {
+      font-size: 40px;
+      margin-bottom: 15px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+
+  .spell-header {
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom-width: 2px;
+
+    .spell-title-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+
+      .spell-name {
+        font-size: 20px;
+      }
+
+      .spell-level-badge {
+        padding: 4px 12px;
+        font-size: 13px;
+        border-width: 2px;
+      }
+    }
+
+    .spell-english {
+      font-size: 12px;
+    }
+  }
+
+  .spell-properties {
+    padding: 12px;
+    margin-bottom: 15px;
+    border-width: 2px;
+
+    .property-row {
+      flex-direction: column;
+      padding: 8px 0;
+
+      .property-label {
+        min-width: auto;
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+
+      .property-value {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .spell-description {
+    h4 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom-width: 2px;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .spell-detail-modal {
+    border-width: 2px;
+
+    &::before {
+      border-width: 1px;
+    }
+  }
+
+  .modal-header {
+    padding: 10px 12px;
+
+    h3 {
+      font-size: 16px;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+    }
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .spell-header .spell-title-row .spell-name {
+    font-size: 18px;
+  }
+
+  .spell-description {
+    h4 {
+      font-size: 15px;
+    }
+
+    p {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  }
+}
 </style>

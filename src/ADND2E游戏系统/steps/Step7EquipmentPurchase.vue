@@ -104,9 +104,9 @@
                     <span v-if="equipment.description" class="equipment-desc">{{ equipment.description }}</span>
                   </div>
                 </td>
-                <td class="price-col">{{ formatPrice(equipment.price) }}</td>
-                <td class="weight-col">{{ formatWeight(equipment.weight) }}</td>
-                <td class="quantity-col">
+                <td class="price-col" data-label="价格">{{ formatPrice(equipment.price) }}</td>
+                <td class="weight-col" data-label="重量">{{ formatWeight(equipment.weight) }}</td>
+                <td class="quantity-col" data-label="数量">
                   <input
                     v-model.number="quantities[equipment.id]"
                     type="number"
@@ -492,6 +492,11 @@ function handleNext() {
   display: flex;
   flex-direction: column;
   gap: 30px;
+
+  @media (max-width: 992px) {
+    padding: 15px 10px;
+    gap: 15px;
+  }
 }
 
 // 掷骰对话框
@@ -506,6 +511,7 @@ function handleNext() {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 15px;
 }
 
 .dice-dialog {
@@ -515,10 +521,22 @@ function handleNext() {
   max-width: 600px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 
+  @media (max-width: 992px) {
+    min-width: unset;
+    width: 100%;
+    max-width: 100%;
+    border-width: 3px;
+  }
+
   &-header {
     padding: 25px 30px;
     border-bottom: 3px solid #000;
     background-color: #f5f5f5;
+
+    @media (max-width: 992px) {
+      padding: 15px;
+      border-bottom-width: 2px;
+    }
   }
 
   &-title {
@@ -527,10 +545,18 @@ function handleNext() {
     font-weight: bold;
     margin: 0;
     text-align: center;
+
+    @media (max-width: 992px) {
+      font-size: 18px;
+    }
   }
 
   &-body {
     padding: 35px 30px;
+
+    @media (max-width: 992px) {
+      padding: 20px 15px;
+    }
   }
 
   &-footer {
@@ -540,6 +566,13 @@ function handleNext() {
     display: flex;
     justify-content: center;
     gap: 15px;
+
+    @media (max-width: 992px) {
+      padding: 15px;
+      border-top-width: 2px;
+      flex-direction: column;
+      gap: 10px;
+    }
   }
 }
 
@@ -549,6 +582,11 @@ function handleNext() {
   line-height: 1.6;
   margin: 0 0 25px 0;
   text-align: center;
+
+  @media (max-width: 992px) {
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
 
   strong {
     color: #c00;
@@ -564,6 +602,12 @@ function handleNext() {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  @media (max-width: 992px) {
+    min-height: 100px;
+    padding: 15px;
+    border-width: 2px;
+  }
 }
 
 .roll-prompt {
@@ -647,6 +691,13 @@ function handleNext() {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
+
+  @media (max-width: 992px) {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    min-height: 44px;
+  }
 }
 
 .dice-roll-button {
@@ -658,6 +709,10 @@ function handleNext() {
   &:hover {
     background-color: #0c0;
     border-color: #0c0;
+  }
+
+  @media (max-width: 992px) {
+    min-width: unset;
   }
 }
 
@@ -688,6 +743,10 @@ function handleNext() {
   display: flex;
   gap: 25px;
   flex-wrap: wrap;
+
+  @media (max-width: 992px) {
+    gap: 10px;
+  }
 }
 
 .info-card {
@@ -697,6 +756,16 @@ function handleNext() {
   background-color: #f5f5f5;
   border: 3px solid #000;
   position: relative;
+
+  @media (max-width: 992px) {
+    min-width: calc(50% - 5px);
+    padding: 12px 15px;
+    border-width: 2px;
+  }
+
+  @media (max-width: 480px) {
+    min-width: 100%;
+  }
 
   &::before {
     content: '';
@@ -717,6 +786,11 @@ function handleNext() {
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
+
+  @media (max-width: 992px) {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
 }
 
 .info-value {
@@ -724,6 +798,10 @@ function handleNext() {
   font-size: 26px;
   font-weight: bold;
   color: #000;
+
+  @media (max-width: 992px) {
+    font-size: 20px;
+  }
 
   &.spent {
     color: #c00;
@@ -740,8 +818,9 @@ function handleNext() {
   gap: 30px;
   flex: 1;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 992px) {
     flex-direction: column;
+    gap: 15px;
   }
 }
 
@@ -753,9 +832,13 @@ function handleNext() {
   background-color: #fff;
   overflow-y: auto;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 992px) {
     width: 100%;
-    max-height: 300px;
+    padding: 15px;
+    border-width: 2px;
+    overflow-x: auto;
+    overflow-y: visible;
+    max-height: none;
   }
 }
 
@@ -768,6 +851,12 @@ function handleNext() {
   border-bottom: 2px solid #000;
   text-transform: uppercase;
   letter-spacing: 1px;
+
+  @media (max-width: 992px) {
+    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
 }
 
 .category-item {
@@ -780,6 +869,13 @@ function handleNext() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  white-space: nowrap;
+
+  @media (max-width: 992px) {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    min-height: 44px;
+  }
 
   &:hover {
     background-color: #e0e0e0;
@@ -800,11 +896,19 @@ function handleNext() {
 .category-name {
   font-family: '临海体', serif;
   font-size: 15px;
+
+  @media (max-width: 992px) {
+    font-size: 14px;
+  }
 }
 
 .category-count {
   font-size: 13px;
   color: #666;
+
+  @media (max-width: 992px) {
+    font-size: 12px;
+  }
 }
 
 // 中间装备列表面板
@@ -814,6 +918,11 @@ function handleNext() {
   background-color: #fff;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 992px) {
+    border-width: 2px;
+    min-height: 400px;
+  }
 }
 
 .panel-header {
@@ -824,12 +933,22 @@ function handleNext() {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+
+  @media (max-width: 992px) {
+    padding: 12px 15px;
+    gap: 10px;
+  }
 }
 
 .search-box {
   flex: 1;
   min-width: 200px;
   max-width: 300px;
+
+  @media (max-width: 992px) {
+    min-width: 100%;
+    max-width: 100%;
+  }
 }
 
 .search-input {
@@ -838,6 +957,11 @@ function handleNext() {
   border: 2px solid #000;
   font-family: '临海体', serif;
   font-size: 14px;
+
+  @media (max-width: 992px) {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
 
   &:focus {
     outline: none;
@@ -850,6 +974,11 @@ function handleNext() {
   flex: 1;
   overflow-y: auto;
   padding: 25px;
+  overflow-x: auto;
+
+  @media (max-width: 992px) {
+    padding: 10px;
+  }
 }
 
 .equipment-table {
@@ -857,6 +986,20 @@ function handleNext() {
   border-collapse: separate;
   border-spacing: 0 8px;
   font-family: '临海体', serif;
+
+  @media (max-width: 992px) {
+    border-spacing: 0;
+
+    thead {
+      display: none;
+    }
+
+    tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  }
 
   thead {
     background-color: #f5f5f5;
@@ -888,10 +1031,49 @@ function handleNext() {
     &:hover td {
       background-color: #f9f9f9;
     }
+
+    @media (max-width: 992px) {
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #000;
+      background-color: #fff;
+      padding: 12px;
+      gap: 8px;
+
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0;
+        border: none;
+        background: none;
+
+        &::before {
+          content: attr(data-label);
+          font-weight: bold;
+          text-transform: uppercase;
+          font-size: 12px;
+          color: #666;
+        }
+
+        &.name-col::before {
+          display: none;
+        }
+      }
+    }
   }
 
   .name-col {
     min-width: 220px;
+
+    @media (max-width: 992px) {
+      min-width: unset;
+      flex-direction: column;
+      align-items: flex-start !important;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #ddd;
+    }
   }
 
   .equipment-name-wrapper {
@@ -903,18 +1085,30 @@ function handleNext() {
   .equipment-name {
     font-weight: bold;
     font-size: 15px;
+
+    @media (max-width: 992px) {
+      font-size: 14px;
+    }
   }
 
   .name-en {
     font-size: 13px;
     color: #666;
     font-style: italic;
+
+    @media (max-width: 992px) {
+      font-size: 12px;
+    }
   }
 
   .equipment-desc {
     font-size: 12px;
     color: #999;
     font-style: italic;
+
+    @media (max-width: 992px) {
+      font-size: 11px;
+    }
   }
 
   .price-col,
@@ -926,11 +1120,24 @@ function handleNext() {
   .quantity-col {
     width: 100px;
     text-align: center;
+
+    @media (max-width: 992px) {
+      width: auto;
+    }
   }
 
   .action-col {
     width: 100px;
     text-align: center;
+
+    @media (max-width: 992px) {
+      width: auto;
+      margin-top: 4px;
+
+      &::before {
+        display: none;
+      }
+    }
   }
 
   .no-data {
@@ -938,6 +1145,10 @@ function handleNext() {
     padding: 40px;
     color: #999;
     font-style: italic;
+
+    @media (max-width: 992px) {
+      padding: 20px;
+    }
   }
 }
 
@@ -947,6 +1158,13 @@ function handleNext() {
   border: 2px solid #000;
   text-align: center;
   font-family: '临海体', serif;
+
+  @media (max-width: 992px) {
+    width: 80px;
+    padding: 8px;
+    font-size: 16px !important;
+    min-height: 40px;
+  }
 
   &:focus {
     outline: none;
@@ -962,6 +1180,13 @@ function handleNext() {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
+
+  @media (max-width: 992px) {
+    width: 100%;
+    padding: 10px 20px;
+    min-height: 44px;
+    font-size: 14px;
+  }
 
   &:hover:not(:disabled) {
     background-color: #000;
@@ -982,6 +1207,11 @@ function handleNext() {
   justify-content: center;
   align-items: center;
   gap: 20px;
+
+  @media (max-width: 992px) {
+    padding: 12px 15px;
+    gap: 10px;
+  }
 }
 
 .page-button {
@@ -991,6 +1221,12 @@ function handleNext() {
   font-family: '临海体', serif;
   cursor: pointer;
   transition: all 0.2s;
+
+  @media (max-width: 992px) {
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: 14px;
+  }
 
   &:hover:not(:disabled) {
     background-color: #000;
@@ -1006,6 +1242,10 @@ function handleNext() {
 .page-info {
   font-family: '临海体', serif;
   font-size: 14px;
+
+  @media (max-width: 992px) {
+    font-size: 13px;
+  }
 }
 
 // 右侧购物车面板
@@ -1018,9 +1258,11 @@ function handleNext() {
   flex-direction: column;
   overflow-y: auto;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 992px) {
     width: 100%;
-    max-height: 400px;
+    padding: 15px;
+    border-width: 2px;
+    max-height: 500px;
   }
 }
 
@@ -1031,12 +1273,21 @@ function handleNext() {
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
+
+  @media (max-width: 992px) {
+    padding: 30px 15px;
+  }
 }
 
 .empty-icon {
   font-size: 64px;
   margin-bottom: 15px;
   opacity: 0.3;
+
+  @media (max-width: 992px) {
+    font-size: 48px;
+    margin-bottom: 10px;
+  }
 }
 
 .empty-text {
@@ -1044,6 +1295,10 @@ function handleNext() {
   font-size: 16px;
   color: #999;
   font-style: italic;
+
+  @media (max-width: 992px) {
+    font-size: 14px;
+  }
 }
 
 .cart-items {
@@ -1052,12 +1307,20 @@ function handleNext() {
   flex-direction: column;
   gap: 18px;
   overflow-y: auto;
+
+  @media (max-width: 992px) {
+    gap: 12px;
+  }
 }
 
 .cart-item {
   padding: 16px;
   border: 2px solid #000;
   background-color: #f9f9f9;
+
+  @media (max-width: 992px) {
+    padding: 12px;
+  }
 }
 
 .cart-item-header {
@@ -1065,12 +1328,20 @@ function handleNext() {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+
+  @media (max-width: 992px) {
+    margin-bottom: 10px;
+  }
 }
 
 .cart-item-name {
   font-family: '临海体', serif;
   font-weight: bold;
   font-size: 15px;
+
+  @media (max-width: 992px) {
+    font-size: 14px;
+  }
 }
 
 .remove-button {
@@ -1084,6 +1355,13 @@ function handleNext() {
   cursor: pointer;
   transition: all 0.2s;
   font-weight: bold;
+  flex-shrink: 0;
+
+  @media (max-width: 992px) {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
 
   &:hover {
     background-color: #c00;
@@ -1095,18 +1373,30 @@ function handleNext() {
   font-family: '临海体', serif;
   font-size: 12px;
   color: #666;
+
+  @media (max-width: 992px) {
+    font-size: 13px;
+  }
 }
 
 .cart-item-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+
+  @media (max-width: 992px) {
+    margin-bottom: 6px;
+  }
 }
 
 .cart-quantity-control {
   display: flex;
   gap: 5px;
   align-items: center;
+
+  @media (max-width: 992px) {
+    gap: 8px;
+  }
 }
 
 .quantity-btn {
@@ -1117,6 +1407,12 @@ function handleNext() {
   cursor: pointer;
   font-weight: bold;
   transition: all 0.2s;
+
+  @media (max-width: 992px) {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
 
   &:hover:not(:disabled) {
     background-color: #000;
@@ -1137,6 +1433,13 @@ function handleNext() {
   font-family: '临海体', serif;
   font-size: 12px;
 
+  @media (max-width: 992px) {
+    width: 60px;
+    padding: 8px;
+    font-size: 16px !important;
+    min-height: 36px;
+  }
+
   &:focus {
     outline: none;
     background-color: #fff;
@@ -1149,12 +1452,23 @@ function handleNext() {
   border-top: 1px solid #ccc;
   font-weight: bold;
   color: #000;
+
+  @media (max-width: 992px) {
+    margin-top: 10px;
+    padding-top: 10px;
+    font-size: 13px;
+  }
 }
 
 .cart-summary {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 2px solid #000;
+
+  @media (max-width: 992px) {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
 }
 
 .summary-row {
@@ -1163,6 +1477,11 @@ function handleNext() {
   margin-bottom: 8px;
   font-family: '临海体', serif;
   font-size: 14px;
+
+  @media (max-width: 992px) {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
 }
 
 .summary-value {
@@ -1182,6 +1501,12 @@ function handleNext() {
   cursor: pointer;
   transition: all 0.2s;
 
+  @media (max-width: 992px) {
+    padding: 12px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
   &:hover {
     background-color: #c00;
     color: #fff;
@@ -1195,6 +1520,12 @@ function handleNext() {
   gap: 20px;
   padding-top: 20px;
   border-top: 3px solid #000;
+
+  @media (max-width: 992px) {
+    gap: 10px;
+    padding-top: 15px;
+    border-top-width: 2px;
+  }
 }
 
 .adnd-button {
@@ -1208,6 +1539,14 @@ function handleNext() {
   text-transform: uppercase;
   font-family: '临海体', serif;
   letter-spacing: 1px;
+
+  @media (max-width: 992px) {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-width: 2px;
+    min-height: 44px;
+  }
 
   &:hover:not(:disabled) {
     background-color: #f0f0f0;

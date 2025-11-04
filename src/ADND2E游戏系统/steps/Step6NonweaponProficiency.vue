@@ -718,4 +718,198 @@ function goNext() {
     cursor: not-allowed;
   }
 }
+
+// 移动端响应式
+@media (max-width: 992px) {
+  .step6-nonweapon-proficiency {
+    padding: 15px 10px;
+  }
+
+  .main-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .info-panel {
+    padding: 12px;
+
+    h2 {
+      font-size: 20px;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      font-size: 13px;
+    }
+  }
+
+  .language-conversion {
+    padding: 10px;
+
+    h3 {
+      font-size: 15px;
+    }
+
+    .help-text {
+      font-size: 12px;
+    }
+  }
+
+  .group-tabs {
+    gap: 6px;
+
+    .tab-button {
+      padding: 6px 12px;
+      font-size: 13px;
+      flex: 1;
+      min-width: 80px;
+    }
+  }
+
+  .proficiency-list {
+    max-height: 400px;
+  }
+
+  .prof-item {
+    padding: 10px;
+
+    .prof-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+
+      .prof-name {
+        font-size: 14px;
+      }
+
+      .prof-cost {
+        font-size: 12px;
+      }
+    }
+
+    .prof-meta {
+      flex-direction: column;
+      gap: 2px;
+    }
+  }
+
+  .right-panel {
+    padding: 15px;
+    max-height: 500px;
+  }
+
+  .prof-details {
+    .details-header {
+      h2 {
+        font-size: 22px;
+      }
+
+      .english-name {
+        font-size: 14px;
+      }
+    }
+
+    .details-stats {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .details-description {
+      h3 {
+        font-size: 18px;
+      }
+
+      .description-text {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+    }
+
+    .details-actions {
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+  }
+
+  .no-selection {
+    padding: 60px 15px;
+    font-size: 16px;
+  }
+
+  .navigation {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .adnd-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .step6-nonweapon-proficiency {
+    padding: 10px 8px;
+  }
+
+  .info-panel {
+    padding: 10px;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  .group-tabs {
+    .tab-button {
+      padding: 6px 10px;
+      font-size: 12px;
+      min-width: 70px;
+    }
+  }
+
+  .proficiency-list {
+    max-height: 300px;
+  }
+
+  .right-panel {
+    padding: 12px;
+    max-height: 400px;
+  }
+
+  .prof-details {
+    .details-header {
+      h2 {
+        font-size: 20px;
+      }
+    }
+
+    .details-stats {
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .details-description {
+      h3 {
+        font-size: 16px;
+      }
+
+      .description-text {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .no-selection {
+    padding: 40px 10px;
+    font-size: 14px;
+  }
+}
 </style>

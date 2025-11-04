@@ -408,43 +408,43 @@ export function getIntelligenceModifiers(int: number | null): AbilityModifiers {
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '95%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '1级';
+    modifiers.immunity = '1级幻术';
   } else if (int === 20) {
     modifiers.languages = '9';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '96%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '2级';
+    modifiers.immunity = '1-2级幻术';
   } else if (int === 21) {
     modifiers.languages = '10';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '97%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '3级';
+    modifiers.immunity = '1-3级幻术';
   } else if (int === 22) {
     modifiers.languages = '11';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '98%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '4级';
+    modifiers.immunity = '1-4级幻术';
   } else if (int === 23) {
     modifiers.languages = '12';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '99%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '5级';
+    modifiers.immunity = '1-5级幻术';
   } else if (int === 24) {
     modifiers.languages = '15';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '100%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '6级';
+    modifiers.immunity = '1-6级幻术';
   } else if (int >= 25) {
     modifiers.languages = '20';
     modifiers.spellLevel = '9';
     modifiers.learnSpell = '100%';
     modifiers.maxSpells = '任意';
-    modifiers.immunity = '7级';
+    modifiers.immunity = '1-7级幻术';
   }
 
   return modifiers;
@@ -509,37 +509,37 @@ export function getWisdomModifiers(wis: number | null): AbilityModifiers {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '1级，3级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '惊恐术等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术';
   } else if (wis === 20) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '2级，4级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '遗忘咒等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术';
   } else if (wis === 21) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '3级，5级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '恐惧术';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术';
   } else if (wis === 22) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '4级，5级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '魅惑怪物等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术';
   } else if (wis === 23) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '1级，6级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '混乱术等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术';
   } else if (wis === 24) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '5级，6级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '指使术等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖';
   } else if (wis >= 25) {
     modifiers.magicDefense = '+4';
     modifiers.bonusSpells = '6级，7级';
     modifiers.spellFailure = '0%';
-    modifiers.immunity = '厌恶/吸引术等';
+    modifiers.immunity = '惊恐术、魅惑人类、命令术、友伴术、催眠术、遗忘咒、人类定身术、衰弱射线、恐吓术、恐惧术、魅惑怪物、困惑术、控制情感、笨拙术、暗示术、混乱术、弱智术、怪物定身术、魔魂壶、使命术、指使术、群体暗示术、统治权杖、厌恶/吸引术、死亡法咒、群体魅惑';
   }
 
   return modifiers;

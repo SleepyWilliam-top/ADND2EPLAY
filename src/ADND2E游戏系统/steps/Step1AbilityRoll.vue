@@ -15,10 +15,11 @@
         <span class="points-value" :class="{ negative: remainingPoints < 0 }">
           {{ remainingPoints }}
         </span>
-        <select v-model="pointPool" class="pool-selector" @change="resetAbilities">
-          <option :value="80">80点</option>
-          <option :value="90">90点</option>
-          <option :value="100">100点</option>
+        <select v-model="pointPoolPreset" class="pool-selector" @change="onPoolPresetChange">
+          <option value="80">80点</option>
+          <option value="90">90点</option>
+          <option value="100">100点</option>
+          <option value="custom">自由输入 (150点)</option>
         </select>
       </div>
     </div>
@@ -61,25 +62,25 @@
             <div class="point-buy-controls">
               <button
                 class="adjust-button decrease"
-                @click="adjustAbility(ability.key, -1)"
                 :disabled="!canDecreaseAbility(ability.key)"
+                @click="adjustAbility(ability.key, -1)"
               >
                 −
               </button>
               <input
                 type="number"
-                min="3"
-                max="18"
+                :min="getAbilityMin()"
+                :max="getAbilityMax()"
                 class="ability-input"
                 :value="getAbilityValue(ability.key) ?? ''"
+                :placeholder="getAbilityPlaceholder()"
                 @change="e => setAbilityFromInput(ability.key, (e.target as HTMLInputElement).value)"
                 @blur="e => validateAndSetAbility(ability.key, e.target as HTMLInputElement)"
-                placeholder="3-18"
               />
               <button
                 class="adjust-button increase"
-                @click="adjustAbility(ability.key, 1)"
                 :disabled="!canIncreaseAbility(ability.key)"
+                @click="adjustAbility(ability.key, 1)"
               >
                 +
               </button>
@@ -107,7 +108,7 @@
           返回主菜单
         </button>
       </div>
-      <div class="action-center" v-if="currentMode === 'roll'">
+      <div v-if="currentMode === 'roll'" class="action-center">
         <button class="action-button" @click="rollAll('3d6')">
           <span class="button-icon"><i class="fa-solid fa-dice-d20"></i></span>
           全部投掷(3d6)
@@ -132,7 +133,6 @@
 </template>
 
 <script setup lang="ts">
-import gsap from 'gsap';
 import { computed, ref } from 'vue';
 import { useCharacterStore } from '../stores/characterStore';
 import {
@@ -155,7 +155,16 @@ const emit = defineEmits<{
 }>();
 const currentMode = ref<Mode>('roll');
 const expandedAbility = ref<AbilityKey | null>(null);
-const pointPool = ref(80);
+const pointPoolPreset = ref<'80' | '90' | '100' | 'custom'>('80');
+const pointPool = computed(() => {
+  if (pointPoolPreset.value === 'custom') {
+    return 150; // 自由输入模式固定使用150点
+  }
+  return parseInt(pointPoolPreset.value);
+});
+
+// 判断是否为自由输入模式
+const isFreeInputMode = computed(() => pointPoolPreset.value === 'custom');
 
 const modes = [
   { label: '掷 <i class="fa-solid fa-dice-d20"></i> 分配', value: 'roll' as Mode },
@@ -247,6 +256,26 @@ const canProceed = computed(() => {
   return allFilled;
 });
 
+// 获取属性值最小值
+function getAbilityMin(): number {
+  return isFreeInputMode.value ? 1 : 3;
+}
+
+// 获取属性值最大值
+function getAbilityMax(): number {
+  return isFreeInputMode.value ? 25 : 18;
+}
+
+// 获取属性值占位符
+function getAbilityPlaceholder(): string {
+  return isFreeInputMode.value ? '1-25' : '3-18';
+}
+
+// 点数池预设改变时
+function onPoolPresetChange() {
+  resetAbilities();
+}
+
 // 切换模式
 function switchMode(mode: Mode) {
   if (currentMode.value !== mode) {
@@ -265,7 +294,10 @@ function getAbilityValue(key: AbilityKey): number | null {
 
 // 设置属性值（内部使用，已经过验证的值）
 function setAbility(key: AbilityKey, value: number) {
-  if (isNaN(value) || value < 3 || value > 18) {
+  const minValue = getAbilityMin();
+  const maxValue = getAbilityMax();
+
+  if (isNaN(value) || value < minValue || value > maxValue) {
     characterStore.updateCharacterData(data => {
       data.abilities[key] = null;
     });
@@ -296,8 +328,11 @@ function setAbilityFromInput(key: AbilityKey, valueStr: string) {
     return;
   }
 
-  if (value < 3 || value > 18) {
-    toastr.warning('属性值必须在 3-18 之间');
+  const minValue = getAbilityMin();
+  const maxValue = getAbilityMax();
+
+  if (value < minValue || value > maxValue) {
+    toastr.warning(`属性值必须在 ${minValue}-${maxValue} 之间`);
     return;
   }
 
@@ -316,9 +351,11 @@ function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
   }
 
   const value = parseInt(valueStr);
+  const minValue = getAbilityMin();
+  const maxValue = getAbilityMax();
 
-  if (isNaN(value) || value < 3 || value > 18) {
-    toastr.warning('属性值必须在 3-18 之间');
+  if (isNaN(value) || value < minValue || value > maxValue) {
+    toastr.warning(`属性值必须在 ${minValue}-${maxValue} 之间`);
     // 恢复为当前值
     const current = getAbilityValue(key);
     input.value = current !== null ? current.toString() : '';
@@ -330,10 +367,12 @@ function validateAndSetAbility(key: AbilityKey, input: HTMLInputElement) {
 
 // 调整属性值（+1 或 -1）
 function adjustAbility(key: AbilityKey, delta: number) {
+  const minValue = getAbilityMin();
+  const maxValue = getAbilityMax();
   const current = getAbilityValue(key) || 9; // 默认从9开始
   const newValue = current + delta;
 
-  if (newValue < 3 || newValue > 18) {
+  if (newValue < minValue || newValue > maxValue) {
     return;
   }
 
@@ -342,14 +381,16 @@ function adjustAbility(key: AbilityKey, delta: number) {
 
 // 检查是否可以减少属性值
 function canDecreaseAbility(key: AbilityKey): boolean {
+  const minValue = getAbilityMin();
   const current = getAbilityValue(key);
-  return current !== null && current > 3;
+  return current !== null && current > minValue;
 }
 
 // 检查是否可以增加属性值
 function canIncreaseAbility(key: AbilityKey): boolean {
+  const maxValue = getAbilityMax();
   const current = getAbilityValue(key);
-  if (current === null || current >= 18) return false;
+  if (current === null || current >= maxValue) return false;
 
   // 检查点数是否足够
   return remainingPoints.value >= 1;
@@ -462,19 +503,34 @@ function generateStrengthTable(): string {
           <th>最大负重</th>
           <th>开门</th>
           <th>弯杆/举门</th>
+          <th>备注</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>3</td><td>-3</td><td>-1</td><td>5</td><td>10</td><td>2</td><td>0%</td></tr>
-        <tr><td>4-5</td><td>-2</td><td>-1</td><td>10</td><td>25</td><td>3</td><td>0%</td></tr>
-        <tr><td>6-7</td><td>-1</td><td>0</td><td>20</td><td>55</td><td>4</td><td>0%</td></tr>
-        <tr><td>8-9</td><td>0</td><td>0</td><td>35</td><td>90</td><td>5</td><td>1%</td></tr>
-        <tr><td>10-11</td><td>0</td><td>0</td><td>40</td><td>115</td><td>6</td><td>2%</td></tr>
-        <tr><td>12-13</td><td>0</td><td>0</td><td>45</td><td>140</td><td>7</td><td>4%</td></tr>
-        <tr><td>14-15</td><td>0</td><td>0</td><td>55</td><td>170</td><td>8</td><td>7%</td></tr>
-        <tr><td>16</td><td>0</td><td>+1</td><td>70</td><td>195</td><td>9</td><td>10%</td></tr>
-        <tr><td>17</td><td>+1</td><td>+1</td><td>85</td><td>220</td><td>10</td><td>13%</td></tr>
-        <tr><td>18</td><td>+1</td><td>+2</td><td>110</td><td>255</td><td>11</td><td>16%</td></tr>
+        <tr><td>1</td><td>-5</td><td>-4</td><td>1</td><td>3</td><td>1</td><td>0%</td><td></td></tr>
+        <tr><td>2</td><td>-3</td><td>-2</td><td>1</td><td>5</td><td>1</td><td>0%</td><td></td></tr>
+        <tr><td>3</td><td>-3</td><td>-1</td><td>5</td><td>10</td><td>2</td><td>0%</td><td></td></tr>
+        <tr><td>4~5</td><td>-2</td><td>-1</td><td>10</td><td>25</td><td>3</td><td>0%</td><td></td></tr>
+        <tr><td>6~7</td><td>-1</td><td>无</td><td>20</td><td>55</td><td>4</td><td>0%</td><td></td></tr>
+        <tr><td>8~9</td><td>正常</td><td>无</td><td>35</td><td>90</td><td>5</td><td>1%</td><td></td></tr>
+        <tr><td>10~11</td><td>正常</td><td>无</td><td>40</td><td>115</td><td>6</td><td>2%</td><td></td></tr>
+        <tr><td>12~13</td><td>正常</td><td>无</td><td>45</td><td>140</td><td>7</td><td>4%</td><td></td></tr>
+        <tr><td>14~15</td><td>正常</td><td>无</td><td>55</td><td>170</td><td>8</td><td>7%</td><td></td></tr>
+        <tr><td>16</td><td>正常</td><td>+1</td><td>70</td><td>195</td><td>9</td><td>10%</td><td></td></tr>
+        <tr><td>17</td><td>+1</td><td>+1</td><td>85</td><td>220</td><td>10</td><td>13%</td><td></td></tr>
+        <tr><td>18</td><td>+1</td><td>+2</td><td>110</td><td>255</td><td>11</td><td>16%</td><td></td></tr>
+        <tr><td>18/01~50</td><td>+1</td><td>+3</td><td>135</td><td>280</td><td>12</td><td>20%</td><td></td></tr>
+        <tr><td>18/51~75</td><td>+2</td><td>+3</td><td>160</td><td>305</td><td>13</td><td>25%</td><td></td></tr>
+        <tr><td>18/76~90</td><td>+2</td><td>+4</td><td>185</td><td>330</td><td>14</td><td>30%</td><td></td></tr>
+        <tr><td>18/91~99</td><td>+2</td><td>+5</td><td>235</td><td>380</td><td>15(3)</td><td>35%</td><td></td></tr>
+        <tr><td>18/00</td><td>+3</td><td>+6</td><td>335</td><td>480</td><td>16(6)</td><td>40%</td><td></td></tr>
+        <tr><td>19</td><td>+3</td><td>+7</td><td>485</td><td>640</td><td>16(8)</td><td>50%</td><td>山丘巨人</td></tr>
+        <tr><td>20</td><td>+3</td><td>+8</td><td>535</td><td>700</td><td>17(10)</td><td>60%</td><td>石巨人</td></tr>
+        <tr><td>21</td><td>+4</td><td>+9</td><td>635</td><td>810</td><td>17(12)</td><td>70%</td><td>霜巨人</td></tr>
+        <tr><td>22</td><td>+4</td><td>+10</td><td>785</td><td>970</td><td>18(14)</td><td>80%</td><td>火巨人</td></tr>
+        <tr><td>23</td><td>+5</td><td>+11</td><td>935</td><td>1130</td><td>18(16)</td><td>90%</td><td>云巨人</td></tr>
+        <tr><td>24</td><td>+6</td><td>+12</td><td>1235</td><td>1440</td><td>19(17)</td><td>95%</td><td>风暴巨人</td></tr>
+        <tr><td>25</td><td>+7</td><td>+14</td><td>1440</td><td>1750</td><td>19(18)</td><td>99%</td><td>泰坦</td></tr>
       </tbody>
     </table>
   `;
@@ -492,15 +548,27 @@ function generateDexterityTable(): string {
         </tr>
       </thead>
       <tbody>
+        <tr><td>1</td><td>-6</td><td>-6</td><td>+5</td></tr>
+        <tr><td>2</td><td>-4</td><td>-4</td><td>+5</td></tr>
         <tr><td>3</td><td>-3</td><td>-3</td><td>+4</td></tr>
         <tr><td>4</td><td>-2</td><td>-2</td><td>+3</td></tr>
         <tr><td>5</td><td>-1</td><td>-1</td><td>+2</td></tr>
         <tr><td>6</td><td>0</td><td>0</td><td>+1</td></tr>
-        <tr><td>7-14</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>7</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>8</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>9</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td>10~14</td><td>0</td><td>0</td><td>0</td></tr>
         <tr><td>15</td><td>0</td><td>0</td><td>-1</td></tr>
         <tr><td>16</td><td>+1</td><td>+1</td><td>-2</td></tr>
         <tr><td>17</td><td>+2</td><td>+2</td><td>-3</td></tr>
         <tr><td>18</td><td>+2</td><td>+2</td><td>-4</td></tr>
+        <tr><td>19</td><td>+3</td><td>+3</td><td>-4</td></tr>
+        <tr><td>20</td><td>+3</td><td>+3</td><td>-4</td></tr>
+        <tr><td>21</td><td>+4</td><td>+4</td><td>-5</td></tr>
+        <tr><td>22</td><td>+4</td><td>+4</td><td>-5</td></tr>
+        <tr><td>23</td><td>+4</td><td>+4</td><td>-5</td></tr>
+        <tr><td>24</td><td>+5</td><td>+5</td><td>-6</td></tr>
+        <tr><td>25</td><td>+5</td><td>+5</td><td>-6</td></tr>
       </tbody>
     </table>
   `;
@@ -516,19 +584,43 @@ function generateConstitutionTable(): string {
           <th>身体休克</th>
           <th>复生存活</th>
           <th>毒素豁免</th>
+          <th>再生</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>3</td><td>-2</td><td>35%</td><td>40%</td><td>0</td></tr>
-        <tr><td>4</td><td>-1</td><td>40%</td><td>45%</td><td>0</td></tr>
-        <tr><td>5-6</td><td>-1</td><td>45-50%</td><td>50-55%</td><td>0</td></tr>
-        <tr><td>7-14</td><td>0</td><td>55-88%</td><td>60-92%</td><td>0</td></tr>
-        <tr><td>15</td><td>+1</td><td>90%</td><td>94%</td><td>0</td></tr>
-        <tr><td>16</td><td>+2</td><td>95%</td><td>96%</td><td>0</td></tr>
-        <tr><td>17</td><td>+2(+3)</td><td>97%</td><td>98%</td><td>0</td></tr>
-        <tr><td>18</td><td>+2(+4)</td><td>99%</td><td>100%</td><td>0</td></tr>
+        <tr><td>1</td><td>-3</td><td>25%</td><td>30%</td><td>-2</td><td>无</td></tr>
+        <tr><td>2</td><td>-2</td><td>30%</td><td>35%</td><td>-1</td><td>无</td></tr>
+        <tr><td>3</td><td>-2</td><td>35%</td><td>40%</td><td>0</td><td>无</td></tr>
+        <tr><td>4</td><td>-1</td><td>40%</td><td>45%</td><td>0</td><td>无</td></tr>
+        <tr><td>5</td><td>-1</td><td>45%</td><td>50%</td><td>0</td><td>无</td></tr>
+        <tr><td>6</td><td>-1</td><td>50%</td><td>55%</td><td>0</td><td>无</td></tr>
+        <tr><td>7</td><td>0</td><td>55%</td><td>60%</td><td>0</td><td>无</td></tr>
+        <tr><td>8</td><td>0</td><td>60%</td><td>65%</td><td>0</td><td>无</td></tr>
+        <tr><td>9</td><td>0</td><td>65%</td><td>70%</td><td>0</td><td>无</td></tr>
+        <tr><td>10</td><td>0</td><td>70%</td><td>75%</td><td>0</td><td>无</td></tr>
+        <tr><td>11</td><td>0</td><td>75%</td><td>80%</td><td>0</td><td>无</td></tr>
+        <tr><td>12</td><td>0</td><td>80%</td><td>85%</td><td>0</td><td>无</td></tr>
+        <tr><td>13</td><td>0</td><td>85%</td><td>90%</td><td>0</td><td>无</td></tr>
+        <tr><td>14</td><td>0</td><td>88%</td><td>92%</td><td>0</td><td>无</td></tr>
+        <tr><td>15</td><td>+1</td><td>90%</td><td>94%</td><td>0</td><td>无</td></tr>
+        <tr><td>16</td><td>+2</td><td>95%</td><td>96%</td><td>0</td><td>无</td></tr>
+        <tr><td>17</td><td>+2(+3)*</td><td>97%</td><td>98%</td><td>0</td><td>无</td></tr>
+        <tr><td>18</td><td>+2(+4)*</td><td>99%</td><td>100%</td><td>0</td><td>无</td></tr>
+        <tr><td>19</td><td>+2(+5)*</td><td>99%</td><td>100%</td><td>+1</td><td>无</td></tr>
+        <tr><td>20</td><td>+2(+5)**</td><td>99%</td><td>100%</td><td>+1</td><td>1/6轮</td></tr>
+        <tr><td>21</td><td>+2(+6)***</td><td>99%</td><td>100%</td><td>+2</td><td>1/5轮</td></tr>
+        <tr><td>22</td><td>+2(+6)***</td><td>99%</td><td>100%</td><td>+2</td><td>1/4轮</td></tr>
+        <tr><td>23</td><td>+2(+6)****</td><td>99%</td><td>100%</td><td>+3</td><td>1/3轮</td></tr>
+        <tr><td>24</td><td>+2(+7)****</td><td>99%</td><td>100%</td><td>+3</td><td>1/2轮</td></tr>
+        <tr><td>25</td><td>+2(+7)****</td><td>100%</td><td>100%</td><td>+4</td><td>1/1轮</td></tr>
       </tbody>
     </table>
+    <div class="table-notes">
+      <p>* 括号内的奖励只适用于勇士，其他所有职业的最高奖励为每生命骰+2。</p>
+      <p>** 对于生命值掷出1的结果，自动视为2。</p>
+      <p>*** 所有生命值掷出1或2的结果被自动视为3。</p>
+      <p>**** 所有生命值掷出1、2或3的结果被自动视为4。</p>
+    </div>
   `;
 }
 
@@ -542,20 +634,40 @@ function generateIntelligenceTable(): string {
           <th>法术等级</th>
           <th>法术习得率</th>
           <th>每级法术上限</th>
+          <th>免疫幻术</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>9</td><td>2</td><td>4级</td><td>35%</td><td>6</td></tr>
-        <tr><td>10-11</td><td>2</td><td>5级</td><td>40-45%</td><td>7</td></tr>
-        <tr><td>12</td><td>3</td><td>6级</td><td>50%</td><td>7</td></tr>
-        <tr><td>13</td><td>3</td><td>6级</td><td>55%</td><td>9</td></tr>
-        <tr><td>14</td><td>4</td><td>7级</td><td>60%</td><td>9</td></tr>
-        <tr><td>15</td><td>4</td><td>7级</td><td>65%</td><td>11</td></tr>
-        <tr><td>16</td><td>5</td><td>8级</td><td>70%</td><td>11</td></tr>
-        <tr><td>17</td><td>6</td><td>8级</td><td>75%</td><td>14</td></tr>
-        <tr><td>18</td><td>7</td><td>9级</td><td>85%</td><td>18</td></tr>
+        <tr><td>1</td><td>0*</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>2</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>3</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>4</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>5</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>6</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>7</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>8</td><td>1</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+        <tr><td>9</td><td>2</td><td>4级</td><td>35%</td><td>6</td><td>--</td></tr>
+        <tr><td>10</td><td>2</td><td>5级</td><td>40%</td><td>7</td><td>--</td></tr>
+        <tr><td>11</td><td>2</td><td>5级</td><td>45%</td><td>7</td><td>--</td></tr>
+        <tr><td>12</td><td>3</td><td>6级</td><td>50%</td><td>7</td><td>--</td></tr>
+        <tr><td>13</td><td>3</td><td>6级</td><td>55%</td><td>9</td><td>--</td></tr>
+        <tr><td>14</td><td>4</td><td>7级</td><td>60%</td><td>9</td><td>--</td></tr>
+        <tr><td>15</td><td>4</td><td>7级</td><td>65%</td><td>11</td><td>--</td></tr>
+        <tr><td>16</td><td>5</td><td>8级</td><td>70%</td><td>11</td><td>--</td></tr>
+        <tr><td>17</td><td>6</td><td>8级</td><td>75%</td><td>14</td><td>--</td></tr>
+        <tr><td>18</td><td>7</td><td>9级</td><td>85%</td><td>18</td><td>--</td></tr>
+        <tr><td>19</td><td>8</td><td>9级</td><td>95%</td><td>任意</td><td>1级</td></tr>
+        <tr><td>20</td><td>9</td><td>9级</td><td>96%</td><td>任意</td><td>2级</td></tr>
+        <tr><td>21</td><td>10</td><td>9级</td><td>97%</td><td>任意</td><td>3级</td></tr>
+        <tr><td>22</td><td>11</td><td>9级</td><td>98%</td><td>任意</td><td>4级</td></tr>
+        <tr><td>23</td><td>12</td><td>9级</td><td>99%</td><td>任意</td><td>5级</td></tr>
+        <tr><td>24</td><td>15</td><td>9级</td><td>100%</td><td>任意</td><td>6级</td></tr>
+        <tr><td>25</td><td>20</td><td>9级</td><td>100%</td><td>任意</td><td>7级</td></tr>
       </tbody>
     </table>
+    <div class="table-notes">
+      <p>* 虽然角色不会说任何语言，但他还是可以通过手势与他人交流。</p>
+    </div>
   `;
 }
 
@@ -568,16 +680,35 @@ function generateWisdomTable(): string {
           <th>魔法防御调整</th>
           <th>奖励法术</th>
           <th>施法失败率</th>
+          <th>法术免疫</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>3-7</td><td>-3 ~ -1</td><td>--</td><td>50-30%</td></tr>
-        <tr><td>8-12</td><td>0</td><td>--/0</td><td>25-5%</td></tr>
-        <tr><td>13-14</td><td>0</td><td>1级</td><td>0%</td></tr>
-        <tr><td>15</td><td>+1</td><td>2级</td><td>0%</td></tr>
-        <tr><td>16</td><td>+2</td><td>2级</td><td>0%</td></tr>
-        <tr><td>17</td><td>+3</td><td>3级</td><td>0%</td></tr>
-        <tr><td>18</td><td>+4</td><td>4级</td><td>0%</td></tr>
+        <tr><td>1</td><td>-6</td><td>--</td><td>80%</td><td>--</td></tr>
+        <tr><td>2</td><td>-4</td><td>--</td><td>60%</td><td>--</td></tr>
+        <tr><td>3</td><td>-3</td><td>--</td><td>50%</td><td>--</td></tr>
+        <tr><td>4</td><td>-2</td><td>--</td><td>45%</td><td>--</td></tr>
+        <tr><td>5</td><td>-1</td><td>--</td><td>40%</td><td>--</td></tr>
+        <tr><td>6</td><td>-1</td><td>--</td><td>35%</td><td>--</td></tr>
+        <tr><td>7</td><td>-1</td><td>--</td><td>30%</td><td>--</td></tr>
+        <tr><td>8</td><td>0</td><td>--</td><td>25%</td><td>--</td></tr>
+        <tr><td>9</td><td>0</td><td>0</td><td>20%</td><td>--</td></tr>
+        <tr><td>10</td><td>0</td><td>0</td><td>15%</td><td>--</td></tr>
+        <tr><td>11</td><td>0</td><td>0</td><td>10%</td><td>--</td></tr>
+        <tr><td>12</td><td>0</td><td>0</td><td>5%</td><td>--</td></tr>
+        <tr><td>13</td><td>0</td><td>1级</td><td>0%</td><td>--</td></tr>
+        <tr><td>14</td><td>0</td><td>1级</td><td>0%</td><td>--</td></tr>
+        <tr><td>15</td><td>+1</td><td>2级</td><td>0%</td><td>--</td></tr>
+        <tr><td>16</td><td>+2</td><td>2级</td><td>0%</td><td>--</td></tr>
+        <tr><td>17</td><td>+3</td><td>3级</td><td>0%</td><td>--</td></tr>
+        <tr><td>18</td><td>+4</td><td>4级</td><td>0%</td><td>--</td></tr>
+        <tr><td>19</td><td>+4</td><td>1级，3级</td><td>0%</td><td>惊恐术、魅惑人类、命令术、友伴术、催眠术</td></tr>
+        <tr><td>20</td><td>+4</td><td>2级，4级</td><td>0%</td><td>遗忘咒、人类定身术、衰弱射线、恐吓术</td></tr>
+        <tr><td>21</td><td>+4</td><td>3级，5级</td><td>0%</td><td>恐惧术</td></tr>
+        <tr><td>22</td><td>+4</td><td>4级，5级</td><td>0%</td><td>魅惑怪物、困惑术、控制情感、笨拙术、暗示术</td></tr>
+        <tr><td>23</td><td>+4</td><td>1级，6级</td><td>0%</td><td>混乱术、弱智术、怪物定身术、魔魂壶、使命术</td></tr>
+        <tr><td>24</td><td>+4</td><td>5级，6级</td><td>0%</td><td>指使术、群体暗示术、统治权杖</td></tr>
+        <tr><td>25</td><td>+4</td><td>6级，7级</td><td>0%</td><td>厌恶/吸引术、死亡法咒、群体魅惑</td></tr>
       </tbody>
     </table>
   `;
@@ -595,16 +726,31 @@ function generateCharismaTable(): string {
         </tr>
       </thead>
       <tbody>
+        <tr><td>1</td><td>0</td><td>-8</td><td>-7</td></tr>
+        <tr><td>2</td><td>1</td><td>-7</td><td>-6</td></tr>
         <tr><td>3</td><td>1</td><td>-6</td><td>-5</td></tr>
-        <tr><td>4-5</td><td>1-2</td><td>-5 ~ -4</td><td>-4 ~ -3</td></tr>
-        <tr><td>6-7</td><td>2-3</td><td>-3 ~ -2</td><td>-2 ~ -1</td></tr>
-        <tr><td>8-12</td><td>3-5</td><td>-1 ~ 0</td><td>0</td></tr>
+        <tr><td>4</td><td>1</td><td>-5</td><td>-4</td></tr>
+        <tr><td>5</td><td>2</td><td>-4</td><td>-3</td></tr>
+        <tr><td>6</td><td>2</td><td>-3</td><td>-2</td></tr>
+        <tr><td>7</td><td>3</td><td>-2</td><td>-1</td></tr>
+        <tr><td>8</td><td>3</td><td>-1</td><td>0</td></tr>
+        <tr><td>9</td><td>4</td><td>0</td><td>0</td></tr>
+        <tr><td>10</td><td>4</td><td>0</td><td>0</td></tr>
+        <tr><td>11</td><td>4</td><td>0</td><td>0</td></tr>
+        <tr><td>12</td><td>5</td><td>0</td><td>0</td></tr>
         <tr><td>13</td><td>5</td><td>0</td><td>+1</td></tr>
         <tr><td>14</td><td>6</td><td>+1</td><td>+2</td></tr>
         <tr><td>15</td><td>7</td><td>+3</td><td>+3</td></tr>
         <tr><td>16</td><td>8</td><td>+4</td><td>+5</td></tr>
         <tr><td>17</td><td>10</td><td>+6</td><td>+6</td></tr>
         <tr><td>18</td><td>15</td><td>+8</td><td>+7</td></tr>
+        <tr><td>19</td><td>20</td><td>+10</td><td>+8</td></tr>
+        <tr><td>20</td><td>25</td><td>+12</td><td>+9</td></tr>
+        <tr><td>21</td><td>30</td><td>+14</td><td>+10</td></tr>
+        <tr><td>22</td><td>35</td><td>+16</td><td>+11</td></tr>
+        <tr><td>23</td><td>40</td><td>+18</td><td>+12</td></tr>
+        <tr><td>24</td><td>45</td><td>+20</td><td>+13</td></tr>
+        <tr><td>25</td><td>50</td><td>+20</td><td>+14</td></tr>
       </tbody>
     </table>
   `;
@@ -617,8 +763,12 @@ function generateCharismaTable(): string {
   max-width: 900px;
   margin: 0 auto;
 
-  @media (max-width: 768px) {
-    padding: 20px;
+  @media (max-width: 992px) {
+    padding: 20px 15px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 15px 10px;
   }
 }
 
@@ -633,9 +783,12 @@ function generateCharismaTable(): string {
   border: 2px solid #000;
   flex-wrap: wrap;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     flex-direction: column;
     align-items: stretch;
+    padding: 15px;
+    margin-bottom: 20px;
+    gap: 12px;
   }
 }
 
@@ -648,6 +801,11 @@ function generateCharismaTable(): string {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
+
+  @media (max-width: 992px) {
+    padding: 12px 20px;
+    min-height: 44px;
+  }
 
   &.active {
     background-color: #000;
@@ -666,7 +824,7 @@ function generateCharismaTable(): string {
   margin-left: auto;
   font-family: '临海体', serif;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     margin-left: 0;
     width: 100%;
     justify-content: space-between;
@@ -693,6 +851,12 @@ function generateCharismaTable(): string {
     font-family: '临海体', serif;
     font-size: 14px;
     cursor: pointer;
+
+    @media (max-width: 992px) {
+      padding: 8px 12px;
+      font-size: 16px; // 防止 iOS 自动缩放
+      min-height: 44px;
+    }
   }
 }
 
@@ -737,14 +901,22 @@ function generateCharismaTable(): string {
   align-items: center;
   gap: 15px;
 
+  @media (max-width: 992px) {
+    gap: 10px;
+  }
+
   h3 {
     font-family: '临海体', serif;
     font-size: 20px;
     font-weight: bold;
     margin: 0;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 18px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 16px;
     }
   }
 
@@ -756,6 +928,11 @@ function generateCharismaTable(): string {
     background-color: #f5f5f5;
     padding: 4px 8px;
     border: 1px solid #999;
+
+    @media (max-width: 992px) {
+      font-size: 14px;
+      padding: 3px 6px;
+    }
   }
 }
 
@@ -782,7 +959,7 @@ function generateCharismaTable(): string {
   margin-bottom: 15px;
   flex-wrap: wrap;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
@@ -823,7 +1000,7 @@ function generateCharismaTable(): string {
   gap: 10px;
   margin-bottom: 15px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     flex-wrap: wrap;
   }
 }
@@ -878,10 +1055,10 @@ function generateCharismaTable(): string {
     border-radius: 0 4px 4px 0;
   }
 
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
+  @media (max-width: 992px) {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
   }
 }
 
@@ -924,6 +1101,12 @@ function generateCharismaTable(): string {
   font-weight: bold;
   text-align: center;
 
+  @media (max-width: 992px) {
+    padding: 10px;
+    font-size: 16px !important; // 防止 iOS 自动缩放
+    min-height: 44px;
+  }
+
   &:focus {
     outline: none;
     border-color: #333;
@@ -962,11 +1145,27 @@ function generateCharismaTable(): string {
   font-size: 12px;
   background-color: #fff;
 
+  @media (max-width: 992px) {
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
+
   th,
   td {
     border: 1px solid #000;
     padding: 8px;
     text-align: center;
+
+    @media (max-width: 992px) {
+      padding: 6px 4px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 4px 2px;
+    }
   }
 
   th {
@@ -977,6 +1176,42 @@ function generateCharismaTable(): string {
 
   tbody tr:nth-child(even) {
     background-color: #f5f5f5;
+  }
+}
+
+// 表格注释样式
+:deep(.table-notes) {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #fffbf0;
+  border: 1px solid #daa520;
+  border-radius: 4px;
+  font-family: '临海体', serif;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #666;
+
+  @media (max-width: 992px) {
+    padding: 12px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+    font-size: 10px;
+    line-height: 1.6;
+  }
+
+  p {
+    margin: 8px 0;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 }
 
@@ -1010,8 +1245,11 @@ function generateCharismaTable(): string {
   border: 3px solid #000;
   border-top: 4px double #000;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 992px) {
     flex-wrap: wrap;
+    padding: 15px;
+    gap: 12px;
+    border-width: 2px;
   }
 }
 
@@ -1022,16 +1260,19 @@ function generateCharismaTable(): string {
   gap: 12px;
   align-items: center;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 992px) {
     &.action-left,
     &.action-right {
       flex: 1 1 100%;
       justify-content: center;
+      gap: 8px;
     }
 
     &.action-center {
       flex: 1 1 100%;
       justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
   }
 }
@@ -1049,6 +1290,12 @@ function generateCharismaTable(): string {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
+
+  @media (max-width: 992px) {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
 
   .back-icon {
     font-size: 18px;
@@ -1080,6 +1327,13 @@ function generateCharismaTable(): string {
   cursor: pointer;
   transition: all 0.2s ease;
 
+  @media (max-width: 992px) {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    min-width: calc(50% - 4px);
+  }
+
   .button-icon {
     font-size: 16px;
   }
@@ -1109,6 +1363,12 @@ function generateCharismaTable(): string {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
+
+  @media (max-width: 992px) {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
 
   .reset-icon {
     font-size: 18px;
@@ -1142,6 +1402,15 @@ function generateCharismaTable(): string {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 992px) {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 24px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    min-height: 44px;
+  }
 
   .next-icon {
     font-size: 18px;

@@ -1,6 +1,6 @@
 /**
  * 图库管理 Composable
- *
+ * 
  * 使用 IndexedDB 统一管理角色卡和NPC的图片资源
  * 支持批量上传、图片压缩、图库管理等功能
  */
@@ -52,7 +52,7 @@ const db = new ImageLibraryDatabase();
 
 /**
  * 智能压缩图片
- *
+ * 
  * 优化策略：
  * 1. 自动检测图片格式，PNG 保留透明度
  * 2. 根据原图大小智能调整目标尺寸和质量
@@ -67,7 +67,7 @@ async function compressImage(
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
-    reader.onload = e => {
+    reader.onload = (e) => {
       const img = new Image();
       img.onload = async () => {
         try {
@@ -109,9 +109,7 @@ async function compressImage(
             base64 = canvas.toDataURL(mimeType, quality);
             const sizeKB = getBase64Size(base64) / 1024;
 
-            console.log(
-              `[ImageCompression] 尝试 ${attempts + 1}: 质量=${quality.toFixed(2)}, 大小=${sizeKB.toFixed(2)}KB`,
-            );
+            console.log(`[ImageCompression] 尝试 ${attempts + 1}: 质量=${quality.toFixed(2)}, 大小=${sizeKB.toFixed(2)}KB`);
 
             // 如果大小合适或已是最低质量，停止
             if (sizeKB <= targetSizeKB || quality <= 0.5) {
@@ -196,7 +194,10 @@ function getBase64Size(base64: string): number {
 /**
  * 添加图片到图库
  */
-export async function addImageToLibrary(file: File, category?: 'character' | 'npc' | 'other'): Promise<ImageItem> {
+export async function addImageToLibrary(
+  file: File,
+  category?: 'character' | 'npc' | 'other',
+): Promise<ImageItem> {
   try {
     // 压缩图片
     const compressedBase64 = await compressImage(file);
@@ -381,11 +382,10 @@ export async function searchImages(keyword: string): Promise<ImageItem[]> {
   try {
     const allImages = await db.images.toArray();
     const lowerKeyword = keyword.toLowerCase();
-
-    return allImages.filter(
-      img =>
-        img.name.toLowerCase().includes(lowerKeyword) ||
-        img.tags?.some(tag => tag.toLowerCase().includes(lowerKeyword)),
+    
+    return allImages.filter(img => 
+      img.name.toLowerCase().includes(lowerKeyword) ||
+      img.tags?.some(tag => tag.toLowerCase().includes(lowerKeyword))
     );
   } catch (error) {
     console.error('[ImageLibrary] 搜索图片失败:', error);
@@ -413,7 +413,7 @@ export async function exportLibrary(): Promise<string> {
 export async function importLibrary(jsonString: string): Promise<number> {
   try {
     const images: ImageItem[] = JSON.parse(jsonString);
-
+    
     // 验证数据结构
     if (!Array.isArray(images)) {
       throw new Error('无效的图库数据格式');
@@ -431,3 +431,4 @@ export async function importLibrary(jsonString: string): Promise<number> {
 
 // 导出数据库实例（供高级使用）
 export { db as imageLibraryDB };
+

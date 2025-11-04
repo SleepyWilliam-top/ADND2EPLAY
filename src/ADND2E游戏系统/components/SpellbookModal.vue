@@ -91,6 +91,24 @@
         <!-- 记忆法术标签页 -->
         <div v-if="activeTab === 'memorize'" class="tab-content">
           <div class="memorize-content">
+            <!-- 祭司法术领域信息栏 -->
+            <div v-if="!isWizard && priestSpellSpheres" class="spell-spheres-info">
+              <div class="spheres-header">
+                <span class="spheres-icon">✨</span>
+                <span class="spheres-title">法术领域权能</span>
+              </div>
+              <div class="spheres-content">
+                <div v-if="priestSpellSpheres.major.length > 0" class="sphere-group">
+                  <span class="sphere-label">主要领域:</span>
+                  <span class="sphere-list">{{ priestSpellSpheres.major.join('、') }}</span>
+                </div>
+                <div v-if="priestSpellSpheres.minor.length > 0" class="sphere-group">
+                  <span class="sphere-label">次要领域:</span>
+                  <span class="sphere-list minor">{{ priestSpellSpheres.minor.join('、') }}</span>
+                </div>
+              </div>
+            </div>
+            
             <!-- 顶部提示栏 -->
             <div class="info-banner">
               <span class="info-icon">ℹ️</span>
@@ -300,6 +318,13 @@ const maxSpellsPerLevel = computed(() => characterStore.getMaxSpellsPerLevel());
 const spellbookByLevel = computed(() => characterStore.getWizardSpellbookByLevel());
 const availableSpellLevels = computed(() => {
   return Array.from({ length: maxSpellLevel.value }, (_, i) => i + 1);
+});
+
+// 祭司法术领域
+const priestSpellSpheres = computed(() => {
+  const cls = characterClass.value;
+  if (!cls || cls.spellcasting?.type !== 'priest') return null;
+  return cls.spellSpheres;
 });
 
 // 记忆法术相关
@@ -691,6 +716,61 @@ function saveMemorizedSpells() {
       color: #9370db;
       font-weight: bold;
       font-size: 16px;
+    }
+  }
+}
+
+// 法术领域信息栏
+.spell-spheres-info {
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  .spheres-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: bold;
+
+    .spheres-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+  }
+
+  .spheres-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sphere-group {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    line-height: 1.6;
+
+    .sphere-label {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .sphere-list {
+      flex: 1;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.95);
+
+      &.minor {
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.85);
+      }
     }
   }
 }
@@ -1092,6 +1172,333 @@ function saveMemorizedSpells() {
         font-style: italic;
       }
     }
+  }
+}
+
+// 移动端适配
+@media (max-width: 992px) {
+  .spellbook-overlay {
+    padding: 10px;
+  }
+
+  .spellbook-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-width: 3px;
+
+    &::before {
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+    }
+  }
+
+  .modal-header {
+    padding: 12px 15px;
+    border-bottom-width: 2px;
+
+    .header-content {
+      h2 {
+        font-size: 20px;
+      }
+
+      .class-info {
+        font-size: 12px;
+      }
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+    }
+  }
+
+  .tabs-bar {
+    padding: 8px;
+    gap: 4px;
+
+    .tab-btn {
+      padding: 10px 12px;
+      font-size: 13px;
+      min-height: 44px; // 触摸友好
+    }
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .info-bar {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+
+    .info-item {
+      .label {
+        font-size: 12px;
+      }
+
+      .value {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .info-banner {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+
+    .info-icon {
+      font-size: 18px;
+    }
+
+    .info-text {
+      font-size: 13px;
+    }
+  }
+
+  .action-bar {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+
+    .primary-btn,
+    .danger-btn {
+      width: 100%;
+      padding: 10px 15px;
+      justify-content: center;
+      min-height: 44px; // 触摸友好
+
+      span {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .learned-spells {
+    .spell-level-group {
+      margin-bottom: 15px;
+
+      .level-header {
+        padding: 8px 12px;
+        border-width: 2px;
+
+        .level {
+          font-size: 14px;
+        }
+
+        .count {
+          font-size: 12px;
+        }
+      }
+
+      .spell-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 8px;
+        border-width: 2px;
+
+        .spell-item {
+          padding: 10px;
+          border-width: 2px;
+
+          .spell-name {
+            font-size: 14px;
+          }
+
+          .spell-school {
+            font-size: 11px;
+          }
+        }
+      }
+    }
+  }
+
+  .spell-slots {
+    .slot-level-group {
+      margin-bottom: 15px;
+
+      .slot-header {
+        padding: 8px 12px;
+        border-width: 2px;
+
+        .level {
+          font-size: 14px;
+        }
+
+        .slot-count {
+          font-size: 12px;
+        }
+      }
+
+      .memorized-spells {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 8px;
+        border-width: 2px;
+
+        .memorized-spell {
+          padding: 10px;
+          border-width: 2px;
+
+          .spell-name {
+            font-size: 14px;
+          }
+
+          .view-icon {
+            font-size: 14px;
+          }
+        }
+
+        .empty-slot {
+          padding: 10px;
+          min-height: 50px;
+          border-width: 2px;
+
+          .plus-icon {
+            font-size: 20px;
+          }
+
+          .hint {
+            font-size: 11px;
+          }
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 40px 15px;
+    border-width: 2px;
+
+    .empty-icon {
+      font-size: 40px;
+    }
+
+    p {
+      font-size: 14px;
+
+      &.hint {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    border-width: 3px;
+
+    .dialog-header {
+      padding: 12px 15px;
+      border-bottom-width: 2px;
+
+      h3 {
+        font-size: 18px;
+      }
+    }
+
+    .dialog-body {
+      padding: 15px;
+
+      .level-selector {
+        gap: 6px;
+        margin-bottom: 15px;
+
+        .level-btn {
+          flex: 1 1 calc(33.33% - 4px);
+          padding: 8px 10px;
+          font-size: 13px;
+          border-width: 2px;
+          min-height: 44px; // 触摸友好
+        }
+      }
+
+      .spell-selection-list {
+        gap: 8px;
+
+        .selectable-spell {
+          flex-direction: column;
+          align-items: stretch;
+          padding: 12px;
+          border-width: 2px;
+
+          .spell-info {
+            padding-right: 0;
+            margin-bottom: 10px;
+
+            .spell-name {
+              font-size: 14px;
+
+              .view-hint {
+                font-size: 11px;
+              }
+            }
+
+            .spell-meta {
+              font-size: 11px;
+            }
+          }
+
+          .learn-btn,
+          .select-btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 13px;
+            border-width: 2px;
+            min-height: 44px; // 触摸友好
+          }
+        }
+
+        .empty-hint {
+          padding: 30px 15px;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .spellbook-modal {
+    border-width: 2px;
+
+    &::before {
+      border-width: 1px;
+    }
+  }
+
+  .modal-header {
+    .header-content h2 {
+      font-size: 18px;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+    }
+  }
+
+  .tabs-bar .tab-btn {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .learned-spells .spell-level-group .spell-list .spell-item {
+    .spell-name {
+      font-size: 13px;
+    }
+  }
+
+  .dialog .dialog-body .level-selector .level-btn {
+    flex: 1 1 calc(50% - 3px);
+    font-size: 12px;
   }
 }
 </style>

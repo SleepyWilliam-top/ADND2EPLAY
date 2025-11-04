@@ -639,15 +639,15 @@ export function useNpcAutoDetection() {
   /**
    * 🔧 智能清理不在场的 NPC
    *
-   * 清理逻辑：
-   * 1. 收集最近所有消息中出现的 NPC 标签（通过解析标签获得）
-   * 2. 将当前 NPC 列表与最近出现的 NPC 对比
-   * 3. 如果某个 NPC 不在最近的标签列表中，说明它已经不在正文中了，应该被移除
+   * 清理逻辑（已优化，避免误删）：
+   * 1. 收集最近所有消息中提及的 NPC 名称（包括标签和普通文本提及）
+   * 2. 将当前 NPC 列表与最近提及的 NPC 对比
+   * 3. 如果某个 NPC 在最近30条消息中都没有被提及（无论是标签还是名字），说明它已经离场，应该被移除
    * 4. 特别关心的 NPC 永远不会被自动移除
    *
-   * @param recentMessagesCount 检查最近几条消息（默认 10 条）
+   * @param recentMessagesCount 检查最近几条消息（默认 30 条，增加容错性）
    */
-  function autoCleanupAbsentNpcs(recentMessagesCount: number = 10) {
+  function autoCleanupAbsentNpcs(recentMessagesCount: number = 30) {
     // 获取最近的所有消息（包括用户和AI消息）
     const recentMessages = gameStore.messages.slice(-recentMessagesCount);
 
@@ -656,12 +656,20 @@ export function useNpcAutoDetection() {
       return;
     }
 
-    // 收集最近消息中所有出现的 NPC 名称（通过解析标签）
+    // 收集最近消息中所有提及的 NPC 名称（标签 + 文本提及）
     const recentNpcNames = new Set<string>();
     recentMessages.forEach(msg => {
-      if (msg.role === 'assistant' && msg.content) {
+      if (msg.content) {
+        // 1. 解析 NPC 标签（完整的 NPC 数据）
         const npcsInMessage = parseNpcTags(msg.content);
         npcsInMessage.forEach(npc => recentNpcNames.add(npc.name));
+
+        // 2. 检查文本中是否提及现有 NPC 的名字（即使没有完整标签）
+        npcList.value.forEach(npc => {
+          if (msg.content.includes(npc.name)) {
+            recentNpcNames.add(npc.name);
+          }
+        });
       }
     });
 
@@ -672,10 +680,10 @@ export function useNpcAutoDetection() {
         return; // 跳过特别关心的 NPC（不会自动移除）
       }
 
-      // 如果这个 NPC 不在最近的标签列表中，说明它的标签已经不在正文中了
+      // 如果这个 NPC 在最近30条消息中都没有被提及，说明它已经离场了
       if (!recentNpcNames.has(npc.name)) {
         toRemove.push(npc.name);
-        console.log(`[NPC Auto] 检测到 ${npc.name} 的标签已不在最近正文中`);
+        console.log(`[NPC Auto] 检测到 ${npc.name} 已在最近${recentMessagesCount}条消息中未出现`);
       }
     });
 
@@ -684,8 +692,8 @@ export function useNpcAutoDetection() {
       npcList.value = npcList.value.filter(npc => !toRemove.includes(npc.name));
       saveNpcList();
 
-      console.log('[NPC Auto] 自动移除标签已不存在的 NPC:', toRemove);
-      toastr.info(`${toRemove.join('、')} 的标签已不在正文中，已自动清除`, 'NPC 管理');
+      console.log('[NPC Auto] 自动移除长时间未出现的 NPC:', toRemove);
+      toastr.info(`${toRemove.join('、')} 已长时间未出现，已自动清除`, 'NPC 管理');
     }
   }
 

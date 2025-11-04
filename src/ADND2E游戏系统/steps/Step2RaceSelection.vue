@@ -1250,8 +1250,12 @@ onMounted(() => {
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
 
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
           grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 480px) {
+          grid-template-columns: 1fr;
         }
 
         .ability-requirement {
@@ -1661,8 +1665,12 @@ onMounted(() => {
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
 
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
           grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 480px) {
+          grid-template-columns: 1fr;
         }
 
         .ability-requirement {
@@ -1882,10 +1890,21 @@ onMounted(() => {
   background-color: #f5f5f5;
   gap: 15px;
 
+  @media (max-width: 992px) {
+    padding: 15px;
+    gap: 10px;
+  }
+
   button {
     display: flex;
     align-items: center;
     gap: 8px;
+
+    @media (max-width: 992px) {
+      flex: 1;
+      justify-content: center;
+      min-height: 44px;
+    }
 
     .button-icon {
       font-size: 16px;
@@ -1893,12 +1912,24 @@ onMounted(() => {
 
     &.primary {
       margin-left: auto;
+
+      @media (max-width: 992px) {
+        margin-left: 0;
+      }
     }
   }
 }
 
 // ========== 响应式 ==========
-@media (max-width: 968px) {
+@media (max-width: 992px) {
+  .category-selection {
+    padding: 20px 15px;
+
+    @media (max-width: 480px) {
+      padding: 15px 10px;
+    }
+  }
+
   .race-selection .selection-content {
     flex-direction: column;
 
@@ -1907,6 +1938,14 @@ onMounted(() => {
       border-right: none;
       border-bottom: 2px solid #000;
       max-height: 300px;
+    }
+  }
+
+  .race-selection .race-details {
+    padding: 20px 15px;
+
+    @media (max-width: 480px) {
+      padding: 15px 10px;
     }
   }
 
@@ -1921,23 +1960,15 @@ onMounted(() => {
     }
 
     .subrace-details {
-      padding: 20px;
+      padding: 20px 15px;
+
+      @media (max-width: 480px) {
+        padding: 15px 10px;
+  }
     }
-  }
-}
-
-@media (max-width: 768px) {
-  .category-selection {
-    padding: 20px;
-  }
-
-  .race-selection .race-details {
-    padding: 20px;
   }
 
   .subrace-selection .subrace-details {
-    padding: 15px;
-
     .detail-section .ability-requirements {
       grid-template-columns: 1fr;
     }

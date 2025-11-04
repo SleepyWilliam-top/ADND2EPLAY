@@ -354,8 +354,9 @@ function confirmSelection() {
   gap: 30px;
   margin-bottom: 30px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
@@ -374,8 +375,14 @@ function confirmSelection() {
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -597,21 +604,232 @@ function confirmSelection() {
   }
 }
 
-@media (max-width: 768px) {
+// 响应式 - 统一使用 992px 和 480px 断点
+@media (max-width: 992px) {
   .step9-alignment-selection {
-    padding: 20px;
+    padding: 20px 15px;
   }
 
-  .selection-header h3 {
-    font-size: 22px;
+  .selection-header {
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .character-info {
+      flex-wrap: wrap;
+      gap: 8px;
+
+      span {
+        padding: 5px 10px;
+        font-size: 13px;
+      }
+    }
   }
 
-  .selection-content {
-    grid-template-columns: 1fr;
+  .alignment-notice,
+  .restriction-notice {
+    padding: 15px;
+    gap: 12px;
+
+    .notice-icon,
+    .restriction-icon {
+      font-size: 28px;
+    }
+
+    .notice-content,
+    .restriction-content {
+      h4 {
+        font-size: 16px;
+      }
+
+      p {
+        font-size: 14px;
+      }
+    }
   }
 
-  .alignment-grid {
-    grid-template-columns: 1fr;
+  .alignment-grid-container {
+    h4 {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+  }
+
+  .alignment-card {
+    padding: 15px;
+
+    .alignment-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .alignment-name {
+      font-size: 15px;
+    }
+
+    .alignment-english {
+      font-size: 11px;
+    }
+  }
+
+  .alignment-detail {
+    padding: 15px;
+
+    h4 {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .detail-text {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .detail-section {
+      margin-bottom: 15px;
+
+      h5 {
+        font-size: 15px;
+        margin-bottom: 8px;
+      }
+
+      p {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  .bottom-actions {
+    padding: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    button {
+      flex: 1;
+      justify-content: center;
+      min-height: 44px;
+
+      &.primary {
+        margin-left: 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .step9-alignment-selection {
+    padding: 15px 10px;
+    min-height: 500px;
+  }
+
+  .selection-header {
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    border-width: 2px;
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .character-info {
+      gap: 6px;
+
+      span {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+    }
+  }
+
+  .alignment-notice,
+  .restriction-notice {
+    padding: 12px;
+    gap: 10px;
+    border-width: 2px;
+
+    .notice-icon,
+    .restriction-icon {
+      font-size: 24px;
+    }
+
+    .notice-content,
+    .restriction-content {
+      h4 {
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .alignment-grid-container {
+    h4 {
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+  }
+
+  .alignment-card {
+    padding: 12px;
+    border-width: 2px;
+
+    .alignment-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .alignment-name {
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .alignment-english {
+      font-size: 10px;
+    }
+  }
+
+  .alignment-detail {
+    padding: 12px;
+    border-width: 2px;
+
+    h4 {
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .detail-text {
+      font-size: 13px;
+    }
+
+    .detail-section {
+      margin-bottom: 12px;
+
+      h5 {
+        font-size: 14px;
+      }
+
+      p {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .bottom-actions {
+    padding: 12px 10px;
+
+    button {
+      font-size: 14px;
+      padding: 10px 15px;
+    }
   }
 }
 </style>

@@ -95,7 +95,7 @@ function handleBackToMenu() {
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 15px 10px;
   }
 
@@ -135,14 +135,14 @@ function handleBackToMenu() {
     margin: 0 0 30px 0;
     text-transform: uppercase;
 
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       font-size: 20px;
       letter-spacing: 2px;
       margin-bottom: 20px;
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     padding: 20px 15px;
     margin-bottom: 20px;
     border-width: 3px;
@@ -194,7 +194,7 @@ function handleBackToMenu() {
   z-index: 1;
   min-width: 70px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     flex: 0 0 auto;
     min-width: 60px;
   }
@@ -217,7 +217,7 @@ function handleBackToMenu() {
   color: #999;
   transition: all 0.3s ease;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     width: 35px;
     height: 35px;
     font-size: 16px;
@@ -236,7 +236,7 @@ function handleBackToMenu() {
   white-space: nowrap;
   max-width: 80px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 992px) {
     font-size: 11px;
     white-space: normal;
     max-width: 60px;

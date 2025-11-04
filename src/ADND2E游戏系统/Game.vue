@@ -54,6 +54,7 @@
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue';
 import MessageArea from './components/MessageArea.vue';
 import { useNpcAutoDetection } from './composables/useNpcAutoDetection';
+import { initializeAutoDetection, cleanupAutoDetection } from './composables/useMonsterEncyclopedia';
 import { useGameStore } from './stores/gameStore';
 
 // 🔧 性能优化：懒加载非关键组件（学习自 lucklyjkop）
@@ -116,6 +117,12 @@ onMounted(async () => {
     // 初始化 NPC 自动检测
     npcDetection.initialize();
 
+    // 初始化怪物图鉴自动检测（在后台运行）
+    setTimeout(() => {
+      initializeAutoDetection();
+      console.log('[Game] 怪物图鉴自动检测已启动');
+    }, 2000); // 延迟 2 秒启动，避免影响初始化性能
+
     // 监听流式传输事件
     eventOn(iframe_events.STREAM_TOKEN_RECEIVED_FULLY, handleStreamTokenFully);
     eventOn(iframe_events.GENERATION_ENDED, handleGenerationEnded);
@@ -151,6 +158,9 @@ onBeforeUnmount(() => {
 
   // 清理 NPC 自动检测
   npcDetection.cleanup();
+
+  // 清理怪物图鉴自动检测
+  cleanupAutoDetection();
 
   // 停止自动同步并清理资源
   gameStore.cleanup();
@@ -308,11 +318,11 @@ function handleGenerationEnded(_text: string, id: string) {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1100;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1199;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease-in-out;
 
   &.visible {
     opacity: 1;

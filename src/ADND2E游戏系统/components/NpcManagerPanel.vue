@@ -795,4 +795,243 @@ async function confirmRemove() {
     }
   }
 }
+
+// 移动端适配
+@media (max-width: 992px) {
+  .npc-manager-panel {
+    border-width: 2px;
+    margin-bottom: 15px;
+
+    &::before {
+      display: none;
+    }
+
+    .panel-header {
+      padding: 10px 12px;
+
+      h3 {
+        font-size: 14px;
+        gap: 6px;
+
+        i {
+          font-size: 14px;
+        }
+      }
+
+      .refresh-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+      }
+    }
+
+    .empty-state {
+      padding: 30px 15px;
+
+      i {
+        font-size: 36px;
+        margin-bottom: 12px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+
+      .hint {
+        font-size: 11px;
+      }
+    }
+
+    .npc-list {
+      max-height: 350px;
+      padding: 8px;
+    }
+
+    .npc-item {
+      padding: 10px;
+      margin-bottom: 6px;
+      border-width: 2px;
+    }
+
+    .npc-header {
+      margin-bottom: 6px;
+    }
+
+    .npc-name {
+      font-size: 14px;
+      gap: 6px;
+    }
+
+    .favorite-icon {
+      font-size: 12px;
+    }
+
+    .red-dot {
+      width: 7px;
+      height: 7px;
+      margin-left: 5px;
+    }
+
+    .npc-basic-stats {
+      gap: 8px;
+      font-size: 11px;
+
+      .stat {
+        padding: 2px 5px;
+      }
+    }
+
+    .npc-info {
+      gap: 5px;
+
+      .info-tag {
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+    }
+
+    .npc-detail-modal {
+      padding: 15px;
+    }
+
+    .npc-detail-content {
+      border-width: 3px;
+      max-width: 100%;
+      max-height: 95vh;
+
+      &::before {
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+      }
+    }
+
+    .detail-header {
+      padding: 15px;
+      border-bottom-width: 2px;
+
+      h2 {
+        font-size: 18px;
+        letter-spacing: 1px;
+      }
+
+      .close-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+    }
+
+    .detail-body {
+      padding: 15px;
+    }
+
+    .detail-section {
+      margin-bottom: 16px;
+
+      h4 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        gap: 6px;
+      }
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .stat-item {
+      padding: 6px 8px;
+      border-width: 2px;
+      font-size: 12px;
+
+      .stat-label {
+        font-size: 11px;
+      }
+
+      .stat-value {
+        font-size: 12px;
+      }
+    }
+
+    .ability-item,
+    .description-item {
+      padding: 8px;
+      font-size: 12px;
+      margin-bottom: 6px;
+      border-width: 2px;
+
+      strong {
+        font-size: 11px;
+        min-width: 70px;
+      }
+    }
+
+    .relationship-bar {
+      height: 25px;
+      border-width: 2px;
+      margin-bottom: 8px;
+    }
+
+    .relationship-info {
+      font-size: 12px;
+
+      .attitude-tag {
+        padding: 3px 8px;
+        font-size: 11px;
+      }
+    }
+
+    .detail-actions {
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .action-btn {
+      padding: 10px;
+      font-size: 13px;
+      gap: 6px;
+      border-width: 2px;
+      min-height: 44px; // 触摸友好
+    }
+  }
+}
+
+// 极小屏幕适配
+@media (max-width: 480px) {
+  .npc-manager-panel {
+    .panel-header h3 {
+      font-size: 13px;
+    }
+
+    .npc-name {
+      font-size: 13px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .stat-item {
+      font-size: 11px;
+    }
+
+    .detail-header h2 {
+      font-size: 16px;
+    }
+
+    .detail-section h4 {
+      font-size: 13px;
+    }
+
+    .ability-item,
+    .description-item {
+      font-size: 11px;
+    }
+  }
+}
 </style>

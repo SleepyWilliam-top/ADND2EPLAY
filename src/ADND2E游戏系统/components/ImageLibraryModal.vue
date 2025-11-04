@@ -117,18 +117,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import toastr from 'toastr';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   type ImageItem,
-  getAllImages,
   addMultipleImages,
-  deleteImage,
   clearImageLibrary,
+  deleteImage,
+  getAllImages,
   updateImageUsage,
-  searchImages,
-  getImagesByCategory,
 } from '../composables/useImageLibrary';
-import toastr from 'toastr';
 
 // ==================== Props & Emits ====================
 
@@ -349,13 +347,14 @@ watch(
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.2s ease-out;
+  padding: 20px;
 }
 
 @keyframes fadeIn {
@@ -369,16 +368,32 @@ watch(
 
 // ==================== 模态框主体 ====================
 .image-library-modal {
-  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-  border: 2px solid #fff;
-  border-radius: 4px;
+  background-color: #fff;
+  border: 3px solid #000;
+  border-radius: 8px;
   width: 90vw;
   max-width: 1200px;
-  height: 80vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+
+  // 内边框装饰
+  &::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    border: 1px solid #666;
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 6px;
+  }
 }
 
 @keyframes slideUp {
@@ -398,13 +413,16 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  border-bottom: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 3px solid #000;
+  background-color: #fff;
+  z-index: 2;
+  position: relative;
 
   h2 {
     margin: 0;
     font-size: 24px;
-    color: #fff;
+    color: #000;
+    font-family: '临海体', serif;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -412,21 +430,21 @@ watch(
 
   .close-btn {
     background: none;
-    border: 2px solid #fff;
-    color: #fff;
+    border: 2px solid #000;
+    color: #000;
     font-size: 24px;
     width: 40px;
     height: 40px;
     cursor: pointer;
-    border-radius: 2px;
+    border-radius: 50%;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
 
     &:hover {
-      background: #fff;
-      color: #000;
+      background: #000;
+      color: #fff;
       transform: rotate(90deg);
     }
   }
@@ -438,10 +456,12 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid #e0e0e0;
   gap: 15px;
   flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.02);
+  background-color: #f5f5f5;
+  z-index: 2;
+  position: relative;
 
   .toolbar-left,
   .toolbar-right {
@@ -454,9 +474,10 @@ watch(
     padding: 8px 16px;
     background: #fff;
     color: #000;
-    border: 2px solid #fff;
-    border-radius: 2px;
+    border: 2px solid #000;
+    border-radius: 4px;
     cursor: pointer;
+    font-family: '临海体', serif;
     font-weight: 600;
     font-size: 14px;
     transition: all 0.2s;
@@ -466,58 +487,66 @@ watch(
       background: #000;
       color: #fff;
       transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     &.batch {
-      background: transparent;
-      color: #fff;
+      background: #f0f0f0;
+      border-color: #666;
+      color: #333;
 
       &:hover {
-        background: #fff;
-        color: #000;
+        background: #666;
+        color: #fff;
+        border-color: #666;
       }
     }
   }
 
   .category-filter {
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    border-radius: 2px;
+    background: #fff;
+    border: 2px solid #ccc;
+    color: #333;
+    border-radius: 4px;
+    font-family: '临海体', serif;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: #fff;
+      border-color: #000;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #000;
     }
 
     option {
-      background: #1a1a1a;
-      color: #fff;
+      background: #fff;
+      color: #000;
     }
   }
 
   .search-input {
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    border-radius: 2px;
+    background: #fff;
+    border: 2px solid #ccc;
+    color: #333;
+    border-radius: 4px;
+    font-family: '临海体', serif;
     font-size: 14px;
     min-width: 200px;
     transition: all 0.2s;
 
     &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+      color: #999;
     }
 
     &:focus {
       outline: none;
-      background: rgba(255, 255, 255, 0.15);
-      border-color: #fff;
+      border-color: #000;
     }
   }
 
@@ -525,12 +554,13 @@ watch(
     display: flex;
     align-items: center;
     gap: 8px;
-    color: rgba(255, 255, 255, 0.7);
+    color: #666;
+    font-family: '临海体', serif;
     font-size: 14px;
     font-weight: 600;
 
     .divider {
-      color: rgba(255, 255, 255, 0.3);
+      color: #ccc;
     }
 
     span {
@@ -542,27 +572,32 @@ watch(
 // ==================== 上传进度 ====================
 .upload-progress {
   padding: 15px 30px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: #fffbf0;
+  border-bottom: 2px solid #e0e0e0;
+  z-index: 2;
+  position: relative;
 
   .progress-bar {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
+    height: 10px;
+    background: #e0e0e0;
+    border: 2px solid #ccc;
+    border-radius: 5px;
     overflow: hidden;
     margin-bottom: 8px;
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+      background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
       transition: width 0.3s ease;
       animation: shimmer 1.5s infinite;
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
     }
   }
 
   p {
     margin: 0;
-    color: #fff;
+    color: #333;
+    font-family: '临海体', serif;
     font-size: 14px;
     text-align: center;
     font-weight: 600;
@@ -575,7 +610,7 @@ watch(
     opacity: 1;
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 }
 
@@ -588,22 +623,25 @@ watch(
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
   align-content: start;
+  background-color: #fafafa;
 
-  // 自定义滚动条（黑白风格）
+  // 自定义滚动条
   &::-webkit-scrollbar {
-    width: 10px;
+    width: 12px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: #e0e0e0;
+    border-left: 1px solid #ccc;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 5px;
+    background: #999;
+    border-radius: 6px;
+    border: 2px solid #e0e0e0;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.5);
+      background: #666;
     }
   }
 
@@ -617,40 +655,43 @@ watch(
 // 空状态
 .empty-state {
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: #999;
 
   .empty-icon {
     font-size: 80px;
     margin-bottom: 20px;
-    opacity: 0.3;
+    opacity: 0.5;
   }
 
   p {
     margin: 8px 0;
     font-size: 18px;
+    font-family: '临海体', serif;
     font-weight: 600;
+    color: #666;
   }
 
   .empty-hint {
     font-size: 14px;
-    opacity: 0.7;
+    color: #999;
   }
 }
 
 // 图片卡片
 .image-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid transparent;
-  border-radius: 4px;
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: #000;
     transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 
     .image-actions {
       opacity: 1;
@@ -658,8 +699,9 @@ watch(
   }
 
   &.selected {
-    border-color: #fff;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    border-color: #4caf50;
+    border-width: 3px;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
 
     .selected-mark {
       opacity: 1;
@@ -670,10 +712,11 @@ watch(
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 30px;
-    height: 30px;
-    background: #fff;
-    color: #000;
+    width: 32px;
+    height: 32px;
+    background: #4caf50;
+    color: #fff;
+    border: 2px solid #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -683,13 +726,14 @@ watch(
     opacity: 0;
     transition: opacity 0.2s;
     z-index: 2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   .image-thumbnail {
     width: 100%;
     height: 180px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.02);
+    background: #f5f5f5;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -703,16 +747,18 @@ watch(
   }
 
   &:hover .image-thumbnail img {
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 
   .image-info {
     padding: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid #f0f0f0;
+    background: #fff;
 
     .image-name {
       margin: 0 0 6px 0;
-      color: #fff;
+      color: #333;
+      font-family: '临海体', serif;
       font-size: 14px;
       font-weight: 600;
       white-space: nowrap;
@@ -722,7 +768,7 @@ watch(
 
     .image-meta {
       margin: 0;
-      color: rgba(255, 255, 255, 0.5);
+      color: #999;
       font-size: 12px;
     }
   }
@@ -739,24 +785,26 @@ watch(
     .action-btn {
       width: 32px;
       height: 32px;
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid #fff;
-      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid #000;
+      border-radius: 50%;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
       &:hover {
-        background: #fff;
+        background: #000;
+        color: #fff;
         transform: scale(1.1);
       }
 
       &.delete:hover {
-        background: #ff4444;
-        border-color: #ff4444;
+        background: #f44336;
+        border-color: #f44336;
       }
     }
   }
@@ -768,8 +816,10 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  border-top: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.05);
+  border-top: 3px solid #000;
+  background-color: #f5f5f5;
+  z-index: 2;
+  position: relative;
 
   .footer-right {
     display: flex;
@@ -778,8 +828,9 @@ watch(
 
   .footer-btn {
     padding: 10px 24px;
-    border: 2px solid #fff;
-    border-radius: 2px;
+    border: 2px solid #000;
+    border-radius: 4px;
+    font-family: '临海体', serif;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -788,38 +839,41 @@ watch(
     letter-spacing: 1px;
 
     &.primary {
-      background: #fff;
-      color: #000;
+      background: #000;
+      color: #fff;
 
       &:hover:not(:disabled) {
-        background: #000;
-        color: #fff;
+        background: #333;
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
 
       &:disabled {
-        opacity: 0.3;
+        opacity: 0.4;
         cursor: not-allowed;
+        background: #ccc;
+        border-color: #ccc;
+        color: #666;
       }
     }
 
     &.secondary {
-      background: transparent;
-      color: #fff;
+      background: #fff;
+      color: #333;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: #f0f0f0;
+        border-color: #666;
       }
     }
 
     &.danger {
       background: transparent;
-      color: #ff4444;
-      border-color: #ff4444;
+      color: #f44336;
+      border-color: #f44336;
 
       &:hover {
-        background: #ff4444;
+        background: #f44336;
         color: #fff;
       }
     }
