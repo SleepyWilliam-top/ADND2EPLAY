@@ -571,8 +571,9 @@ export function useNpcAutoDetection() {
 
   /**
    * 添加或更新 NPC（增强版 - 智能合并）
+   * @returns 返回是否是新增的NPC（true=新增，false=更新）
    */
-  function addOrUpdateNpc(npc: NPC) {
+  function addOrUpdateNpc(npc: NPC): boolean {
     const existingIndex = npcList.value.findIndex(n => n.id === npc.id || n.name === npc.name);
 
     if (existingIndex !== -1) {
@@ -601,14 +602,16 @@ export function useNpcAutoDetection() {
         attitude: npc.attitude || existing.attitude,
       };
       console.log('[NPC Auto] 更新 NPC:', npc.name);
+      saveNpcList();
+      return false; // 返回false表示是更新
     } else {
       // 添加新 NPC
       npcList.value.push(npc);
       console.log('[NPC Auto] 新增 NPC:', npc.name);
       toastr.info(`新 NPC 登场: ${npc.name}`);
+      saveNpcList();
+      return true; // 返回true表示是新增
     }
-
-    saveNpcList();
   }
 
   /**
@@ -623,12 +626,23 @@ export function useNpcAutoDetection() {
       const npcs = parseNpcTags(content);
       if (npcs.length > 0) {
         console.log(`[NPC Auto] 在消息中检测到 ${npcs.length} 个 NPC`);
-        npcs.forEach(npc => addOrUpdateNpc(npc));
-      }
+        
+        // 记录本次新增的NPC名称
+        const newlyAddedNpcNames = new Set<string>();
+        npcs.forEach(npc => {
+          const isNew = addOrUpdateNpc(npc);
+          if (isNew) {
+            newlyAddedNpcNames.add(npc.name);
+          }
+        });
 
-      // 🔧 每次处理完 AI 消息后，智能清理不在场的 NPC
-      // 学习自 lucklyjkop：根据剧情自动判断 NPC 是否还在场景中
-      autoCleanupAbsentNpcs();
+        // 🔧 每次处理完 AI 消息后，智能清理不在场的 NPC
+        // 但要排除刚刚新增的NPC（避免秒删）
+        autoCleanupAbsentNpcs(30, newlyAddedNpcNames);
+      } else {
+        // 如果本次没有检测到NPC，正常清理（不排除任何NPC）
+        autoCleanupAbsentNpcs();
+      }
     } catch (error) {
       console.error('[NPC Auto] 处理 AI 消息失败:', error);
     } finally {
@@ -644,10 +658,12 @@ export function useNpcAutoDetection() {
    * 2. 将当前 NPC 列表与最近提及的 NPC 对比
    * 3. 如果某个 NPC 在最近30条消息中都没有被提及（无论是标签还是名字），说明它已经离场，应该被移除
    * 4. 特别关心的 NPC 永远不会被自动移除
+   * 5. 刚刚新增的 NPC 不会被移除（避免秒删问题）
    *
    * @param recentMessagesCount 检查最近几条消息（默认 30 条，增加容错性）
+   * @param excludeNpcNames 排除的NPC名称集合（本次新增的NPC，避免秒删）
    */
-  function autoCleanupAbsentNpcs(recentMessagesCount: number = 30) {
+  function autoCleanupAbsentNpcs(recentMessagesCount: number = 30, excludeNpcNames: Set<string> = new Set()) {
     // 获取最近的所有消息（包括用户和AI消息）
     const recentMessages = gameStore.messages.slice(-recentMessagesCount);
 
@@ -678,6 +694,12 @@ export function useNpcAutoDetection() {
     npcList.value.forEach(npc => {
       if (npc.favorite) {
         return; // 跳过特别关心的 NPC（不会自动移除）
+      }
+
+      // 🔧 跳过本次新增的 NPC（避免秒删问题）
+      if (excludeNpcNames.has(npc.name)) {
+        console.log(`[NPC Auto] 跳过检查刚刚新增的 NPC: ${npc.name}`);
+        return;
       }
 
       // 如果这个 NPC 在最近30条消息中都没有被提及，说明它已经离场了
