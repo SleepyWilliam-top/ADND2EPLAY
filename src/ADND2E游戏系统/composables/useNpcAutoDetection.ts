@@ -680,15 +680,15 @@ export function useNpcAutoDetection() {
 
     // 收集最近消息中所有提及的 NPC 名称（标签 + 文本提及）
     const recentNpcNames = new Set<string>();
-    
+
     // 🔧 额外保护：最近3条消息中的NPC绝对不删除
     const veryRecentNpcNames = new Set<string>();
     const veryRecentMessages = gameStore.messages.slice(-3);
-    
+
     recentMessages.forEach(msg => {
       if (msg.content) {
         const isVeryRecent = veryRecentMessages.includes(msg);
-        
+
         // 1. 解析 NPC 标签（完整的 NPC 数据）
         const npcsInMessage = parseNpcTags(msg.content);
         npcsInMessage.forEach(npc => {
