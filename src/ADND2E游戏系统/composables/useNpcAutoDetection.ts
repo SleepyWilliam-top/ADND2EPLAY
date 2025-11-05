@@ -1011,11 +1011,11 @@ export function useNpcAutoDetection() {
     if (index !== -1) {
       const removedNpc = npcList.value[index];
       const removedId = removedNpc.id;
-      
+
       // 1. 从本地列表删除
       npcList.value.splice(index, 1);
       console.log(`[NPC Auto] 手动移除 NPC: ${name} (ID: ${removedId})`);
-      
+
       // 2. 从 gameStateStore 删除（学习 lucklyjkop: delete currentState['0'][id]）
       const gameStateStore = useGameStateStore();
       const stateIndex = gameStateStore.gameState.npcs.findIndex(n => n.id === removedId);
@@ -1023,16 +1023,16 @@ export function useNpcAutoDetection() {
         gameStateStore.gameState.npcs.splice(stateIndex, 1);
         console.log(`[NPC Auto] 已从游戏状态删除 NPC: ${name}`);
       }
-      
+
       // 3. 同步到角色卡变量（学习 lucklyjkop: syncStateFromTables）
       gameStateStore.syncToCharacterVariables();
       console.log('[NPC Auto] 已同步到角色卡变量');
-      
+
       // 4. 保存到 IndexedDB（学习 lucklyjkop: await saveCurrentState）
       try {
         const { saveGameData } = await import('./usePersistence');
         const gameStore = useGameStore();
-        
+
         await saveGameData({
           messages: gameStore.messages,
           gameState: gameStateStore.exportGameState(),
@@ -1041,7 +1041,7 @@ export function useNpcAutoDetection() {
       } catch (error) {
         console.error('[NPC Auto] 保存到 IndexedDB 失败:', error);
       }
-      
+
       // 5. 如果是重要NPC，从名册删除（学习 lucklyjkop: delete bondedCharacters[id]）
       if (removedNpc.favorite) {
         try {
@@ -1052,14 +1052,14 @@ export function useNpcAutoDetection() {
           console.warn('[NPC Auto] 从名册删除失败:', error);
         }
       }
-      
+
       // 6. 保存本地列表（兼容性）
       saveNpcList();
-      
+
       // 7. 触发更新事件
       eventEmit('adnd2e_game_data_updated');
       eventEmit('adnd2e_character_data_synced');
-      
+
       toastr.success(`已移除 ${name}`);
     } else {
       console.warn(`[NPC Auto] 未找到 NPC: ${name}`);
