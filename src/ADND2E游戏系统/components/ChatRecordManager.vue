@@ -420,6 +420,24 @@ async function clearAllMessages() {
 function editMessage(index: number) {
   if (index < 0 || index >= gameStore.messages.length) return;
 
+  const message = gameStore.messages[index];
+
+  // 🔧 如果编辑的是AI消息且后面还有很多消息，给出警告
+  if (message.role === 'assistant' && index < gameStore.messages.length - 5) {
+    const confirmed = confirm(
+      `⚠️ 编辑提示\n\n您正在编辑第 ${index + 1} 条消息，此消息后还有 ${gameStore.messages.length - index - 1} 条消息。\n\n` +
+        `📝 编辑模式：增量更新\n` +
+        `• 只会重新解析当前消息的命令\n` +
+        `• 不会影响后续消息添加的NPC和其他数据\n` +
+        `• 适合修正文本、微调数值\n\n` +
+        `⚠️ 如果您要修改关键游戏命令（如NPC的创建、删除），建议使用"删除消息"功能，\n` +
+        `这样系统会回溯游戏状态并重新应用所有后续命令。\n\n` +
+        `是否继续编辑？`,
+    );
+
+    if (!confirmed) return;
+  }
+
   editingMessageIndex.value = index;
   editingContent.value = gameStore.messages[index].content;
 }
@@ -449,85 +467,40 @@ async function saveEdit() {
 
     // 2. 如果是 AI 消息，重新解析命令并更新游戏状态
     if (message.role === 'assistant') {
-      console.log('[ChatRecordManager] 检测到 AI 消息编辑，重新解析命令并重放后续消息...');
+      console.log('[ChatRecordManager] 检测到 AI 消息编辑，重新解析当前消息的命令（增量更新模式）...');
 
       // 动态导入 commandParser
       const { parseAiResponse } = await import('../utils/commandParser');
 
-      // 回溯到该消息之前的快照
-      let snapshotToRestore: any = null;
-      let snapshotIndex = -1;
-      for (let i = index - 1; i >= 0; i--) {
-        const snapshot = gameStore.messages[i].stateSnapshot;
-        if (snapshot) {
-          snapshotToRestore = JSON.parse(snapshot);
-          snapshotIndex = i;
-          console.log(`[ChatRecordManager] 找到快照: 消息 #${i + 1}，准备回溯`);
-          break;
-        }
-      }
+      // 🔧 修复：使用增量更新策略，只重新解析当前消息，不回溯整个游戏状态
+      // 这样可以避免丢失后续消息添加的NPC等数据
 
-      // 如果没有找到快照，从初始状态开始
-      if (snapshotToRestore) {
-        gameStateStore.restoreGameState(snapshotToRestore);
-        console.log('[ChatRecordManager] 已回溯到快照状态');
+      // 解析新的消息内容
+      const parseResult = parseAiResponse(newContent);
+
+      if (parseResult.commands.length > 0) {
+        console.log(`[ChatRecordManager] 当前消息包含 ${parseResult.commands.length} 个命令，准备增量应用...`);
+
+        // 3. 增量应用新命令（不清空现有状态）
+        const successCount = gameStateStore.applyCommands(parseResult.commands);
+
+        // 4. 更新该消息的快照为最新状态
+        message.stateSnapshot = JSON.stringify(gameStateStore.exportGameState());
+
+        console.log(
+          `[ChatRecordManager] 消息 #${index + 1}: 增量应用了 ${successCount}/${parseResult.commands.length} 个命令`,
+        );
+
+        // 收集错误
+        if (parseResult.errors.length > 0) {
+          console.warn('[ChatRecordManager] 命令解析错误:', parseResult.errors);
+          toastr.warning(`部分命令解析失败，详见控制台`);
+        }
+
+        toastr.success(`消息已更新，增量应用了 ${successCount}/${parseResult.commands.length} 个命令`);
       } else {
-        // 从角色卡数据初始化游戏状态
-        const charVars = getVariables({ type: 'character' });
-        const characterData = charVars?.adnd2e?.character;
-        gameStateStore.resetGameState();
-        if (characterData) {
-          gameStateStore.initializeGameState(characterData);
-          console.log('[ChatRecordManager] 未找到快照，已从角色数据初始化游戏状态');
-        } else {
-          console.log('[ChatRecordManager] 未找到快照，从空白状态开始');
-        }
-      }
-
-      // 重新应用从当前消息到最后一条消息的所有 AI 命令
-      let totalCommands = 0;
-      let successCommands = 0;
-      const errors: string[] = [];
-
-      for (let i = index; i < gameStore.messages.length; i++) {
-        const msg = gameStore.messages[i];
-
-        // 只处理 AI 消息
-        if (msg.role === 'assistant') {
-          // 使用新内容（如果是当前编辑的消息）或原内容
-          const contentToParse = i === index ? newContent : msg.content;
-          const parseResult = parseAiResponse(contentToParse);
-
-          if (parseResult.commands.length > 0) {
-            totalCommands += parseResult.commands.length;
-            const successCount = gameStateStore.applyCommands(parseResult.commands);
-            successCommands += successCount;
-
-            // 更新该消息的快照
-            msg.stateSnapshot = JSON.stringify(gameStateStore.exportGameState());
-
-            console.log(
-              `[ChatRecordManager] 消息 #${i + 1}: 应用了 ${successCount}/${parseResult.commands.length} 个命令`,
-            );
-
-            // 收集错误
-            if (parseResult.errors.length > 0) {
-              errors.push(...parseResult.errors.map(err => `消息#${i + 1}: ${err}`));
-            }
-          }
-        }
-      }
-
-      console.log(`[ChatRecordManager] 重放完成: 共 ${successCommands}/${totalCommands} 个命令成功应用`);
-
-      if (errors.length > 0) {
-        console.warn('[ChatRecordManager] 命令解析错误:', errors);
-        toastr.warning(`部分命令解析失败，详见控制台`);
-      }
-
-      if (totalCommands > 0) {
-        toastr.success(`消息已更新，重放了 ${successCommands}/${totalCommands} 个命令`);
-      } else {
+        // 5. 如果新内容没有命令，只更新消息内容，不改变游戏状态
+        console.log('[ChatRecordManager] 新内容未检测到命令，仅更新消息文本');
         toastr.info('消息已更新（未检测到命令）');
       }
     } else {

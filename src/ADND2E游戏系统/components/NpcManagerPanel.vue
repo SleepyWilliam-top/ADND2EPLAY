@@ -804,26 +804,56 @@ async function confirmRemove() {
     if (!confirmed) return;
   }
 
-  // 从 gameState 中删除 NPC
-  const index = gameStateStore.gameState.npcs.findIndex(n => n.id === selectedNpc.value!.id);
-  if (index !== -1) {
-    const removedNpc = gameStateStore.gameState.npcs[index];
-    const isBonded = removedNpc.isBonded;
+  try {
+    // 从 gameState 中删除 NPC
+    const index = gameStateStore.gameState.npcs.findIndex(n => n.id === selectedNpc.value!.id);
+    if (index !== -1) {
+      const removedNpc = gameStateStore.gameState.npcs[index];
+      const isBonded = removedNpc.isBonded;
+      const removedName = removedNpc.name;
 
-    gameStateStore.gameState.npcs.splice(index, 1);
+      // 1. 从游戏状态中删除
+      gameStateStore.gameState.npcs.splice(index, 1);
+      console.log(`[NpcManager] 已从游戏状态删除 NPC: ${removedName} (ID: ${removedNpc.id})`);
 
-    // 🔧 如果是重要NPC，同时从IndexedDB名册中删除
-    if (isBonded) {
-      import('../composables/usePersistence')
-        .then(({ deleteBondedNpc }) => deleteBondedNpc(removedNpc.id))
-        .catch(err => console.warn('[NpcManager] 从名册删除重要NPC失败:', err));
+      // 2. 同步到角色卡变量（学习 lucklyjkop: syncStateFromTables）
+      gameStateStore.syncToCharacterVariables();
+      console.log('[NpcManager] 已同步到角色卡变量');
+
+      // 3. 立即保存到 IndexedDB（学习 lucklyjkop: await saveCurrentState）
+      await nextTick(); // 等待 Vue 响应式更新
+
+      const { saveGameData } = await import('../composables/usePersistence');
+      const { useGameStore } = await import('../stores/gameStore');
+      const gameStore = useGameStore();
+
+      await saveGameData({
+        messages: gameStore.messages,
+        gameState: gameStateStore.exportGameState(),
+      });
+      console.log('[NpcManager] 已保存到 IndexedDB');
+
+      // 4. 如果是重要NPC，同时从IndexedDB名册中删除（学习 lucklyjkop: delete bondedCharacters[char.id]）
+      if (isBonded) {
+        const { deleteBondedNpc } = await import('../composables/usePersistence');
+        await deleteBondedNpc(removedNpc.id);
+        console.log(`[NpcManager] 已从重要NPC名册删除: ${removedName}`);
+      }
+
+      // 5. 触发更新事件，通知其他组件（学习 lucklyjkop 的事件系统）
+      console.log('[NpcManager] 🔔 触发 NPC 移除事件');
+      eventEmit('adnd2e_game_data_updated');
+      eventEmit('adnd2e_character_data_synced');
+
+      toastr.success(`已移除 ${removedName}${isBonded ? '（已从重要NPC名册删除）' : ''}`);
+      closeDetail();
+      forceUpdateKey.value++; // 强制刷新列表
+    } else {
+      toastr.error('未找到该 NPC');
     }
-
-    // 同步到角色卡变量
-    gameStateStore.syncToCharacterVariables();
-
-    toastr.success(`已移除 ${removedNpc.name}${isBonded ? '（已从重要NPC名册删除）' : ''}`);
-    closeDetail();
+  } catch (error) {
+    console.error('[NpcManager] 删除 NPC 失败:', error);
+    toastr.error('删除失败: ' + (error as Error).message);
   }
 }
 </script>
