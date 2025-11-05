@@ -562,12 +562,17 @@ function handleInteract(action: string, npc: NPC) {
   }
 }
 
-// 处理删除NPC
-function handleDeleteNpc(npc: NPC) {
+// 处理删除NPC（学习 lucklyjkop 的异步删除）
+async function handleDeleteNpc(npc: NPC) {
   if (confirm(`确定要删除 NPC "${npc.name}" 吗？此操作不可逆。`)) {
-    npcAuto.removeNpc(npc.name);
-    selectedNpc.value = null;
-    toastr.success(`已删除 NPC: ${npc.name}`);
+    try {
+      await npcAuto.removeNpc(npc.name);
+      selectedNpc.value = null;
+      // removeNpc 内部已经显示 toastr.success，这里不再重复显示
+    } catch (error) {
+      console.error('[SettingsPanel] 删除 NPC 失败:', error);
+      toastr.error('删除失败: ' + (error as Error).message);
+    }
   }
 }
 
