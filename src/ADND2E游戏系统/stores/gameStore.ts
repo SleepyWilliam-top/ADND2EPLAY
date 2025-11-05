@@ -461,11 +461,9 @@ export const useGameStore = defineStore('adnd2e-game', () => {
         });
 
         // 修复旧数据：为没有快照的消息补充快照
-        let needsRepair = needsNameRepair; // 如果修复了 name，也需要保存
         const hasAnyMissingSnapshot = messages.value.some(msg => !msg.stateSnapshot);
 
-        if (hasAnyMissingSnapshot) {
-          needsRepair = true;
+        if (hasAnyMissingSnapshot || needsNameRepair) {
           console.log('[Game] 检测到旧数据缺少快照，开始重建状态快照...');
 
           // 动态导入 commandParser
@@ -652,19 +650,20 @@ export const useGameStore = defineStore('adnd2e-game', () => {
       const olderAIMessages = aiMessages.slice(0, aiMessages.length - recentAICount);
 
       // 处理较旧的 AI 消息
+      // 🔧 完全学习 lucklyjkop：保留原始消息的所有属性（包括 role），只替换 content
       olderAIMessages.forEach(aiMsg => {
         const reverseIndex = aiMessages.length - 1 - aiMessages.indexOf(aiMsg);
 
         if (largeSummaryStart > 0 && reverseIndex >= largeSummaryStart) {
-          // 很旧的消息：只发送大总结
+          // 很旧的消息：只发送大总结（如果没有大总结就用小总结，最后才是原始内容）
           contextMessages.push({
-            ...aiMsg,
+            ...aiMsg, // ✅ 保留所有原始属性（role, name, timestamp 等）
             content: aiMsg.largeSummary || aiMsg.smallSummary || aiMsg.content,
           });
         } else {
-          // 较旧的消息：发送小总结
+          // 较旧的消息：发送小总结（如果没有小总结就用原始内容）
           contextMessages.push({
-            ...aiMsg,
+            ...aiMsg, // ✅ 保留所有原始属性
             content: aiMsg.smallSummary || aiMsg.content,
           });
         }
@@ -897,11 +896,23 @@ ${currentNpcs
       // 3.2 然后注入历史对话消息（排除刚刚添加的用户输入）
       // 🔧 应用 AI 上下文控制：加载设置
       const textRegexSettings = charVars?.adnd2e?.textRegexSettings || {};
-      const contextLimit = textRegexSettings.contextLimit; // 发送最近消息层数（undefined = 全部）
+      const summarySettings = charVars?.adnd2e?.summarySettings || {};
+
+      // 🌟 分段记忆策略（参考 lucklyjkop）
+      // 如果启用分段记忆，将覆盖普通的上下文控制设置
+      const segmentedMemoryEnabled = summarySettings.segmentedMemory?.enabled || false;
+      const segmentedChatLayers = summarySettings.segmentedMemory?.chatLayers || 10; // 最新的 X 层发送完整聊天记录
+      const segmentedLargeSummaryStart = summarySettings.segmentedMemory?.largeSummaryStart || 20; // 从倒数第 Y 层开始，只发送大总结
+
+      // 如果未启用分段记忆，使用普通的上下文控制设置
+      const contextLimit = segmentedMemoryEnabled ? undefined : textRegexSettings.contextLimit; // 发送最近消息层数（undefined = 全部）
       const autoHideSummarized = textRegexSettings.autoHideSummarized || false; // 自动隐藏已总结内容
       const fixedHideRange = textRegexSettings.fixedHideRange || ''; // 固定隐藏范围（如 "5-10"）
 
       console.log('[Game] AI 上下文控制设置:', {
+        segmentedMemoryEnabled,
+        segmentedChatLayers,
+        segmentedLargeSummaryStart,
         contextLimit,
         autoHideSummarized,
         fixedHideRange,
@@ -922,18 +933,84 @@ ${currentNpcs
       // 获取历史消息（排除最后一条刚添加的用户输入，也排除第一条角色卡）
       let historyMessages = messages.value.slice(1, -1); // 跳过第一条角色卡和最后一条用户输入
 
-      // 🔧 应用上下文限制：只发送最近 N 条消息
+      // 🔧 应用上下文限制：只发送最近 N 条消息（仅在未启用分段记忆时）
       if (contextLimit && contextLimit > 0) {
         historyMessages = historyMessages.slice(-contextLimit);
         console.log(`[Game] 应用上下文限制，发送最近 ${contextLimit} 条消息`);
       }
 
+      // 计算历史消息总数（用于倒数计算）
+      const totalHistoryCount = historyMessages.length;
+
       // 遍历历史消息，应用正则规则和隐藏逻辑
-      historyMessages.forEach(msg => {
+      historyMessages.forEach((msg, index) => {
         // 计算在完整消息列表中的索引（排除角色卡后的索引，从 1 开始）
         const globalIndex = messages.value.indexOf(msg);
 
-        // 🔧 检查是否在固定隐藏范围内
+        // 🌟 计算倒数位置（从最新消息倒数，1 表示最新的历史消息）
+        const reverseIndex = totalHistoryCount - index;
+
+        // 🌟 分段记忆策略（完全学习 lucklyjkop）
+        // 关键：保留原始消息的 role，只替换 content 为总结，这样 AI 能正确理解对话结构
+        if (segmentedMemoryEnabled) {
+          // 策略 1：最新的 X 层发送完整消息
+          if (reverseIndex <= segmentedChatLayers) {
+            console.log(
+              `[Game] 消息 #${globalIndex} 在最新 ${segmentedChatLayers} 层内，发送完整消息（倒数 #${reverseIndex}）`,
+            );
+            const cleanedContent = cleanMessageForAI(msg.content);
+            chatHistoryPrompts.push({
+              role: msg.role,
+              content: cleanedContent,
+            });
+            return;
+          }
+
+          // 策略 2：从倒数第 Y 层开始，只发送大总结
+          // 🔧 学习 lucklyjkop：保留原始 role，只替换 content
+          if (reverseIndex >= segmentedLargeSummaryStart) {
+            const largeSummary = msg.largeSummary || msg.smallSummary || '';
+            if (largeSummary) {
+              console.log(`[Game] 消息 #${globalIndex} 在倒数第 ${reverseIndex} 层，发送大总结`);
+              chatHistoryPrompts.push({
+                role: msg.role, // ✅ 保留原始 role
+                content: largeSummary, // ✅ 直接使用总结内容，不添加标记
+              });
+            } else {
+              // 如果没有总结，发送原始内容（作为回退）
+              console.log(`[Game] 消息 #${globalIndex} 在倒数第 ${reverseIndex} 层，无大总结，发送原始内容作为回退`);
+              const cleanedContent = cleanMessageForAI(msg.content);
+              chatHistoryPrompts.push({
+                role: msg.role,
+                content: cleanedContent,
+              });
+            }
+            return;
+          }
+
+          // 策略 3：在 X 和 Y 之间，发送小总结（如果有），否则发送完整消息
+          // 🔧 学习 lucklyjkop：保留原始 role，只替换 content
+          const smallSummary = msg.smallSummary || '';
+          if (smallSummary) {
+            console.log(`[Game] 消息 #${globalIndex} 在倒数第 ${reverseIndex} 层，发送小总结`);
+            chatHistoryPrompts.push({
+              role: msg.role, // ✅ 保留原始 role
+              content: smallSummary, // ✅ 直接使用总结内容，不添加标记
+            });
+          } else {
+            console.log(`[Game] 消息 #${globalIndex} 在倒数第 ${reverseIndex} 层，无总结，发送完整消息`);
+            const cleanedContent = cleanMessageForAI(msg.content);
+            chatHistoryPrompts.push({
+              role: msg.role,
+              content: cleanedContent,
+            });
+          }
+          return;
+        }
+
+        // 🔧 非分段记忆模式：使用普通的上下文控制逻辑
+
+        // 检查是否在固定隐藏范围内
         if (fixedHideStart > 0 && fixedHideEnd > 0) {
           if (globalIndex >= fixedHideStart && globalIndex <= fixedHideEnd) {
             console.log(`[Game] 消息 #${globalIndex} 在固定隐藏范围内，跳过`);
@@ -941,13 +1018,26 @@ ${currentNpcs
           }
         }
 
-        // 🔧 检查是否自动隐藏已总结内容
-        if (autoHideSummarized && msg.smallSummary) {
-          console.log(`[Game] 消息 #${globalIndex} 已有总结，跳过（自动隐藏已总结内容）`);
-          return; // 跳过已总结的消息
+        // 检查是否自动隐藏已总结内容
+        if (autoHideSummarized && (msg.smallSummary || msg.largeSummary)) {
+          // 🌟 不是跳过消息，而是发送总结内容（参考 lucklyjkop）
+          // 优先使用大总结（一句话），如果没有则使用小总结（50-100字）
+          const summaryContent = msg.largeSummary || msg.smallSummary || '';
+          if (summaryContent) {
+            console.log(
+              `[Game] 消息 #${globalIndex} 已有总结，发送总结内容（${msg.largeSummary ? '大总结' : '小总结'}）`,
+            );
+            chatHistoryPrompts.push({
+              role: 'system',
+              content: `[总结 #${globalIndex}] ${summaryContent}`,
+            });
+          } else {
+            console.log(`[Game] 消息 #${globalIndex} 标记已总结但无内容，跳过`);
+          }
+          return; // 跳过原始消息
         }
 
-        // 🔧 应用正则规则清理消息内容（隐藏 NPC 标签、变量思考块等）
+        // 应用正则规则清理消息内容（隐藏 NPC 标签、变量思考块等）
         const cleanedContent = cleanMessageForAI(msg.content);
 
         chatHistoryPrompts.push({
@@ -1126,6 +1216,256 @@ ${currentNpcs
     pendingMessageIndex.value = null;
   }
 
+  // ==================== 消息操作方法（重roll AI消息功能） ====================
+
+  /**
+   * 编辑指定索引的消息
+   */
+  async function editMessage(index: number, newContent: string) {
+    if (index < 0 || index >= messages.value.length) {
+      console.error('[Game] editMessage: 索引超出范围');
+      toastr.error('消息索引无效');
+      return;
+    }
+
+    const message = messages.value[index];
+    console.log(`[Game] 编辑消息 #${index}:`, { old: message.content, new: newContent });
+
+    // 更新消息内容
+    message.content = newContent;
+
+    // 保存到 IndexedDB
+    await saveProgress();
+
+    toastr.success('消息已更新');
+  }
+
+  /**
+   * 删除指定索引的消息
+   */
+  async function deleteMessage(index: number) {
+    if (index < 0 || index >= messages.value.length) {
+      console.error('[Game] deleteMessage: 索引超出范围');
+      toastr.error('消息索引无效');
+      return;
+    }
+
+    const message = messages.value[index];
+    console.log(`[Game] 删除消息 #${index}:`, message);
+
+    // 删除消息
+    messages.value.splice(index, 1);
+
+    // 保存到 IndexedDB
+    await saveProgress();
+
+    toastr.success('消息已删除');
+  }
+
+  /**
+   * 复制消息内容到剪贴板
+   */
+  async function copyMessage(index: number) {
+    if (index < 0 || index >= messages.value.length) {
+      console.error('[Game] copyMessage: 索引超出范围');
+      toastr.error('消息索引无效');
+      return;
+    }
+
+    const message = messages.value[index];
+    let text = message.content;
+
+    // 如果是用户消息，移除前导的 "> " 标记（如果有）
+    if (message.role === 'user') {
+      text = text.replace(/^> /, '');
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      toastr.success('消息已复制到剪贴板');
+    } catch (error) {
+      console.error('[Game] copyMessage: 复制失败:', error);
+      toastr.error('复制失败');
+    }
+  }
+
+  /**
+   * 重新生成/重新发送消息（重roll）
+   * 🔧 学习 lucklyjkop.html 的完整实现：支持所有类型的消息
+   *
+   * - AI 消息：删除该消息及之后的内容，恢复状态，重新发送最后一条用户输入
+   * - 用户/系统消息：将该消息内容重新发送（删除该消息及之后的内容）
+   */
+  async function regenerateMessage(index: number) {
+    if (index < 0 || index >= messages.value.length) {
+      console.error('[Game] regenerateMessage: 索引超出范围');
+      toastr.error('消息索引无效');
+      return;
+    }
+
+    const message = messages.value[index];
+
+    console.log(`[Game] 重新发送消息 #${index} (${message.role}):`, message);
+
+    // 🔧 根据消息类型选择不同的确认文本
+    let confirmText: string;
+    if (message.role === 'assistant') {
+      confirmText =
+        '确定要重新生成这条 AI 消息吗？\n\n这将删除该消息及之后的所有消息，并根据之前的对话上下文重新生成。';
+    } else {
+      confirmText = '确定要重新发送这条消息吗？\n\n这将删除该消息及之后的所有消息，并将该消息内容重新发送。';
+    }
+
+    // 确认操作
+    const confirmed = await new Promise<boolean>(resolve => {
+      if (window.confirm(confirmText)) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // 如果正在生成，先停止
+    if (isGenerating.value) {
+      await stopGeneration();
+    }
+
+    // 恢复到该消息之前的状态快照（如果有）
+    // 查找该消息之前最近的一个带有状态快照的消息
+    let snapshotToRestore: string | undefined;
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages.value[i].stateSnapshot) {
+        snapshotToRestore = messages.value[i].stateSnapshot;
+        console.log(`[Game] 找到状态快照 #${i}，准备恢复`);
+        break;
+      }
+    }
+
+    if (snapshotToRestore) {
+      try {
+        const gameStateStore = useGameStateStore();
+        const parsedState = JSON.parse(snapshotToRestore);
+        gameStateStore.restoreGameState(parsedState);
+        console.log('[Game] 游戏状态已恢复');
+      } catch (error) {
+        console.error('[Game] 恢复游戏状态失败:', error);
+        toastr.error('恢复游戏状态失败');
+        return;
+      }
+    }
+
+    // 🔧 保存要重新发送的内容（如果不是 AI 消息）
+    const contentToResend = message.role !== 'assistant' ? message.content : null;
+
+    // 删除该消息及之后的所有消息
+    const removedCount = messages.value.length - index;
+    messages.value.splice(index);
+    console.log(`[Game] 已删除 ${removedCount} 条消息（从 #${index} 开始）`);
+
+    // 保存删除操作
+    await saveProgress();
+
+    // 🔧 根据消息类型决定如何重新发送
+    if (contentToResend !== null) {
+      // 用户消息或系统消息：直接重新发送该消息的内容
+      console.log('[Game] 重新发送该消息内容:', contentToResend);
+
+      // 移除可能的引用标记 "> "
+      const cleanContent = contentToResend.replace(/^> /, '');
+
+      await sendUserInput(cleanContent);
+      toastr.info('正在重新发送消息...');
+    } else {
+      // AI 消息：重新发送最后一条用户输入（触发新的 AI 生成）
+      const lastUserMessage = messages.value.findLast(msg => msg.role === 'user');
+      if (!lastUserMessage) {
+        toastr.error('找不到用户输入消息，无法重新生成');
+        return;
+      }
+
+      console.log('[Game] 重新发送用户输入以触发 AI 生成:', lastUserMessage.content);
+
+      // 删除该用户消息（因为 sendUserInput 会重新添加）
+      const lastUserIndex = messages.value.lastIndexOf(lastUserMessage);
+      messages.value.splice(lastUserIndex, 1);
+
+      // 重新发送
+      await sendUserInput(lastUserMessage.content);
+
+      toastr.info('正在重新生成 AI 回复...');
+    }
+  }
+
+  /**
+   * 回溯到指定消息（删除该消息及之后的所有内容）
+   * 这是一个更简单的版本，学习自 lucklyjkop 的"重新发送"功能
+   */
+  async function revertToMessage(index: number) {
+    if (index < 0 || index >= messages.value.length) {
+      console.error('[Game] revertToMessage: 索引超出范围');
+      toastr.error('消息索引无效');
+      return;
+    }
+
+    const message = messages.value[index];
+    console.log(`[Game] 回溯到消息 #${index}:`, message);
+
+    // 确认操作
+    const confirmed = await new Promise<boolean>(resolve => {
+      if (window.confirm(`确定要回溯到这条消息吗？\n\n这将删除该消息及之后的所有消息。`)) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    // 如果正在生成，先停止
+    if (isGenerating.value) {
+      await stopGeneration();
+    }
+
+    // 恢复到该消息之前的状态快照（如果有）
+    let snapshotToRestore: string | undefined;
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages.value[i].stateSnapshot) {
+        snapshotToRestore = messages.value[i].stateSnapshot;
+        console.log(`[Game] 找到状态快照 #${i}，准备恢复`);
+        break;
+      }
+    }
+
+    if (snapshotToRestore) {
+      try {
+        const gameStateStore = useGameStateStore();
+        const parsedState = JSON.parse(snapshotToRestore);
+        gameStateStore.restoreGameState(parsedState);
+        console.log('[Game] 游戏状态已恢复');
+      } catch (error) {
+        console.error('[Game] 恢复游戏状态失败:', error);
+        toastr.error('恢复游戏状态失败');
+        return;
+      }
+    }
+
+    // 删除该消息及之后的所有消息
+    const removedCount = messages.value.length - index;
+    messages.value.splice(index);
+    console.log(`[Game] 已删除 ${removedCount} 条消息（从 #${index} 开始）`);
+
+    // 保存
+    await saveProgress();
+
+    toastr.success('已成功回溯');
+  }
+
   return {
     // 状态
     messages,
@@ -1151,5 +1491,11 @@ ${currentNpcs
     exportToFile, // 导出为文件
     supplementSegmentedMemory, // 手动补充分段记忆
     closeManualSegmentedMemoryModal, // 关闭手动补充弹窗
+    // 消息操作方法（重roll AI消息功能）
+    editMessage,
+    deleteMessage,
+    copyMessage,
+    regenerateMessage,
+    revertToMessage,
   };
 });

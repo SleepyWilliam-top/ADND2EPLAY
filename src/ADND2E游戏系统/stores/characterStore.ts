@@ -423,9 +423,12 @@ export const useCharacterStore = defineStore('character', () => {
   // 保存角色数据到酒馆变量
   async function saveToTavern() {
     try {
+      // 🐛 修复：保留现有的 adnd2e 数据（如 npcs、gameState 等），避免覆盖
+      const charVars = getVariables({ type: 'character' });
       await replaceVariables(
         {
           adnd2e: {
+            ...charVars?.adnd2e, // 保留现有字段（特别是 npcs）
             character: characterData.value,
             lastSaved: new Date().toISOString(),
           },

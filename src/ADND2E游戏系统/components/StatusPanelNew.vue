@@ -1220,11 +1220,13 @@ function loadCharacterData() {
     'gameState.character.deity': charVars?.adnd2e?.gameState?.character?.deity,
   });
 
-  // 🔧 修复：同步更新 gameState store，确保状态栏显示最新数据
-  // 从角色卡变量中加载最新的 gameState 数据（如果存在）
-  if (charVars?.adnd2e?.gameState) {
+  // 🔧 注意：不再从角色卡变量重新加载 gameState，以免覆盖内存中的最新数据
+  // gameState store 中的数据是最新的，因为所有修改都直接更新 store
+  // 只在初始化时（gameState 为空）才从角色卡变量加载
+  if (charVars?.adnd2e?.gameState && (!gameState.gameState.npcs || gameState.gameState.npcs.length === 0)) {
+    // 只在 gameState 为空时才从角色卡变量加载（首次加载）
     gameState.loadGameState(charVars.adnd2e.gameState);
-    console.log('[StatusPanel] 已从角色卡变量同步更新 gameState:', {
+    console.log('[StatusPanel] 首次加载：从角色卡变量同步更新 gameState:', {
       hp: charVars.adnd2e.gameState.character?.hp,
       gold: charVars.adnd2e.gameState.character?.gold,
       npcCount: charVars.adnd2e.gameState.npcs?.length || 0,
@@ -1234,7 +1236,7 @@ function loadCharacterData() {
       deity: charVars.adnd2e.gameState.character?.deity,
     });
   } else {
-    console.warn('[StatusPanel] 角色卡变量中没有 gameState 数据！这可能导致状态栏显示初始数据');
+    console.log('[StatusPanel] 使用内存中的最新 gameState 数据（不从角色卡变量重新加载）');
   }
 
   console.log(

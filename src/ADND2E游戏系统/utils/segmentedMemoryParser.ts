@@ -33,8 +33,15 @@ export function parseSegmentedMemory(content: string): SegmentedMemory | null {
     }
 
     // 方法2：兼容 lucklyjkop 的指令格式（作为 fallback）
-    const smallSummaryFnMatch = content.match(/addSmallSummary\s*\(\s*["']([^"']+)["']\s*\)/i);
-    const largeSummaryFnMatch = content.match(/addLargeSummary\s*\(\s*["']([^"']+)["']\s*\)/i);
+    // 🐛 修复：支持字符串内部包含引号的情况
+    // 优先匹配双引号包裹的字符串，然后匹配单引号包裹的字符串
+    const smallSummaryFnMatch = 
+      content.match(/addSmallSummary\s*\(\s*"([^"]*)"\s*\)/i) || 
+      content.match(/addSmallSummary\s*\(\s*'([^']*)'\s*\)/i);
+    
+    const largeSummaryFnMatch = 
+      content.match(/addLargeSummary\s*\(\s*"([^"]*)"\s*\)/i) || 
+      content.match(/addLargeSummary\s*\(\s*'([^']*)'\s*\)/i);
 
     if (smallSummaryFnMatch && largeSummaryFnMatch) {
       return {
@@ -61,9 +68,9 @@ export function removeSegmentedMemoryTags(content: string): string {
     // 移除 XML 格式的分段记忆
     let cleanContent = content.replace(/<segmented-memory>[\s\S]*?<\/segmented-memory>/gi, '');
 
-    // 移除函数格式的分段记忆（可选，如果需要兼容）
-    cleanContent = cleanContent.replace(/addSmallSummary\s*\([^)]*\)\s*/gi, '');
-    cleanContent = cleanContent.replace(/addLargeSummary\s*\([^)]*\)\s*/gi, '');
+    // 🐛 修复：移除函数格式的分段记忆（支持双引号和单引号）
+    cleanContent = cleanContent.replace(/addSmallSummary\s*\(\s*(?:"[^"]*"|'[^']*')\s*\)\s*/gi, '');
+    cleanContent = cleanContent.replace(/addLargeSummary\s*\(\s*(?:"[^"]*"|'[^']*')\s*\)\s*/gi, '');
 
     return cleanContent.trim();
   } catch (error) {

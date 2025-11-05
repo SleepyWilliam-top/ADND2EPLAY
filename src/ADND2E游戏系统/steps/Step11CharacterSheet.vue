@@ -328,6 +328,7 @@ import {
 import { getAlignmentById } from '../utils/alignmentData';
 import { getClassById } from '../utils/classData';
 import { getClassCategory, getSavingThrows, getTHAC0 } from '../utils/combatData';
+import { getEquipmentById } from '../utils/equipmentData';
 import { getProficiencyById } from '../utils/proficiencyData';
 import { getRaceById, getSubraceById } from '../utils/raceData';
 import { getWeaponById } from '../utils/weaponData';
@@ -515,14 +516,70 @@ const hitPoints = computed(() => {
   return characterStore.characterData.hitPoints?.max || 0;
 });
 
+// 🔧 新增：计算护甲等级（AC）
+function calculateArmorClass(): {
+  total: number;
+  fromArmor: number;
+  fromShield: number;
+  dexterityBonus: number;
+} {
+  // 1. 获取护甲基础 AC（默认为10，即无护甲）
+  let baseAC = 10;
+  let shieldBonus = 0;
+
+  // 2. 遍历购买的装备，找出护甲和盾牌
+  const equipment = characterStore.characterData.purchasedEquipment || [];
+  for (const item of equipment) {
+    const equipmentData = getEquipmentById(item.id);
+    if (!equipmentData || equipmentData.category !== 'armor') continue;
+
+    // 检查是否为护甲接口（有 ac 属性）
+    const armorData = equipmentData as any;
+    if (typeof armorData.ac !== 'number') continue;
+
+    // 护甲类型判断
+    if (armorData.armorType === 'shield') {
+      // 盾牌：提供 -1 AC 加成（AC越低越好）
+      shieldBonus = -1;
+    } else {
+      // 护甲：使用装备的 AC 值
+      baseAC = armorData.ac;
+    }
+  }
+
+  // 3. 获取敏捷防御修正
+  const dex = characterStore.adjustedAbilities.dex || 10;
+  const dexMods = getDexterityModifiers(dex);
+  // defense 修正：如 "+2" "-1" "0"
+  let dexBonus = 0;
+  if (dexMods.defense) {
+    const defenseStr = String(dexMods.defense);
+    // 解析 "+2" "-1" "0" 等格式
+    const match = defenseStr.match(/^([+-]?\d+)$/);
+    if (match) {
+      dexBonus = parseInt(match[1], 10);
+    }
+  }
+
+  // 4. 计算总 AC（AC越低越好，所以是相加）
+  const totalAC = baseAC + shieldBonus + dexBonus;
+
+  return {
+    total: totalAC,
+    fromArmor: baseAC,
+    fromShield: shieldBonus,
+    dexterityBonus: dexBonus,
+  };
+}
+
 const armorClass = computed(() => {
-  // 基础AC为10，如果有护甲数据则使用
-  return characterStore.characterData.armorClass?.total || 10;
+  // 实时计算 AC 值
+  const calculated = calculateArmorClass();
+  return calculated.total;
 });
 
 const armorClassDetail = computed(() => {
-  const acData = characterStore.characterData.armorClass;
-  if (!acData) return '';
+  const acData = calculateArmorClass();
 
   const parts = [`基础${acData.fromArmor}`];
   if (acData.fromShield !== 0) {
@@ -763,11 +820,24 @@ async function completeCreation() {
 
     // 3. 保存到角色卡变量（核心步骤，必须完成）
     console.log('[Step11] 步骤3: 保存到角色卡变量');
+    // 🔧 计算护甲等级（AC）
+    const calculatedAC = calculateArmorClass();
+    console.log('[Step11] 计算后的 AC 值:', calculatedAC);
+
+    // 🔧 计算战斗加成（力量）
+    const str = characterStore.adjustedAbilities.str || 10;
+    const strMods = getStrengthModifiers(str);
+    const attackBonus = parseInt(String(strMods.hitProb || '0').replace(/[^0-9-]/g, ''), 10) || 0;
+    const damageBonus = parseInt(String(strMods.damage || '0').replace(/[^0-9-]/g, ''), 10) || 0;
+    console.log('[Step11] 战斗加成 - 攻击:', attackBonus, '伤害:', damageBonus);
+
     const characterDataToSave = {
       ...characterStore.characterData,
       abilities: characterStore.adjustedAbilities,
       completed: true,
       // 保存计算后的战斗数据
+      armorClass: calculatedAC, // 🔧 保存 AC 值
+      combatBonuses: { attackBonus, damageBonus }, // 🔧 保存战斗加成
       thac0: thac0.value,
       savingThrows: savingThrows.value,
       movement: movement.value,

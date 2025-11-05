@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import type { GameCommand } from '../utils/commandParser';
 import { parseDeityFromCharacterBackground, validateCommand } from '../utils/commandParser';
+import type { Equipment } from '../utils/equipmentData';
 import {
   emitCharacterDataSynced,
   emitGameDataUpdated,
@@ -10,6 +11,32 @@ import {
   emitNpcRemoved,
   emitNpcUpdated,
 } from '../utils/eventBus';
+
+/**
+ * 装备槽位类型
+ */
+export type EquipmentSlot =
+  | 'helmet' // 头盔
+  | 'armor' // 护甲
+  | 'shield' // 盾牌
+  | 'weapon' // 武器（主手）
+  | 'offhand' // 副手
+  | 'ring1' // 戒指1
+  | 'ring2' // 戒指2
+  | 'amulet' // 项链
+  | 'cloak' // 斗篷
+  | 'gloves' // 手套
+  | 'belt' // 腰带
+  | 'boots'; // 靴子
+
+/**
+ * 装备槽位数据（扩展装备信息）
+ */
+export interface EquippedItem extends Equipment {
+  slot: EquipmentSlot; // 装备槽位
+  bonus?: string; // 魔法加成（如 "+1", "+2"）
+  magical?: boolean; // 是否魔法物品
+}
 
 /**
  * 游戏状态接口（结构化存储）
@@ -30,6 +57,21 @@ export interface GameState {
     gold: number;
     xp: number;
     level: number;
+    // 装备槽位
+    equipment: {
+      helmet?: EquippedItem;
+      armor?: EquippedItem;
+      shield?: EquippedItem;
+      weapon?: EquippedItem;
+      offhand?: EquippedItem;
+      ring1?: EquippedItem;
+      ring2?: EquippedItem;
+      amulet?: EquippedItem;
+      cloak?: EquippedItem;
+      gloves?: EquippedItem;
+      belt?: EquippedItem;
+      boots?: EquippedItem;
+    };
     // 魔法抗力（来自种族、职业、装备、法术等，不包括神祇）
     magicResistance?: {
       race?: number; // 种族魔法抗力
@@ -217,6 +259,20 @@ function createDefaultGameState(): GameState {
       gold: 0,
       xp: 0,
       level: 1,
+      equipment: {
+        helmet: undefined,
+        armor: undefined,
+        shield: undefined,
+        weapon: undefined,
+        offhand: undefined,
+        ring1: undefined,
+        ring2: undefined,
+        amulet: undefined,
+        cloak: undefined,
+        gloves: undefined,
+        belt: undefined,
+        boots: undefined,
+      },
     },
     location: {
       current: '未知',
@@ -449,12 +505,20 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
         console.log('[GameState] 已同步魔法抗力数据到角色卡变量');
       }
 
+      // 🔧 调试：输出当前 gameState.npcs 的内容
+      console.log('[GameState] 准备同步 NPC 数据，当前 gameState.value.npcs:', gameState.value.npcs);
+      console.log('[GameState] gameState.value.npcs 长度:', gameState.value.npcs?.length);
+      console.log('[GameState] gameState.value.npcs 内容:', JSON.stringify(gameState.value.npcs, null, 2));
+
       // 🔧 新增：同步游戏状态关键数据到角色卡变量（NPC、任务等）
       // 这些数据需要在变量管理器中显示，且需要随着聊天记录编辑/删除实时更新
       // 重要：必须同步完整的 gameState.character 对象，因为状态栏会读取 gameState.character
+      const npcsToSync = klona(gameState.value.npcs) || [];
+      console.log('[GameState] klona 后的 npcs 数组:', npcsToSync, '长度:', npcsToSync.length);
+
       charVars.adnd2e.gameState = {
         character: klona(gameState.value.character), // 完整的角色游戏状态（HP、金币、属性、等级等）
-        npcs: klona(gameState.value.npcs) || [],
+        npcs: npcsToSync,
         quests: klona(gameState.value.quests) || [],
         location: klona(gameState.value.location),
         time: klona(gameState.value.time),
@@ -467,11 +531,12 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
 
       // 🔧 兼容性修复：useNpcAutoDetection 从 charVars.adnd2e.npcs 读取 NPC 列表
       // 为了确保 SettingsPanel 的 NPC 管理能正确显示，也同步到这个位置
-      charVars.adnd2e.npcs = klona(gameState.value.npcs) || [];
+      charVars.adnd2e.npcs = npcsToSync;
+      console.log('[GameState] 同步到 charVars.adnd2e.npcs:', charVars.adnd2e.npcs.length, '个');
 
       console.log(
         '[GameState] 已同步完整游戏状态到角色卡变量（NPC数量:',
-        gameState.value.npcs?.length || 0,
+        npcsToSync.length,
         ', HP:',
         gameState.value.character.hp.current,
         '/',
@@ -483,8 +548,17 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
       replaceVariables(charVars, { type: 'character' });
       console.log('[GameState] 已同步数据到角色卡变量');
 
+      // 🔧 学习lucklyjkop：重要NPC自动保存到独立名册（IndexedDB）
+      const bondedNpcs = gameState.value.npcs.filter(n => n.isBonded);
+      if (bondedNpcs.length > 0) {
+        import('../composables/usePersistence')
+          .then(({ saveBondedNpcs }) => saveBondedNpcs(bondedNpcs))
+          .catch(err => console.warn('[GameState] 保存重要NPC到名册失败:', err));
+      }
+
       // 🔧 使用双事件系统（DOM + 酒馆助手）
       emitCharacterDataSynced('update');
+      emitGameDataUpdated(); // ← 在同步完成后触发，确保其他组件读取到最新数据
 
       // 兼容旧系统（保留）
       eventEmit('adnd2e_character_data_synced');
@@ -565,9 +639,72 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
           break;
 
         case 'add_npc': {
-          // 生成唯一 ID
-          const npcId = command.data.id || `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          // 🔧 学习 lucklyjkop：检查是否已存在同名的重要NPC
+          const existingBondedNpc = gameState.value.npcs.find((n: any) => n.isBonded && n.name === command.data.name);
 
+          if (existingBondedNpc) {
+            // 🔧 如果已存在同名的重要NPC，更新而不是新增（避免重复）
+            console.warn(`[GameState] ⚠️ 检测到重复的重要NPC "${command.data.name}"，将更新现有数据而不是新增`);
+
+            // 使用 update_npc 命令的逻辑
+            Object.assign(existingBondedNpc, {
+              ...command.data,
+              id: existingBondedNpc.id, // 保留原ID
+              isBonded: true, // 保留重要标记
+              notes: existingBondedNpc.notes, // 保留备注
+            });
+
+            toastr.info(`重要NPC已更新: ${command.data.name}（避免重复）`);
+            emitNpcUpdated(existingBondedNpc.id, command.data.name, Object.keys(command.data));
+            break;
+          }
+
+          // 🔧 检查是否已存在同ID的NPC
+          const npcId = command.data.id || `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const existingById = gameState.value.npcs.find((n: any) => n.id === npcId);
+
+          if (existingById) {
+            // 如果ID已存在，调用 addNpc 方法处理（会智能合并）
+            console.warn(`[GameState] 检测到重复ID "${npcId}"，使用 addNpc 方法处理`);
+            const newNpc = {
+              id: npcId,
+              name: command.data.name,
+
+              // 战斗属性（必需）
+              ac: command.data.ac || 10,
+              mv: command.data.mv || 12,
+              hd: command.data.hd || '1',
+              hp: command.data.hp || 4,
+              maxHp: command.data.maxHp || command.data.hp || 4,
+              thac0: command.data.thac0 || 20,
+              at: command.data.at || '1',
+              dmg: command.data.dmg || '1d6',
+              sz: command.data.sz || 'M',
+              int: command.data.int || '8-10',
+              al: command.data.al || 'N',
+              ml: command.data.ml || 10,
+              xp: command.data.xp || 15,
+
+              // 可选属性
+              sa: command.data.sa,
+              sd: command.data.sd,
+              sw: command.data.sw,
+              sp: command.data.sp,
+              mr: command.data.mr,
+              magicItems: command.data.magicItems,
+
+              // 基本信息
+              race: command.data.race,
+              class: command.data.class,
+              location: command.data.location,
+              status: command.data.status || 'normal',
+              attitude: command.data.attitude || 'neutral',
+            };
+            addNpc(newNpc); // 使用 addNpc 方法，会智能处理重要NPC
+            break;
+          }
+
+          // 🔧 正常新增NPC
           const newNpc = {
             id: npcId,
             name: command.data.name,
@@ -614,9 +751,21 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
         case 'update_npc': {
           const npc = gameState.value.npcs.find(n => n.name === command.data.name);
           if (npc) {
+            // 🔧 学习 lucklyjkop：保护重要NPC的标记不被意外清除
+            const wasBonded = npc.isBonded;
+            const oldNotes = npc.notes;
+
             // 记录变更字段
             const changes = Object.keys(command.data).filter(key => key !== 'name');
             Object.assign(npc, command.data);
+
+            // 🔧 强制保留重要标记和备注（防止被命令覆盖）
+            if (wasBonded) {
+              npc.isBonded = true;
+              npc.notes = oldNotes || npc.notes; // 保留原备注，除非明确提供了新备注
+              console.log(`[GameState] 更新重要NPC "${npc.name}"，已保留 isBonded 标记`);
+            }
+
             toastr.info(`NPC ${command.data.name} 状态更新`);
 
             // 🔧 触发 NPC 更新事件（双事件系统）
@@ -629,6 +778,19 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
           const npcIndex = gameState.value.npcs.findIndex(n => n.name === command.data.name);
           if (npcIndex !== -1) {
             const removedNpc = gameState.value.npcs[npcIndex];
+
+            // 🔧 学习 lucklyjkop：重要NPC不会被轻易删除，给出警告
+            if (removedNpc.isBonded) {
+              console.warn(`[GameState] ⚠️ 尝试删除重要NPC "${removedNpc.name}"！这可能不是预期行为。`);
+              toastr.warning(
+                `警告: AI尝试删除重要NPC "${removedNpc.name}"！如需删除，请在NPC管理中手动操作。`,
+                '重要NPC保护',
+                { timeOut: 8000 },
+              );
+              // 🔧 重要NPC不会被 AI 命令删除，只能手动删除
+              break;
+            }
+
             gameState.value.npcs.splice(npcIndex, 1);
             toastr.info(`NPC ${command.data.name} 已离开`);
 
@@ -1105,19 +1267,119 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
   }
 
   /**
-   * 导出游戏状态（用于保存）
+   * 导出游戏状态（用于保存快照）
+   * 🔧 学习lucklyjkop：重要NPC不进入快照，独立存储
    */
   function exportGameState(): GameState {
-    return klona(gameState.value);
+    const snapshot = klona(gameState.value);
+
+    // 🔧 重要NPC不进入快照（它们有独立的名册存储）
+    const temporaryNpcs = snapshot.npcs.filter(n => !n.isBonded);
+    const bondedNpcs = snapshot.npcs.filter(n => n.isBonded);
+
+    if (bondedNpcs.length > 0) {
+      console.log(
+        `[GameState] 导出快照：排除了 ${bondedNpcs.length} 个重要NPC，仅保存 ${temporaryNpcs.length} 个临时NPC`,
+        bondedNpcs.map(n => n.name),
+      );
+    }
+
+    snapshot.npcs = temporaryNpcs;
+    return snapshot;
   }
 
   /**
    * 从快照恢复游戏状态
+   * 🔧 学习lucklyjkop：场景NPC优先，羁绊NPC作为补充
    */
-  function restoreGameState(snapshot: GameState) {
+  async function restoreGameState(snapshot: GameState) {
     try {
       gameState.value = klona(snapshot);
       console.log('[GameState] 游戏状态已从快照恢复');
+
+      // 🔧 学习lucklyjkop的做法：场景NPC优先，只补充不冲突的羁绊NPC
+      // lucklyjkop逻辑（第5570-5586行）：
+      // 1. 场景角色（currentSceneChars）= 快照中的NPC
+      // 2. 羁绊角色（bondedCharacters）= 从IndexedDB加载的重要NPC
+      // 3. 最终列表 = { ...场景角色, ...羁绊角色 } → 场景优先，羁绊补充
+
+      try {
+        // 🔧 步骤1：构建场景NPC映射（来自快照）
+        const sceneNpcsMap = new Map<string, any>();
+        gameState.value.npcs.forEach(npc => {
+          sceneNpcsMap.set(npc.id, npc);
+        });
+
+        console.log(
+          `[GameState] 快照中包含 ${sceneNpcsMap.size} 个场景NPC:`,
+          Array.from(sceneNpcsMap.values()).map(n => `${n.name}(${n.id})`),
+        );
+
+        // 🔧 步骤2：从IndexedDB加载重要NPC
+        const bondedNpcsMap = new Map<string, any>();
+        try {
+          const { loadBondedNpcs } = await import('../composables/usePersistence');
+          const bondedNpcs = await loadBondedNpcs();
+
+          bondedNpcs.forEach(npc => {
+            // 🔧 学习lucklyjkop：如果场景中已有相同ID的NPC，用场景数据更新羁绊NPC
+            if (sceneNpcsMap.has(npc.id)) {
+              console.log(`[GameState] ⚠️ 羁绊NPC "${npc.name}"(${npc.id}) 与场景NPC冲突，场景NPC优先`);
+              bondedNpcsMap.set(npc.id, { ...npc, ...sceneNpcsMap.get(npc.id) });
+            } else {
+              // 不冲突，可以补充
+              bondedNpcsMap.set(npc.id, npc);
+            }
+          });
+
+          console.log(
+            `[GameState] 从IndexedDB加载了 ${bondedNpcs.length} 个重要NPC，其中 ${bondedNpcsMap.size - sceneNpcsMap.size} 个可补充`,
+          );
+        } catch (bondedError) {
+          console.warn('[GameState] 从重要NPC名册加载失败:', bondedError);
+        }
+
+        // 🔧 步骤3：从角色卡变量补充快照后创建的NPC
+        try {
+          const charVars = getVariables({ type: 'character' });
+          const persistedNpcs = charVars?.adnd2e?.npcs || charVars?.adnd2e?.gameState?.npcs;
+
+          if (persistedNpcs && Array.isArray(persistedNpcs) && persistedNpcs.length > 0) {
+            let supplementCount = 0;
+            persistedNpcs.forEach((npc: any) => {
+              // 只补充快照后创建的NPC（场景和羁绊名册中都没有的）
+              if (!sceneNpcsMap.has(npc.id) && !bondedNpcsMap.has(npc.id)) {
+                bondedNpcsMap.set(npc.id, npc);
+                supplementCount++;
+              }
+            });
+
+            if (supplementCount > 0) {
+              console.log(`[GameState] 从角色卡变量补充了 ${supplementCount} 个快照后创建的NPC`);
+            }
+          }
+        } catch (fallbackError) {
+          console.warn('[GameState] 从角色卡变量补充失败:', fallbackError);
+        }
+
+        // 🔧 步骤4：合并NPC列表（学习lucklyjkop）
+        // 场景NPC优先，然后补充羁绊NPC
+        const finalNpcsMap = new Map([...sceneNpcsMap, ...bondedNpcsMap]);
+        gameState.value.npcs = Array.from(finalNpcsMap.values());
+
+        const bondedCount = gameState.value.npcs.filter(n => n.isBonded).length;
+        const temporaryCount = gameState.value.npcs.length - bondedCount;
+
+        console.log(
+          `[GameState] ✅ 最终NPC列表: ${gameState.value.npcs.length} 个 (重要: ${bondedCount}, 临时: ${temporaryCount})`,
+        );
+        console.log(
+          '[GameState] NPC列表:',
+          gameState.value.npcs.map(n => `${n.name}(${n.id})${n.isBonded ? '⭐' : ''}`),
+        );
+      } catch (error) {
+        console.error('[GameState] NPC恢复流程失败:', error);
+      }
 
       // 触发游戏数据更新事件，通知其他组件（如状态栏）更新显示
       eventEmit('adnd2e_game_data_updated');
@@ -1134,6 +1396,71 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
   function resetGameState() {
     gameState.value = createDefaultGameState();
     console.log('[GameState] 游戏状态已重置');
+  }
+
+  /**
+   * 🔧 新增：直接添加 NPC 到游戏状态
+   * 这个方法确保在 store 内部直接操作 gameState.value，避免 Pinia ref 解包问题
+   * 🔧 学习 lucklyjkop.html (5570-5578行)：重要NPC不会被新NPC覆盖
+   */
+  function addNpc(npc: any) {
+    console.log('[GameState] addNpc 被调用，NPC:', npc.name, 'ID:', npc.id);
+    console.log('[GameState] 添加前 npcs 数组长度:', gameState.value.npcs.length);
+
+    // 🔧 修复：检查 ID 是否已存在
+    const existingIndex = gameState.value.npcs.findIndex((n: any) => n.id === npc.id);
+
+    if (existingIndex !== -1) {
+      const existingNpc = gameState.value.npcs[existingIndex];
+
+      // 🔧 学习 lucklyjkop：如果现有 NPC 是重要NPC (isBonded)，保留其标记和重要信息
+      if (existingNpc.isBonded) {
+        console.warn(`[GameState] ⚠️ NPC "${existingNpc.name}" (ID: ${npc.id}) 是重要NPC，将合并数据而不是覆盖`);
+
+        // 🔧 学习 lucklyjkop (5573行)：合并数据 { ...旧数据, ...新数据 }
+        // 保留旧 NPC 的重要标记（isBonded、notes 等），更新场景数据（hp、location 等）
+        gameState.value.npcs[existingIndex] = {
+          ...existingNpc, // 保留旧数据（包括 isBonded、notes 等）
+          ...npc, // 用新数据更新（hp、location、status 等）
+          isBonded: true, // 🔧 强制保留 isBonded 标记
+          notes: existingNpc.notes || npc.notes, // 保留备注
+        };
+
+        toastr.info(`重要NPC已更新: ${npc.name}（保留重要标记）`, 'NPC 合并');
+      } else {
+        // 普通 NPC，直接更新
+        console.log(`[GameState] 普通NPC "${existingNpc.name}" 已更新为 "${npc.name}"`);
+        gameState.value.npcs[existingIndex] = npc;
+        toastr.warning(`NPC 数据已更新: ${npc.name}`, 'NPC 覆盖');
+      }
+
+      // 触发更新事件而不是添加事件
+      emitNpcUpdated(npc.id, npc.name, Object.keys(npc));
+    } else {
+      // 🔧 新 NPC，检查是否与重要NPC同名（不同ID）
+      const bondedWithSameName = gameState.value.npcs.find(
+        (n: any) => n.isBonded && n.name === npc.name && n.id !== npc.id,
+      );
+
+      if (bondedWithSameName) {
+        console.warn(
+          `[GameState] ⚠️ 检测到与重要NPC "${bondedWithSameName.name}" 同名的新NPC，但ID不同 (旧ID: ${bondedWithSameName.id}, 新ID: ${npc.id})`,
+        );
+        toastr.warning(`警告: 新增了与重要NPC "${bondedWithSameName.name}" 同名的角色（不同ID）`, '重名检测', {
+          timeOut: 5000,
+        });
+      }
+
+      // 正常添加
+      gameState.value.npcs.push(npc);
+      console.log('[GameState] 新增 NPC:', npc.name, '(ID:', npc.id, ')');
+    }
+
+    console.log('[GameState] 操作后 npcs 数组长度:', gameState.value.npcs.length);
+    console.log(
+      '[GameState] gameState.value.npcs 内容:',
+      gameState.value.npcs.map((n: any) => `${n.name}(${n.id})${n.isBonded ? '⭐' : ''}`),
+    );
   }
 
   return {
@@ -1154,5 +1481,6 @@ export const useGameStateStore = defineStore('adnd2e-game-state', () => {
     exportGameState,
     restoreGameState, // 从快照恢复状态
     resetGameState,
+    addNpc, // 🔧 新增：添加 NPC 方法
   };
 });

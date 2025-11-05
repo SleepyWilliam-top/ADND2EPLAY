@@ -880,49 +880,463 @@ watch(
   }
 }
 
-// ==================== 响应式 ====================
-@media (max-width: 768px) {
+// ==================== 响应式适配 ====================
+
+// 🔧 优化：平板和移动端适配（学习 lucklyjkop）
+@media (max-width: 992px) {
+  .image-library-modal-overlay {
+    padding: 10px;
+  }
+
   .image-library-modal {
-    width: 95vw;
-    height: 90vh;
+    width: 96vw;
+    height: 92vh;
+    border-width: 2px;
+
+    &::before {
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+    }
+  }
+
+  .modal-header {
+    padding: 15px 20px;
+
+    h2 {
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+    }
+  }
+
+  .toolbar {
+    padding: 12px 20px;
+    gap: 10px;
+
+    .upload-btn {
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+    .category-filter {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .search-input {
+      padding: 8px 14px;
+      font-size: 13px;
+      min-width: 150px;
+    }
+
+    .stats {
+      font-size: 13px;
+    }
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    padding: 15px 20px;
+  }
+
+  .image-card {
+    .image-thumbnail {
+      height: 140px;
+    }
+
+    .image-info {
+      padding: 10px;
+
+      .image-name {
+        font-size: 13px;
+      }
+
+      .image-meta {
+        font-size: 11px;
+      }
+    }
+
+    .selected-mark {
+      width: 28px;
+      height: 28px;
+      font-size: 16px;
+      top: 8px;
+      right: 8px;
+    }
+
+    .image-actions {
+      top: 8px;
+      left: 8px;
+
+      .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .modal-footer {
+    padding: 15px 20px;
+
+    .footer-btn {
+      padding: 10px 20px;
+      font-size: 15px;
+    }
+  }
+}
+
+// 🔧 移动端优化（小屏幕）
+@media (max-width: 768px) {
+  .image-library-modal-overlay {
+    padding: 5px;
+  }
+
+  .image-library-modal {
+    width: 98vw;
+    height: 95vh;
+    border-radius: 4px;
+  }
+
+  .modal-header {
+    padding: 12px 15px;
+    border-bottom-width: 2px;
+
+    h2 {
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      border-width: 1.5px;
+    }
   }
 
   .toolbar {
     flex-direction: column;
     align-items: stretch;
+    padding: 10px 15px;
+    gap: 10px;
 
     .toolbar-left,
     .toolbar-right {
       width: 100%;
-      justify-content: space-between;
+      flex-wrap: wrap;
     }
 
-    .search-input {
-      min-width: auto;
-      flex: 1;
+    .toolbar-left {
+      gap: 8px;
+
+      .upload-btn {
+        flex: 1;
+        min-width: calc(50% - 4px);
+        padding: 10px 12px;
+        font-size: 13px;
+        text-align: center;
+        min-height: 42px; // 触摸友好
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.batch {
+          flex-basis: 100%;
+        }
+      }
+
+      .category-filter {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 13px;
+        min-height: 42px; // 触摸友好
+      }
+    }
+
+    .toolbar-right {
+      gap: 8px;
+
+      .search-input {
+        flex: 1;
+        min-width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 42px; // 触摸友好
+      }
+
+      .stats {
+        width: 100%;
+        justify-content: center;
+        font-size: 12px;
+        padding: 5px 0;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .upload-progress {
+    padding: 10px 15px;
+
+    .progress-bar {
+      height: 8px;
+      border-width: 1.5px;
+    }
+
+    p {
+      font-size: 13px;
     }
   }
 
   .image-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 12px;
-    padding: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    padding: 12px 15px;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
   }
 
-  .modal-footer {
-    flex-direction: column;
-    gap: 12px;
+  .empty-state {
+    .empty-icon {
+      font-size: 60px;
+    }
 
-    .footer-right {
-      width: 100%;
+    p {
+      font-size: 16px;
+    }
 
-      .footer-btn {
-        flex: 1;
+    .empty-hint {
+      font-size: 13px;
+    }
+  }
+
+  .image-card {
+    border-width: 1.5px;
+    border-radius: 6px;
+
+    &.selected {
+      border-width: 2px;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+
+    .image-thumbnail {
+      height: 110px;
+    }
+
+    .image-info {
+      padding: 8px;
+
+      .image-name {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      .image-meta {
+        font-size: 10px;
       }
     }
 
+    .selected-mark {
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      top: 6px;
+      right: 6px;
+      border-width: 1.5px;
+    }
+
+    .image-actions {
+      top: 6px;
+      left: 6px;
+      gap: 4px;
+      opacity: 1; // 移动端始终显示
+
+      .action-btn {
+        width: 32px; // 更大的触摸区域
+        height: 32px;
+        font-size: 14px;
+        border-width: 1.5px;
+      }
+    }
+
+    // 移动端优化：点击效果
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 10px;
+    padding: 12px 15px;
+    border-top-width: 2px;
+
     .footer-btn.danger {
       width: 100%;
+      order: 2;
+      padding: 10px 16px;
+      font-size: 14px;
+      min-height: 44px; // 触摸友好
+    }
+
+    .footer-right {
+      width: 100%;
+      order: 1;
+      gap: 8px;
+
+      .footer-btn {
+        flex: 1;
+        padding: 10px 16px;
+        font-size: 14px;
+        min-height: 44px; // 触摸友好
+      }
+    }
+  }
+}
+
+// 🔧 超小屏幕优化（手机横屏或小手机）
+@media (max-width: 480px) {
+  .image-library-modal {
+    border-radius: 0;
+  }
+
+  .modal-header {
+    h2 {
+      font-size: 16px;
+    }
+
+    .close-btn {
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+    }
+  }
+
+  .toolbar {
+    padding: 8px 12px;
+
+    .toolbar-left {
+      .upload-btn {
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+
+      .category-filter {
+        font-size: 12px;
+        padding: 8px 10px;
+      }
+    }
+
+    .toolbar-right {
+      .search-input {
+        font-size: 13px;
+        padding: 8px 10px;
+      }
+
+      .stats {
+        font-size: 11px;
+      }
+    }
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .image-card {
+    .image-thumbnail {
+      height: 90px;
+    }
+
+    .image-info {
+      padding: 6px;
+
+      .image-name {
+        font-size: 11px;
+      }
+
+      .image-meta {
+        font-size: 9px;
+      }
+    }
+
+    .selected-mark {
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+    }
+
+    .image-actions .action-btn {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+  }
+
+  .modal-footer {
+    padding: 10px 12px;
+
+    .footer-btn {
+      font-size: 13px;
+      padding: 8px 12px;
+      min-height: 40px;
+    }
+  }
+}
+
+// 🔧 横屏模式优化
+@media (max-height: 600px) and (orientation: landscape) {
+  .image-library-modal {
+    height: 96vh;
+  }
+
+  .modal-header {
+    padding: 10px 15px;
+
+    h2 {
+      font-size: 16px;
+    }
+
+    .close-btn {
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+    }
+  }
+
+  .toolbar {
+    padding: 8px 15px;
+  }
+
+  .image-grid {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+
+  .image-card .image-thumbnail {
+    height: 100px;
+  }
+
+  .modal-footer {
+    padding: 10px 15px;
+
+    .footer-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      min-height: 38px;
     }
   }
 }

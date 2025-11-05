@@ -194,6 +194,11 @@ function saveSettings() {
     replaceVariables(vars, { type: 'character' });
 
     console.log('[TextRegexSettings] 设置已保存');
+
+    // 🔧 触发事件通知其他组件（如 MessageArea）清除缓存
+    eventEmit('adnd2e_regex_rules_updated');
+    console.log('[TextRegexSettings] 已触发正则规则更新事件');
+
     return true;
   } catch (error) {
     console.error('[TextRegexSettings] 保存设置失败:', error);

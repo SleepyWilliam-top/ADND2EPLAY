@@ -39,9 +39,18 @@ export interface PersistenceSettings {
 
 // ==================== IndexedDB 数据库 ====================
 
+export interface BondedNPC {
+  id: string; // NPC唯一标识
+  characterId: string; // 所属角色卡ID
+  data: any; // NPC完整数据
+  createdAt: string; // 创建时间
+  updatedAt: string; // 更新时间
+}
+
 class ADND2EDatabase extends Dexie {
   archives!: Table<GameArchive, string>;
   settings!: Table<PersistenceSettings, string>;
+  bondedNpcs!: Table<BondedNPC, string>; // 🔧 新增：重要NPC名册
 
   constructor() {
     super('ADND2E_GameDB');
@@ -51,11 +60,118 @@ class ADND2EDatabase extends Dexie {
       archives: '&name, characterId, chatId, updatedAt',
       settings: '&key',
     });
+
+    // 版本 2: 添加重要NPC名册（学习lucklyjkop）
+    this.version(2).stores({
+      archives: '&name, characterId, chatId, updatedAt',
+      settings: '&key',
+      bondedNpcs: '&id, characterId, updatedAt', // 重要NPC独立存储
+    });
   }
 }
 
 // 创建数据库实例
 const db = new ADND2EDatabase();
+
+// ==================== 重要NPC名册 API ====================
+
+/**
+ * 保存重要NPC到独立名册（学习lucklyjkop）
+ * 重要NPC不随快照存储，确保编辑消息时不会丢失
+ */
+export async function saveBondedNpc(npc: any): Promise<void> {
+  if (!npc || !npc.id || !npc.isBonded) {
+    console.warn('[BondedNPC] 尝试保存非重要NPC，已跳过');
+    return;
+  }
+
+  try {
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    const now = new Date().toISOString();
+
+    await db.bondedNpcs.put({
+      id: `${characterId}_${npc.id}`, // 组合键：角色卡ID + NPC ID
+      characterId,
+      data: klona(npc),
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    console.log(`[BondedNPC] 已保存重要NPC: ${npc.name} (${npc.id})`);
+  } catch (error) {
+    console.error('[BondedNPC] 保存失败:', error);
+  }
+}
+
+/**
+ * 批量保存重要NPC
+ */
+export async function saveBondedNpcs(npcs: any[]): Promise<void> {
+  const bondedNpcs = npcs.filter(n => n.isBonded);
+  if (bondedNpcs.length === 0) return;
+
+  try {
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    const now = new Date().toISOString();
+
+    const records: BondedNPC[] = bondedNpcs.map(npc => ({
+      id: `${characterId}_${npc.id}`,
+      characterId,
+      data: klona(npc),
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    await db.bondedNpcs.bulkPut(records);
+    console.log(`[BondedNPC] 批量保存了 ${bondedNpcs.length} 个重要NPC`);
+  } catch (error) {
+    console.error('[BondedNPC] 批量保存失败:', error);
+  }
+}
+
+/**
+ * 加载当前角色的所有重要NPC
+ */
+export async function loadBondedNpcs(): Promise<any[]> {
+  try {
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    const records = await db.bondedNpcs.where('characterId').equals(characterId).toArray();
+
+    const npcs = records.map(r => r.data);
+    console.log(`[BondedNPC] 加载了 ${npcs.length} 个重要NPC`);
+    return npcs;
+  } catch (error) {
+    console.error('[BondedNPC] 加载失败:', error);
+    return [];
+  }
+}
+
+/**
+ * 删除重要NPC
+ */
+export async function deleteBondedNpc(npcId: string): Promise<void> {
+  try {
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    const id = `${characterId}_${npcId}`;
+    await db.bondedNpcs.delete(id);
+    console.log(`[BondedNPC] 已删除重要NPC: ${npcId}`);
+  } catch (error) {
+    console.error('[BondedNPC] 删除失败:', error);
+  }
+}
+
+/**
+ * 清除当前角色的所有重要NPC
+ */
+export async function clearBondedNpcs(): Promise<void> {
+  try {
+    const characterId = (typeof SillyTavern !== 'undefined' && SillyTavern.characterId) || 'default';
+    await db.bondedNpcs.where('characterId').equals(characterId).delete();
+    console.log('[BondedNPC] 已清除所有重要NPC');
+  } catch (error) {
+    console.error('[BondedNPC] 清除失败:', error);
+  }
+}
 
 // ==================== 持久化 API ====================
 

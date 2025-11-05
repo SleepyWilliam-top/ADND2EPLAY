@@ -1,4 +1,5 @@
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
+import { useGameStateStore } from '../stores/gameStateStore';
 import { useGameStore } from '../stores/gameStore';
 
 /**
@@ -81,49 +82,62 @@ export interface NpcInventoryItem {
 }
 
 /**
- * AI 输出的 NPC 格式支持三种方式：
+ * 🔧 NPC 管理方式：命令驱动（学习 lucklyjkop）
  *
- * 1. **标准 ADND2E 格式（推荐）**：
- *    格式1（带方括号）：<[名称]：AC [AC值]；MV [MV值]；...>
- *    格式2（不带方括号）：<名称：AC [AC值]；MV [MV值]；...>
+ * NPC 现在**完全由 <gamestate> 中的命令管理**，不再支持自动标签检测。
  *
- *    示例：
- *    <[地精战士]：AC 6；MV 6；HD 1-1；hp 4；THAC0 20；#AT 1；Dmg 1d6；SZ S；Int 低（5-7）；AL LE；ML 8；XP 15>
- *    <托姆·铜须：AC -2；MV 12；HD 15；hp 120；THAC0 5；#AT 2；Dmg 1d6+3；SA 幸运诅咒；SD 魔法抗力70%；SW 无；SP 每日任意1-5级祭司/法师法术各6个；MR 70%；SZ S；Int 18；AL 混乱中立；ML 19；XP --；MagicItem 幸运骰子；状态 健康；外貌 矮小的矮人，留着火红的胡子；性格 狡黠且爱恶作剧；与角色关系 盟友>
+ * **管理命令**：
  *
- *    字段说明：
- *    - AC: 护甲等级（Armor Class），数值越低越好，10为无甲，可为负数
- *    - MV: 移动速度（Movement），通常为6-15，人类平民12
- *    - HD: 生命骰（Hit Dice），如"1"表示1d8，"1-1"表示1d8-1，平民通常为1，骰子默认d6/d8
- *    - hp: 生命值（Hit Points），当前生命值
- *    - THAC0: 命中值（To Hit AC 0），数值越低越好，普通人20
- *    - #AT: 每轮攻击次数（# of Attacks），如"1"、"2"、"3/2"
- *    - Dmg: 伤害骰（Damage），如"1d6"、"1d8+2"、"2d4"
- *    - SA: 特殊攻击（Special Attacks），可选，如"背刺×2"
- *    - SD: 特殊防御（Special Defenses），可选，如"免疫魅惑"
- *    - SW: 特殊弱点（Special Weaknesses），可选，如"畏惧阳光"
- *    - SP: 法术能力（Spells），可选，如"可使用1级法术"
- *    - MR: 魔法抗力（Magic Resistance），可选，如"15%"、"70%"或"无"
- *    - SZ: 体型（Size），T(微型)/S(小型)/M(中型)/L(大型)/H(超大型)/G(巨型)
- *    - Int: 智力（Intelligence），如"高（13-14）"、"8-10"、"18"、"动物（1）"
- *    - AL: 阵营（Alignment），如"LG"(守序善良)、"CE"(混乱邪恶)、"N"(中立)、"混乱中立"
- *    - ML: 士气（Morale），2-20，普通人10，精英12-14
- *    - XP: 经验值（Experience Points），击败该生物获得的经验，可用"--"表示不适用
- *    - MagicItem: 魔法物品（可选），如"长剑+1"
- *    - 状态: NPC当前状态（可选），如"健康"、"受伤"、"中毒"
- *    - 外貌: NPC外貌描述（可选），如"高大的人类骑士，身着银色铠甲"
- *    - 性格: NPC性格描述（可选），如"正直勇敢"、"狡诈多疑"
- *    - 与角色关系: 与玩家角色的关系（可选），如"朋友"、"敌人"、"盟友"
+ * 1. **新增 NPC**：
+ *    ```
+ *    set({"table": "npc", "id": "N5", "name": "地精战士", "ac": "6", "mv": "6",
+ *         "hd": "1-1", "hp": "4/4", "thac0": "20", "at": "1", "dmg": "1d6",
+ *         "sz": "S", "int": "低(5-7)", "al": "LE", "ml": "8", "xp": "15",
+ *         "status": "警戒", "appearance": "绿皮肤，尖耳朵",
+ *         "personality": "狡猾胆小", "relationship": "敌对"})
+ *    ```
  *
- * 2. **XML 格式**：
- *    <npc name="卫兵队长" ac="5" mv="12" hd="1" hp="5" thac0="18" at="1" dmg="1d8" sz="M" int="8-10" al="LG" ml="12" xp="15">
- *      一位经验丰富的城卫兵队长，身着链甲，手持长剑。
- *    </npc>
+ * 2. **更新 NPC**：
+ *    ```
+ *    add("N5", {"hp": "2/4", "status": "受伤"})
+ *    ```
  *
- * 3. **管道分隔格式**：
- *    <npc>卫兵队长|AC:5|MV:12|HD:1|HP:5|THAC0:18|#AT:1|Dmg:1d8|SZ:M|Int:8-10|AL:LG|ML:12|XP:15</npc>
+ * 3. **删除 NPC**（离场、死亡）：
+ *    ```
+ *    del("N5")
+ *    ```
  *
- * 🔧 注意：当AI输出包含NPC数据时，游戏界面将自动隐藏
+ * **字段说明**：
+ * - AC: 护甲等级（Armor Class），数值越低越好，10为无甲，可为负数
+ * - MV: 移动速度（Movement），通常为6-15，人类平民12
+ * - HD: 生命骰（Hit Dice），如"1"表示1d8，"1-1"表示1d8-1
+ * - hp: 生命值（Hit Points），格式："当前/最大"
+ * - THAC0: 命中值（To Hit AC 0），数值越低越好，普通人20
+ * - #AT (at): 每轮攻击次数，如"1"、"2"、"3/2"
+ * - Dmg (dmg): 伤害骰，如"1d6"、"1d8+2"、"2d4"
+ * - SA (sa): 特殊攻击（可选），如"背刺×2"
+ * - SD (sd): 特殊防御（可选），如"免疫魅惑"
+ * - SW (sw): 特殊弱点（可选），如"畏惧阳光"
+ * - SP (sp): 法术能力（可选），如"可使用1级法术"
+ * - MR (mr): 魔法抗力（可选），如"15%"、"70%"
+ * - SZ (sz): 体型，T(微型)/S(小型)/M(中型)/L(大型)/H(超大型)/G(巨型)
+ * - Int (int): 智力，如"高（13-14）"、"8-10"、"动物（1）"
+ * - AL (al): 阵营，如"LG"(守序善良)、"CE"(混乱邪恶)、"N"(中立)
+ * - ML (ml): 士气，2-20，普通人10，精英12-14
+ * - XP (xp): 击败获得的经验值
+ * - status: NPC当前状态（可选），如"健康"、"受伤"、"中毒"
+ * - appearance: NPC外貌描述（可选）
+ * - personality: NPC性格描述（可选）
+ * - relationship: 与玩家关系（可选），如"朋友"、"敌人"、"盟友"
+ * - attitude: 态度（可选），hostile/unfriendly/neutral/friendly/helpful
+ * - location: 当前位置（可选）
+ * - isBonded: 是否为重要NPC（true/false），重要NPC不会被手动删除保护
+ *
+ * ❌ 已移除功能：
+ * - 不再支持 <npc> 标签自动检测
+ * - 不再支持 XML 格式
+ * - 不再支持管道分隔格式
+ * - AI 必须显式使用命令来管理 NPC
  */
 
 /**
@@ -136,16 +150,82 @@ export function useNpcAutoDetection() {
   const isProcessing = ref(false);
 
   /**
-   * 从角色卡变量加载 NPC 列表
+   * 从多个来源加载 NPC 列表（优先级：gameStateStore > 角色卡变量 > MVU 变量框架）
    */
   function loadNpcList() {
     try {
-      const charVars = getVariables({ type: 'character' });
-      const savedNpcs = charVars?.adnd2e?.npcs;
+      let savedNpcs: NPC[] | undefined;
+
+      // 🔧 优先级1：尝试从 gameStateStore 读取（最新的内存状态）
+      try {
+        const gameStateStore = useGameStateStore();
+        if (gameStateStore && gameStateStore.gameState?.npcs && gameStateStore.gameState.npcs.length > 0) {
+          // 转换 gameStateStore 的 NPC 格式为本地 NPC 格式（补充缺失的字段）
+          savedNpcs = gameStateStore.gameState.npcs.map(npc => ({
+            ...npc,
+            favorite: (npc as any).favorite || false,
+            lastSeen: (npc as any).lastSeen || Date.now(),
+            firstSeen: (npc as any).firstSeen || Date.now(),
+            interactionCount: (npc as any).interactionCount || 0,
+          })) as NPC[];
+          console.log('[NPC Auto] 从 gameStateStore 加载 NPC 列表，共', savedNpcs.length, '个');
+        }
+      } catch (storeError) {
+        console.warn('[NPC Auto] 从 gameStateStore 加载失败，尝试其他来源:', storeError);
+      }
+
+      // 🔧 优先级2：从角色卡变量读取（持久化存储）
+      if (!savedNpcs || savedNpcs.length === 0) {
+        const charVars = getVariables({ type: 'character' });
+        savedNpcs = charVars?.adnd2e?.npcs;
+        if (savedNpcs && savedNpcs.length > 0) {
+          console.log('[NPC Auto] 从角色卡变量加载 NPC 列表，共', savedNpcs.length, '个');
+        }
+      }
+
+      // 🔧 优先级3：从 gameState 备份读取（角色卡变量中的游戏状态备份）
+      if (!savedNpcs || savedNpcs.length === 0) {
+        const charVars = getVariables({ type: 'character' });
+        savedNpcs = charVars?.adnd2e?.gameState?.npcs;
+        if (savedNpcs && savedNpcs.length > 0) {
+          console.log('[NPC Auto] 从角色卡变量的 gameState 备份加载 NPC 列表，共', savedNpcs.length, '个');
+        }
+      }
+
+      // 🔧 优先级4：支持从 MVU 变量框架的 stat_data.npc 表中读取 NPC
+      // 检查是否使用了 MVU 变量框架
+      if (typeof Mvu !== 'undefined' && (!savedNpcs || savedNpcs.length === 0)) {
+        try {
+          console.log('[NPC Auto] 尝试从 MVU 变量框架加载 NPC 数据');
+          const mvuData = Mvu.getMvuData({ type: 'character' });
+          const npcTable = Mvu.getMvuVariable(mvuData, 'npc', { default_value: {} });
+
+          // 将 MVU 的表格数据转换为 NPC 数组
+          if (npcTable && typeof npcTable === 'object' && Object.keys(npcTable).length > 0) {
+            const mvuNpcs: NPC[] = [];
+            for (const [id, npcData] of Object.entries(npcTable)) {
+              if (npcData && typeof npcData === 'object') {
+                // 将 MVU 表格中的 NPC 数据转换为标准 NPC 格式
+                const npc = convertMvuNpcToStandard(id, npcData as Record<string, any>);
+                if (npc) {
+                  mvuNpcs.push(npc);
+                }
+              }
+            }
+
+            if (mvuNpcs.length > 0) {
+              savedNpcs = mvuNpcs;
+              console.log('[NPC Auto] 从 MVU 变量框架加载了', mvuNpcs.length, '个 NPC');
+            }
+          }
+        } catch (mvuError) {
+          console.warn('[NPC Auto] 从 MVU 加载失败（可能未安装 MVU 框架）:', mvuError);
+        }
+      }
 
       if (savedNpcs && Array.isArray(savedNpcs)) {
         npcList.value = savedNpcs;
-        console.log('[NPC Auto] 从角色卡变量加载 NPC 列表，共', npcList.value.length, '个');
+        console.log('[NPC Auto] 最终加载 NPC 列表，共', npcList.value.length, '个');
       } else {
         npcList.value = [];
         console.log('[NPC Auto] 无已保存的 NPC');
@@ -157,7 +237,80 @@ export function useNpcAutoDetection() {
   }
 
   /**
-   * 保存 NPC 列表到角色卡变量
+   * 将 MVU 表格中的 NPC 数据转换为标准 NPC 格式
+   */
+  function convertMvuNpcToStandard(id: string, mvuData: Record<string, any>): NPC | null {
+    try {
+      // MVU 数据格式：{ name: "家猪", ac: "10", mv: "9", ... }
+      // 需要转换为标准 NPC 格式
+      const npc: NPC = {
+        id: mvuData.id || id,
+        name: mvuData.name || '未命名',
+        ac: mvuData.ac || '10',
+        mv: mvuData.mv || '12',
+        hd: mvuData.hd || '1',
+        hp: mvuData.hp || '4',
+        maxHp: mvuData.maxHp || mvuData.hp || '4',
+        thac0: mvuData.thac0 || '20',
+        at: mvuData.at || '1',
+        dmg: mvuData.dmg || '1d6',
+        sa: mvuData.sa,
+        sd: mvuData.sd,
+        sw: mvuData.sw,
+        sp: mvuData.sp,
+        mr: mvuData.mr,
+        sz: mvuData.sz || 'M',
+        int: mvuData.int || '8-10',
+        al: mvuData.al || 'N',
+        ml: mvuData.ml || '10',
+        xp: mvuData.xp || '15',
+
+        // 基本信息
+        gender: mvuData.gender,
+        race: mvuData.race,
+        class: mvuData.class,
+        location: mvuData.location,
+        status: mvuData.status,
+
+        // 描述信息
+        appearance: mvuData.appearance,
+        personality: mvuData.personality,
+        background: mvuData.background,
+        motivation: mvuData.motivation,
+
+        // 装备与物品
+        magicItems: mvuData.magicItems,
+        equipment: mvuData.equipment,
+        inventory: mvuData.inventory,
+
+        // 关系系统
+        relationship:
+          typeof mvuData.relationship === 'number'
+            ? mvuData.relationship
+            : mvuData.relationship === 'isBonded' || mvuData.isBonded
+              ? 50
+              : 0,
+        relationshipDescription: mvuData.relationshipDescription || mvuData.relationship,
+        attitude: mvuData.attitude || 'neutral',
+
+        // 管理信息
+        favorite: mvuData.favorite || false,
+        lastSeen: Date.now(),
+        firstSeen: Date.now(),
+        interactionCount: mvuData.interactionCount || 0,
+        notes: mvuData.notes,
+        tags: mvuData.tags,
+      };
+
+      return npc;
+    } catch (error) {
+      console.error('[NPC Auto] 转换 MVU NPC 数据失败:', error, mvuData);
+      return null;
+    }
+  }
+
+  /**
+   * 保存 NPC 列表到角色卡变量（同时同步到 MVU 变量框架）
    */
   function saveNpcList() {
     try {
@@ -171,10 +324,97 @@ export function useNpcAutoDetection() {
         },
         { type: 'character' },
       );
-      console.log('[NPC Auto] NPC 列表已保存');
+      console.log('[NPC Auto] NPC 列表已保存到角色卡变量');
+
+      // 🔧 新增：同时保存到 MVU 变量框架（如果已安装）
+      if (typeof Mvu !== 'undefined') {
+        try {
+          const mvuData = Mvu.getMvuData({ type: 'character' });
+
+          // 将 NPC 数组转换为 MVU 表格格式
+          const npcTable: Record<string, any> = {};
+          for (const npc of npcList.value) {
+            npcTable[npc.id] = convertStandardNpcToMvu(npc);
+          }
+
+          // 使用 MVU 的 setMvuVariable 更新整个 npc 表
+          Mvu.setMvuVariable(mvuData, 'npc', npcTable, {
+            reason: 'NPC 管理系统更新',
+          })
+            .then(() => {
+              // 替换回去
+              return Mvu.replaceMvuData(mvuData, { type: 'character' });
+            })
+            .then(() => {
+              console.log('[NPC Auto] NPC 列表已同步到 MVU 变量框架');
+            })
+            .catch((mvuError: any) => {
+              console.warn('[NPC Auto] 同步到 MVU 失败:', mvuError);
+            });
+        } catch (mvuError) {
+          console.warn('[NPC Auto] 同步到 MVU 失败（可能未安装 MVU 框架）:', mvuError);
+        }
+      }
     } catch (error) {
       console.error('[NPC Auto] 保存 NPC 列表失败:', error);
     }
+  }
+
+  /**
+   * 将标准 NPC 格式转换为 MVU 表格数据
+   */
+  function convertStandardNpcToMvu(npc: NPC): Record<string, any> {
+    return {
+      id: npc.id,
+      name: npc.name,
+      ac: npc.ac,
+      mv: npc.mv,
+      hd: npc.hd,
+      hp: npc.hp,
+      maxHp: npc.maxHp,
+      thac0: npc.thac0,
+      at: npc.at,
+      dmg: npc.dmg,
+      sa: npc.sa,
+      sd: npc.sd,
+      sw: npc.sw,
+      sp: npc.sp,
+      mr: npc.mr,
+      sz: npc.sz,
+      int: npc.int,
+      al: npc.al,
+      ml: npc.ml,
+      xp: npc.xp,
+
+      // 基本信息
+      gender: npc.gender,
+      race: npc.race,
+      class: npc.class,
+      location: npc.location,
+      status: npc.status,
+
+      // 描述信息
+      appearance: npc.appearance,
+      personality: npc.personality,
+      background: npc.background,
+      motivation: npc.motivation,
+
+      // 装备与物品
+      magicItems: npc.magicItems,
+      equipment: npc.equipment,
+      inventory: npc.inventory,
+
+      // 关系系统
+      relationship: npc.relationshipDescription || npc.relationship,
+      isBonded: npc.relationship && npc.relationship > 0,
+      attitude: npc.attitude,
+
+      // 管理信息
+      favorite: npc.favorite,
+      interactionCount: npc.interactionCount,
+      notes: npc.notes,
+      tags: npc.tags,
+    };
   }
 
   /**
@@ -571,9 +811,10 @@ export function useNpcAutoDetection() {
 
   /**
    * 添加或更新 NPC（增强版 - 智能合并）
+   * ❌ 已废弃：标签检测已禁用，本函数不再使用
    * @returns 返回是否是新增的NPC（true=新增，false=更新）
    */
-  function addOrUpdateNpc(npc: NPC): boolean {
+  function _addOrUpdateNpc(npc: NPC): boolean {
     const existingIndex = npcList.value.findIndex(n => n.id === npc.id || n.name === npc.name);
 
     if (existingIndex !== -1) {
@@ -615,37 +856,22 @@ export function useNpcAutoDetection() {
   }
 
   /**
-   * 处理 AI 消息，检测并记录 NPC
+   * 处理 AI 消息（已废弃标签检测功能）
+   *
+   * 🔧 新架构：NPC 完全由命令管理（set/add/del）
+   * - AI 必须在 <gamestate> 中使用命令来管理 NPC
+   * - 不再从消息内容自动提取 <npc> 标签
+   * - 本函数保留仅用于兼容性，实际不执行任何操作
+   *
+   * NPC 管理现在完全由以下系统负责：
+   * 1. useGameStateParser: 解析并执行 set()/add()/del() 命令
+   * 2. useNpcAutoDetection: 从 gameStateStore 读取 NPC 列表
+   * 3. 事件系统: 同步命令执行结果到 UI
    */
-  function processAiMessage(content: string) {
-    if (isProcessing.value) return;
-
-    try {
-      isProcessing.value = true;
-
-      const npcs = parseNpcTags(content);
-      if (npcs.length > 0) {
-        console.log(`[NPC Auto] 在消息中检测到 ${npcs.length} 个 NPC`);
-
-        // 记录本次新增的NPC名称
-        const newlyAddedNpcNames = new Set<string>();
-        npcs.forEach(npc => {
-          const isNew = addOrUpdateNpc(npc);
-          if (isNew) {
-            newlyAddedNpcNames.add(npc.name);
-          }
-        });
-
-        // 🔧 禁用自动清理功能（避免误删NPC）
-        // 改为只能手动管理：用户需要在NPC管理器中手动移除不需要的NPC
-        // 或者通过 remove_npc 命令让AI主动移除离场的NPC
-        console.log('[NPC Auto] 自动清理已禁用，请手动管理NPC或使用 remove_npc 命令');
-      }
-    } catch (error) {
-      console.error('[NPC Auto] 处理 AI 消息失败:', error);
-    } finally {
-      isProcessing.value = false;
-    }
+  function processAiMessage(_content: string) {
+    // 标签检测功能已完全禁用
+    // NPC 的增删改现在完全由命令系统处理
+    console.log('[NPC Auto] 标签检测已禁用，NPC 由 <gamestate> 命令管理');
   }
 
   /**
@@ -882,7 +1108,7 @@ export function useNpcAutoDetection() {
   /**
    * 事件处理器（保存引用以便清理）
    */
-  let generationEndedHandler: ((text: string, generationId: string) => void) | null = null;
+  // ❌ 已移除：generationEndedHandler（标签检测已禁用）
   let gameDataUpdatedHandler: (() => void) | null = null;
 
   /**
@@ -891,30 +1117,14 @@ export function useNpcAutoDetection() {
   function initialize() {
     loadNpcList();
 
-    // 🔧 性能优化：使用 watchEffect 代替 deep watch，只监听消息数组长度
-    // 方式1：监听前端消息日志变化（作为备用）
-    watch(
-      () => gameStore.messages.length,
-      (newLength, oldLength) => {
-        // 只在新增消息时处理（不处理删除）
-        if (newLength > oldLength) {
-          const lastMessage = gameStore.messages[gameStore.messages.length - 1];
-          if (lastMessage && lastMessage.role === 'assistant') {
-            processAiMessage(lastMessage.content);
-          }
-        }
-      },
-    );
+    // 🔧 新架构：不再监听消息内容解析标签
+    // NPC 完全由 <gamestate> 命令管理，无需监听消息变化
 
-    // 方式2：监听酒馆生成完成事件（主要检测方式，更及时）
-    generationEndedHandler = (text: string, generationId: string) => {
-      // 只处理本游戏的生成
-      if (generationId === 'adnd2e-game' && text) {
-        console.log('[NPC Auto] 检测到 AI 生成完成，开始解析 NPC');
-        processAiMessage(text);
-      }
-    };
-    eventOn(iframe_events.GENERATION_ENDED, generationEndedHandler);
+    // ❌ 已移除：标签检测的消息监听
+    // watch(() => gameStore.messages.length, ...)
+    // eventOn(iframe_events.GENERATION_ENDED, generationEndedHandler)
+
+    console.log('[NPC Auto] 初始化完成（纯命令模式：标签检测已禁用）');
 
     // 🔧 方式3：监听游戏数据更新事件（确保编辑/删除消息后能同步 NPC 列表）
     gameDataUpdatedHandler = () => {
@@ -924,25 +1134,54 @@ export function useNpcAutoDetection() {
     eventOn('adnd2e_game_data_updated', gameDataUpdatedHandler);
     eventOn('adnd2e_character_data_synced', gameDataUpdatedHandler);
 
-    console.log('[NPC Auto] NPC 自动检测已初始化（三重监听：消息变化 + 生成完成 + 数据更新）');
+    // 🔧 方式4：监听 set()/add()/del() 命令触发的专用 NPC 事件（更精确）
+    const npcRemovedHandler = (detail: any) => {
+      const { npcId, npcName } = detail;
+      console.log(`[NPC Auto] 🎯 收到 NPC 删除事件: ${npcName} (${npcId})，同步删除本地 NPC`);
+
+      // 从本地列表中移除（通过 ID 或名称匹配）
+      const removedIndex = npcList.value.findIndex(n => n.id === npcId || n.name === npcName);
+      if (removedIndex >= 0) {
+        const removed = npcList.value.splice(removedIndex, 1)[0];
+        console.log(`[NPC Auto] ✅ 已同步删除本地 NPC: ${removed.name}`);
+        saveNpcList();
+      } else {
+        console.log(`[NPC Auto] ⚠️ 未找到要删除的本地 NPC: ${npcName} (可能已被删除)`);
+      }
+    };
+    eventOn('adnd2e_npc-removed', npcRemovedHandler);
+
+    const npcAddedHandler = (detail: any) => {
+      console.log(`[NPC Auto] 🎯 收到 NPC 新增事件: ${detail.npcName}，重新加载 NPC 列表`);
+      // 重新加载以确保数据一致（从 gameStateStore 读取最新数据）
+      loadNpcList();
+    };
+    eventOn('adnd2e_npc-added', npcAddedHandler);
+
+    const npcUpdatedHandler = (detail: any) => {
+      console.log(`[NPC Auto] 🎯 收到 NPC 更新事件: ${detail.npcName}`, detail.changes);
+      // 重新加载以确保数据一致（从 gameStateStore 读取最新数据）
+      loadNpcList();
+    };
+    eventOn('adnd2e_npc-updated', npcUpdatedHandler);
+
+    console.log('[NPC Auto] NPC 自动检测已初始化（四重监听：消息变化 + 生成完成 + 数据更新 + 专用NPC事件）');
   }
 
   /**
    * 清理：移除事件监听器
    */
   function cleanup() {
-    if (generationEndedHandler) {
-      eventRemoveListener(iframe_events.GENERATION_ENDED, generationEndedHandler);
-      generationEndedHandler = null;
-      console.log('[NPC Auto] 已清理 GENERATION_ENDED 事件监听器');
-    }
-    // 🔧 新增：清理 gameDataUpdatedHandler
+    // 🔧 新架构：只清理数据更新监听器
     if (gameDataUpdatedHandler) {
       eventRemoveListener('adnd2e_game_data_updated', gameDataUpdatedHandler);
       eventRemoveListener('adnd2e_character_data_synced', gameDataUpdatedHandler);
       gameDataUpdatedHandler = null;
       console.log('[NPC Auto] 已清理游戏数据更新事件监听器');
     }
+
+    // ❌ 已移除：标签检测的事件监听器清理
+    // generationEndedHandler 已不再使用
   }
 
   return {

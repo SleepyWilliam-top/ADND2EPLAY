@@ -159,7 +159,7 @@ export function loadRegexRulesFromVariables(): RegexRule[] {
 }
 
 /**
- * 完整的消息格式化函数
+ * 完整的消息格式化函数（用于前端显示）
  * 先应用正则规则，再进行基础格式化（换行、空格）
  */
 export function formatMessageWithRegex(content: string): string {
@@ -182,4 +182,26 @@ export function formatMessageWithRegex(content: string): string {
   console.log('[RegexProcessor] 格式化完成，最终内容长度:', processed.length);
 
   return processed;
+}
+
+/**
+ * 清理消息内容（用于发送给 AI）
+ * 仅应用正则规则，不进行 HTML 格式化
+ * @param content 原始消息内容
+ * @returns 应用正则规则后的纯文本内容
+ */
+export function cleanMessageForAI(content: string): string {
+  if (!content) {
+    return '';
+  }
+
+  console.log('[RegexProcessor] 清理消息用于 AI，原始内容长度:', content.length);
+
+  // 应用正则规则（隐藏 NPC 标签、变量思考块等）
+  const rules = loadRegexRulesFromVariables();
+  const cleaned = applyRegexRules(content, rules);
+
+  console.log('[RegexProcessor] 清理完成，最终内容长度:', cleaned.length);
+
+  return cleaned;
 }
