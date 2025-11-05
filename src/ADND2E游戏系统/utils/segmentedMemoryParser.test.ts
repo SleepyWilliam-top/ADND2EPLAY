@@ -45,11 +45,10 @@ console.log('清理后:', cleaned4);
 console.log('');
 
 // 验证结果
-if (result1 && result1.smallSummary.includes("獠牙") && result1.largeSummary.includes("森林")) {
+if (result1 && result1.smallSummary.includes('獠牙') && result1.largeSummary.includes('森林')) {
   console.log('✅ 测试通过！修复成功，现在可以正确解析包含引号的字符串了。');
 } else {
   console.error('❌ 测试失败！');
   console.error('期望小总结包含"獠牙"');
   console.error('期望大总结包含"森林"');
 }
-
