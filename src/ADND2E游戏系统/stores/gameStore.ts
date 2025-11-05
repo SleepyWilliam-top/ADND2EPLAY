@@ -26,6 +26,7 @@ import { removeNpcTags } from '../utils/npcTagRemover';
 import { getPriestSpellById } from '../utils/priestSpellData';
 import { getProficiencyById } from '../utils/proficiencyData';
 import { getRaceById, getSubraceById } from '../utils/raceData';
+import { cleanMessageForAI } from '../utils/regexProcessor';
 import { parseSegmentedMemory, removeSegmentedMemoryTags } from '../utils/segmentedMemoryParser';
 import { getWeaponById } from '../utils/weaponData';
 import { getWizardSpellById } from '../utils/wizardSpellData';
@@ -894,18 +895,68 @@ ${currentNpcs
       }
 
       // 3.2 然后注入历史对话消息（排除刚刚添加的用户输入）
-      const historyMessages = messages.value.slice(0, -1); // 排除最后一条（刚添加的用户输入）
-      for (const msg of historyMessages) {
-        // 跳过第一条角色卡消息（已经在上面注入了最新的角色卡）
-        // 第一条消息总是角色卡，通过索引判断
-        if (msg === messages.value[0] && msg.role === 'system') {
-          continue;
+      // 🔧 应用 AI 上下文控制：加载设置
+      const textRegexSettings = charVars?.adnd2e?.textRegexSettings || {};
+      const contextLimit = textRegexSettings.contextLimit; // 发送最近消息层数（undefined = 全部）
+      const autoHideSummarized = textRegexSettings.autoHideSummarized || false; // 自动隐藏已总结内容
+      const fixedHideRange = textRegexSettings.fixedHideRange || ''; // 固定隐藏范围（如 "5-10"）
+
+      console.log('[Game] AI 上下文控制设置:', {
+        contextLimit,
+        autoHideSummarized,
+        fixedHideRange,
+      });
+
+      // 解析固定隐藏范围
+      let fixedHideStart = -1;
+      let fixedHideEnd = -1;
+      if (fixedHideRange && typeof fixedHideRange === 'string') {
+        const match = fixedHideRange.match(/(\d+)-(\d+)/);
+        if (match) {
+          fixedHideStart = parseInt(match[1]);
+          fixedHideEnd = parseInt(match[2]);
+          console.log(`[Game] 固定隐藏范围: ${fixedHideStart}-${fixedHideEnd}`);
         }
+      }
+
+      // 获取历史消息（排除最后一条刚添加的用户输入，也排除第一条角色卡）
+      let historyMessages = messages.value.slice(1, -1); // 跳过第一条角色卡和最后一条用户输入
+
+      // 🔧 应用上下文限制：只发送最近 N 条消息
+      if (contextLimit && contextLimit > 0) {
+        historyMessages = historyMessages.slice(-contextLimit);
+        console.log(`[Game] 应用上下文限制，发送最近 ${contextLimit} 条消息`);
+      }
+
+      // 遍历历史消息，应用正则规则和隐藏逻辑
+      historyMessages.forEach(msg => {
+        // 计算在完整消息列表中的索引（排除角色卡后的索引，从 1 开始）
+        const globalIndex = messages.value.indexOf(msg);
+
+        // 🔧 检查是否在固定隐藏范围内
+        if (fixedHideStart > 0 && fixedHideEnd > 0) {
+          if (globalIndex >= fixedHideStart && globalIndex <= fixedHideEnd) {
+            console.log(`[Game] 消息 #${globalIndex} 在固定隐藏范围内，跳过`);
+            return; // 跳过这条消息
+          }
+        }
+
+        // 🔧 检查是否自动隐藏已总结内容
+        if (autoHideSummarized && msg.smallSummary) {
+          console.log(`[Game] 消息 #${globalIndex} 已有总结，跳过（自动隐藏已总结内容）`);
+          return; // 跳过已总结的消息
+        }
+
+        // 🔧 应用正则规则清理消息内容（隐藏 NPC 标签、变量思考块等）
+        const cleanedContent = cleanMessageForAI(msg.content);
+
         chatHistoryPrompts.push({
           role: msg.role,
-          content: msg.content,
+          content: cleanedContent,
         });
-      }
+      });
+
+      console.log(`[Game] 最终发送给 AI 的历史消息数量: ${chatHistoryPrompts.length - 2}`); // 减去角色卡和 NPC 列表
 
       // 4. 触发 AI 生成（启用流式传输，并注入完整上下文）
       isGenerating.value = true;
