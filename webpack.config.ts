@@ -51,7 +51,11 @@ function common_path(lhs: string, rhs: string) {
 
 function glob_script_files() {
   const files: string[] = fs
+<<<<<<< HEAD
     .globSync(`src/**/index.{ts,js}`)
+=======
+    .globSync(`src/**/index.{ts,tsx,js,jsx}`)
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
     .filter(file => process.env.CI !== 'true' || !fs.readFileSync(path.join(__dirname, file)).includes('@no-ci'));
 
   const results: string[] = [];
@@ -108,7 +112,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
 
   return (_env, argv) => ({
     experiments: {
+<<<<<<< HEAD
       outputModule: entry.html === undefined, // 仅在脚本项目中使用模块输出
+=======
+      outputModule: true,
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
     },
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     watchOptions: {
@@ -134,11 +142,17 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       asyncChunks: true,
       clean: true,
       publicPath: '',
+<<<<<<< HEAD
       library: entry.html === undefined
         ? {
             type: 'module',
           }
         : undefined, // 前端界面使用普通输出格式
+=======
+      library: {
+        type: 'module',
+      },
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
     },
     module: {
       rules: [
@@ -253,7 +267,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             },
           ].concat(
             entry.html === undefined
+<<<<<<< HEAD
               ? <any[]>[
+=======
+              ? [
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
                   {
                     test: /\.vue\.s(a|c)ss$/,
                     use: [
@@ -288,8 +306,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     use: ['style-loader', { loader: 'css-loader', options: { url: false } }, 'postcss-loader'],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ]
               : <any[]>[
+=======
+                ] as any[]
+              : [
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
                   {
                     test: /\.s(a|c)ss$/,
                     use: [
@@ -309,7 +332,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     ],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ],
+=======
+                ] as any[],
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
           ),
         },
       ],
@@ -330,10 +357,15 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           new HtmlWebpackPlugin({
             template: path.join(__dirname, entry.html),
             filename: path.parse(entry.html).base,
+<<<<<<< HEAD
             scriptLoading: 'blocking',
             cache: false,
             inject: 'body', // 将脚本注入到 body 底部
             minify: false, // 完全禁用 HTML 压缩，避免 srcdoc 解析问题
+=======
+            scriptLoading: 'module',
+            cache: false,
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
           }),
           new HtmlInlineScriptWebpackPlugin(),
           new MiniCssExtractPlugin(),
@@ -389,6 +421,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     optimization: {
       minimize: true,
       minimizer: [
+<<<<<<< HEAD
         argv.mode === 'production' && entry.html === undefined // 仅对脚本项目压缩
           ? new TerserPlugin({
               parallel: false, // 禁用并行处理以减少内存占用
@@ -430,6 +463,18 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 keep_classnames: true,
                 keep_fnames: true,
                 ecma: 2020,
+=======
+        argv.mode === 'production'
+          ? new TerserPlugin({
+              terserOptions: { format: { quote_style: 1 }, mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z'] } },
+            })
+          : new TerserPlugin({
+              extractComments: false,
+              terserOptions: {
+                format: { beautify: true, indent_level: 2 },
+                compress: false,
+                mangle: false,
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
               },
             }),
       ],
@@ -479,6 +524,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       if (argv.mode !== 'production' && ['vue', 'pixi'].some(key => request.includes(key))) {
         return callback();
       }
+<<<<<<< HEAD
       
       // 前端界面项目：使用 externals（从酒馆环境或自己的 CDN 加载）
       if (entry.html !== undefined) {
@@ -503,6 +549,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       }
       
       // 脚本项目：使用原有的 externals 配置
+=======
+      if (['react'].some(key => request.includes(key))) {
+        return callback();
+      }
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
       const global = {
         jquery: '$',
         lodash: '_',
@@ -513,18 +564,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
+<<<<<<< HEAD
         pinia: 'Pinia',
         gsap: 'gsap',
+=======
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
       }
+<<<<<<< HEAD
       
       // 将某些库打包到文件中而不是使用 CDN
       const bundled = ['klona', '@vueuse/core', '@vueuse/shared', 'dexie', 'dedent'];
       if (bundled.some(key => request === key || request.startsWith(key + '/'))) {
         return callback();
       }
+=======
+>>>>>>> 863524288243b48f95f2dcf78eac2a71cc5b2777
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
