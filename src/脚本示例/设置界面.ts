@@ -9,7 +9,11 @@ $(() => {
   app.mount($app[0]);
 });
 
+<<<<<<< HEAD
 $(window).on('unload', () => {
+=======
+$(window).on('pagehide', () => {
+>>>>>>> 4dd206c0dc4e487a36681a4080d0394c48b95fc5
   app.unmount();
   deteleportStyle();
   destroyScriptIdDiv();
