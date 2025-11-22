@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { createScriptIdDiv, destroyScriptIdDiv, deteleportStyle, teleportStyle } from '@/util/script';
+>>>>>>> b35de94e317b52b390dc26cd21d44d07dbb55b9e
 import 界面 from './设置界面.vue';
 
 const app = createApp(界面).use(createPinia());
@@ -9,11 +13,16 @@ $(() => {
   app.mount($app[0]);
 });
 
+<<<<<<< HEAD
 $(window).on('unload', () => {
+=======
+$(window).on('pagehide', () => {
+>>>>>>> b35de94e317b52b390dc26cd21d44d07dbb55b9e
   app.unmount();
   deteleportStyle();
   destroyScriptIdDiv();
 });
+<<<<<<< HEAD
 
 function teleportStyle() {
   if ($(`head > div[script_id="${getScriptId()}"]`).length > 0) {
@@ -34,3 +43,5 @@ function createScriptIdDiv(): JQuery<HTMLDivElement> {
 function destroyScriptIdDiv(): void {
   $(`div[script_id="${getScriptId()}"]`).remove();
 }
+=======
+>>>>>>> b35de94e317b52b390dc26cd21d44d07dbb55b9e
