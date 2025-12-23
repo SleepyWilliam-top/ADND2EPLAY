@@ -5,6 +5,7 @@ const Settings = z
   .prefault({});
 
 export const useSettingsStore = defineStore('settings', () => {
+<<<<<<< HEAD
   const settings = ref(validateInplace(Settings, getVariables({ type: 'script', script_id: getScriptId() })));
 
   watch(
@@ -31,3 +32,13 @@ function parsePrettified<T>(schema: z.ZodType<T>, data: unknown): T {
   }
   return result.data;
 }
+=======
+  const settings = ref(Settings.parse(getVariables({ type: 'script', script_id: getScriptId() })));
+
+  watchEffect(() => {
+    insertOrAssignVariables(klona(settings.value), { type: 'script', script_id: getScriptId() });
+  });
+
+  return { settings };
+});
+>>>>>>> fa6f61d75970bed3668f8d9d1d044052890e077a
