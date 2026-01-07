@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+<<<<<<< HEAD
+=======
+      '@pixi/react':
+        specifier: 8.0.0-beta.25
+        version: 8.0.0-beta.25(@types/react@19.2.7)(pixi.js@8.15.0)(react@19.2.3)
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
       '@vueuse/components':
         specifier: ^14.1.0
         version: 14.1.0(vue@3.5.26(typescript@6.0.0-dev.20250807))
@@ -20,12 +26,24 @@ importers:
       '@vueuse/shared':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.26(typescript@6.0.0-dev.20250807))
+<<<<<<< HEAD
       dedent:
         specifier: ^1.7.1
         version: 1.7.1
       dexie:
         specifier: ^4.2.1
         version: 4.2.1
+=======
+      async-wait-until:
+        specifier: ^2.0.31
+        version: 2.0.31
+      compare-versions:
+        specifier: ^6.1.1
+        version: 6.1.1
+      dedent:
+        specifier: ^1.7.1
+        version: 1.7.1
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -44,12 +62,24 @@ importers:
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@6.0.0-dev.20250807)(vue@3.5.26(typescript@6.0.0-dev.20250807))
+<<<<<<< HEAD
       pinyin:
         specifier: ^4.0.0
         version: 4.0.0
       pixi.js:
         specifier: ^8.15.0
         version: 8.15.0
+=======
+      pixi.js:
+        specifier: ^8.15.0
+        version: 8.15.0
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
+      react-dom:
+        specifier: ^19.2.3
+        version: 19.2.3(react@19.2.3)
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
       toastr:
         specifier: ^2.1.4
         version: 2.1.4
@@ -87,6 +117,15 @@ importers:
       '@types/lodash':
         specifier: ^4.17.21
         version: 4.17.21
+<<<<<<< HEAD
+=======
+      '@types/react':
+        specifier: ^19.2.7
+        version: 19.2.7
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.7)
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
       '@types/showdown':
         specifier: ^2.0.6
         version: 2.0.6
@@ -102,6 +141,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.23
         version: 10.4.23(postcss@8.5.6)
+<<<<<<< HEAD
+=======
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.104.1)
@@ -500,6 +545,15 @@ packages:
   '@pixi/colord@2.9.6':
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
 
+<<<<<<< HEAD
+=======
+  '@pixi/react@8.0.0-beta.25':
+    resolution: {integrity: sha512-nXZbWj6nBHoOhlN1hKjKCeSPWPcv4BGBe8Em8B2V/QrSiihKI4C2vaxvV6Q1udLGsLnv4Hv9EBVa0Ixe0QAdiQ==}
+    peerDependencies:
+      pixi.js: ^8.2.6
+      react: '>=19.0.0'
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
@@ -679,6 +733,22 @@ packages:
   '@types/q@1.5.8':
     resolution: {integrity: sha512-hroOstUScF6zhIi+5+x0dzqrHA1EJi+Irri6b1fxolMTqqHIV/Cg77EtnQcZqZCu8hR3mX2BzIxN4/GzI68Kfw==}
 
+<<<<<<< HEAD
+=======
+  '@types/react-dom@19.2.3':
+    resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
+    peerDependencies:
+      '@types/react': ^19.2.0
+
+  '@types/react-reconciler@0.28.9':
+    resolution: {integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==}
+    peerDependencies:
+      '@types/react': '*'
+
+  '@types/react@19.2.7':
+    resolution: {integrity: sha512-MWtvHrGZLFttgeEj28VXHxpmwYbor/ATPYbBfSFZEIRK0ecCFLl2Qo55z52Hss+UV9CRN7trSeq1zbgx7YDWWg==}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   '@types/showdown@2.0.6':
     resolution: {integrity: sha512-pTvD/0CIeqe4x23+YJWlX2gArHa8G0J0Oh6GKaVXV7TAeickpkkZiNOgFcFcmLQ5lB/K0qBJL1FtRYltBfbGCQ==}
 
@@ -1188,6 +1258,13 @@ packages:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
 
+<<<<<<< HEAD
+=======
+  async-wait-until@2.0.31:
+    resolution: {integrity: sha512-9VCfHvc4f36oT6sG5p16aKc9zojf3wF4FrjNDxU3Db51SJ1bQ5lWAWtQDDZPysTwSLKBDzNZ083qPkTIj6XnrA==}
+    engines: {node: '>= 0.14.0', npm: '>= 1.0.0'}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
@@ -1381,10 +1458,13 @@ packages:
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
 
+<<<<<<< HEAD
   commander@1.1.1:
     resolution: {integrity: sha512-71Rod2AhcH3JhkBikVpNd0pA+fWsmAaVoti6OR38T76chA7vE3pSerS0Jor4wDw+tOueD2zLVvFOw5H0Rcj7rA==}
     engines: {node: '>= 0.6.x'}
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   commander@10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
     engines: {node: '>=14'}
@@ -1404,6 +1484,12 @@ packages:
     resolution: {integrity: sha512-buhp5kePrmda3vhc5B9t7pUQXAb2Tnd0qgpkIhPhkHXxJpiPJ11H0ZEU0oBpJ2QztSbzG/ZxMj/CHsYJqRHmyg==}
     engines: {node: '>= 12.0.0'}
 
+<<<<<<< HEAD
+=======
+  compare-versions@6.1.1:
+    resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -1591,9 +1677,12 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
+<<<<<<< HEAD
   dexie@4.2.1:
     resolution: {integrity: sha512-Ckej0NS6jxQ4Po3OrSQBFddayRhTCic2DoCAG5zacOfOVB9P2Q5Xc5uL/nVa7ZVs+HdMnvUPzLFCB/JwpB6Csg==}
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   diff@4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
     engines: {node: '>=0.3.1'}
@@ -2396,6 +2485,14 @@ packages:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
 
+<<<<<<< HEAD
+=======
+  its-fine@1.2.5:
+    resolution: {integrity: sha512-fXtDA0X0t0eBYAGLVM5YsgJGsJ5jEmqZEPrGbzdf5awjv0xE7nqv3TVnvtUF060Tkes15DbDAKW/I48vsb6SyA==}
+    peerDependencies:
+      react: '>=18.0'
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   javascript-obfuscator@4.2.2:
     resolution: {integrity: sha512-+7oXAUnFCA6vS0omIGHcWpSr67dUBIF7FKGYSXyzxShSLqM6LBgdugWKFl0XrYtGWyJMGfQR5F4LL85iCefkRA==}
     engines: {node: '>=18.0.0'}
@@ -2474,9 +2571,12 @@ packages:
   jsonfile@6.2.0:
     resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
 
+<<<<<<< HEAD
   keypress@0.1.0:
     resolution: {integrity: sha512-x0yf9PL/nx9Nw9oLL8ZVErFAk85/lslwEP7Vz7s5SI1ODXZIgit3C5qyWjw4DxOuO/3Hb4866SQh28a1V1d+WA==}
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -2992,6 +3092,7 @@ packages:
       typescript:
         optional: true
 
+<<<<<<< HEAD
   pinyin@4.0.0:
     resolution: {integrity: sha512-vHpV5K+vpp6XUUpZNGRDuHoN+1xcmieM3EWlH4QjSX2kkpG/gVOwpqwV9EOJ9x9c9UERFKeLml5XVSukE/PLgQ==}
     engines: {install-node: ^18.0.0}
@@ -3008,6 +3109,8 @@ packages:
       segmentit:
         optional: true
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   pixi-filters@6.1.5:
     resolution: {integrity: sha512-Ewb/J+kxAbaNN+0/ATJbglAJG+skGJfh7BIDP3ILIDdD6wWk1p0pGa25pVf1T8hGBOQSUNVAmwwJBwkj+cyLLA==}
     peerDependencies:
@@ -3183,6 +3286,24 @@ packages:
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
 
+<<<<<<< HEAD
+=======
+  react-dom@19.2.3:
+    resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
+    peerDependencies:
+      react: ^19.2.3
+
+  react-reconciler@0.31.0:
+    resolution: {integrity: sha512-7Ob7Z+URmesIsIVRjnLoDGwBEG/tVitidU0nMsqX/eeJaLY89RISO/10ERe0MqmzuKUUB1rmY+h1itMbUHg9BQ==}
+    engines: {node: '>=0.10.0'}
+    peerDependencies:
+      react: ^19.0.0
+
+  react@19.2.3:
+    resolution: {integrity: sha512-Ku/hhYbVjOQnXDZFv2+RibmLFGwFdeeKHFcOTlrt7xplBnya5OGn/hIRDsqDiSUcfORsDC7MPxwork8jBwsIWA==}
+    engines: {node: '>=0.10.0'}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   read-cache@1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
 
@@ -3320,6 +3441,15 @@ packages:
   sax@1.2.4:
     resolution: {integrity: sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==}
 
+<<<<<<< HEAD
+=======
+  scheduler@0.25.0:
+    resolution: {integrity: sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==}
+
+  scheduler@0.27.0:
+    resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   schema-utils@2.7.1:
     resolution: {integrity: sha512-SHiNtMOUGWBQJwzISiVYKu82GiV4QYGePp3odlY1tuKO7gPtphAT5R/py0fA6xtbgLL/RvtJZnU9b8s0F1q0Xg==}
     engines: {node: '>= 8.9.0'}
@@ -4241,6 +4371,18 @@ snapshots:
 
   '@pixi/colord@2.9.6': {}
 
+<<<<<<< HEAD
+=======
+  '@pixi/react@8.0.0-beta.25(@types/react@19.2.7)(pixi.js@8.15.0)(react@19.2.3)':
+    dependencies:
+      its-fine: 1.2.5(@types/react@19.2.7)(react@19.2.3)
+      pixi.js: 8.15.0
+      react: 19.2.3
+      react-reconciler: 0.31.0(react@19.2.3)
+    transitivePeerDependencies:
+      - '@types/react'
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   '@pkgr/core@0.2.9': {}
 
   '@sinclair/typebox@0.27.8': {}
@@ -4397,6 +4539,21 @@ snapshots:
 
   '@types/q@1.5.8': {}
 
+<<<<<<< HEAD
+=======
+  '@types/react-dom@19.2.3(@types/react@19.2.7)':
+    dependencies:
+      '@types/react': 19.2.7
+
+  '@types/react-reconciler@0.28.9(@types/react@19.2.7)':
+    dependencies:
+      '@types/react': 19.2.7
+
+  '@types/react@19.2.7':
+    dependencies:
+      csstype: 3.2.3
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   '@types/showdown@2.0.6': {}
 
   '@types/sizzle@2.3.10': {}
@@ -4932,6 +5089,11 @@ snapshots:
 
   async-function@1.0.0: {}
 
+<<<<<<< HEAD
+=======
+  async-wait-until@2.0.31: {}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   asynckit@0.4.0: {}
 
   atomically@2.1.0:
@@ -5168,10 +5330,13 @@ snapshots:
 
   comma-separated-tokens@2.0.3: {}
 
+<<<<<<< HEAD
   commander@1.1.1:
     dependencies:
       keypress: 0.1.0
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   commander@10.0.1: {}
 
   commander@12.1.0: {}
@@ -5182,6 +5347,11 @@ snapshots:
 
   comment-parser@1.4.1: {}
 
+<<<<<<< HEAD
+=======
+  compare-versions@6.1.1: {}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   concat-map@0.0.1: {}
 
   conf@15.0.2:
@@ -5370,8 +5540,11 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
+<<<<<<< HEAD
   dexie@4.2.1: {}
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   diff@4.0.2: {}
 
   dom-converter@0.2.0:
@@ -6297,6 +6470,16 @@ snapshots:
 
   isobject@3.0.1: {}
 
+<<<<<<< HEAD
+=======
+  its-fine@1.2.5(@types/react@19.2.7)(react@19.2.3):
+    dependencies:
+      '@types/react-reconciler': 0.28.9(@types/react@19.2.7)
+      react: 19.2.3
+    transitivePeerDependencies:
+      - '@types/react'
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   javascript-obfuscator@4.2.2:
     dependencies:
       '@javascript-obfuscator/escodegen': 2.3.1
@@ -6392,8 +6575,11 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
+<<<<<<< HEAD
   keypress@0.1.0: {}
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -6977,10 +7163,13 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.0-dev.20250807
 
+<<<<<<< HEAD
   pinyin@4.0.0:
     dependencies:
       commander: 1.1.1
 
+=======
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   pixi-filters@6.1.5(pixi.js@8.15.0):
     dependencies:
       '@types/gradient-parser': 0.1.5
@@ -7145,6 +7334,21 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
+<<<<<<< HEAD
+=======
+  react-dom@19.2.3(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      scheduler: 0.27.0
+
+  react-reconciler@0.31.0(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      scheduler: 0.25.0
+
+  react@19.2.3: {}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   read-cache@1.0.0:
     dependencies:
       pify: 2.3.0
@@ -7304,6 +7508,13 @@ snapshots:
 
   sax@1.2.4: {}
 
+<<<<<<< HEAD
+=======
+  scheduler@0.25.0: {}
+
+  scheduler@0.27.0: {}
+
+>>>>>>> 124945a90966936241183bf0fa550c6a426a6f17
   schema-utils@2.7.1:
     dependencies:
       '@types/json-schema': 7.0.15
