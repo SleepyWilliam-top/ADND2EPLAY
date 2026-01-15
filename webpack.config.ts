@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
@@ -5,6 +6,17 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import url from 'node:url';
+=======
+import { FSWatcher, watch } from 'chokidar';
+import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import _ from 'lodash';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { ChildProcess, exec, spawn } from 'node:child_process';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
 import RemarkHTML from 'remark-html';
 import { Server } from 'socket.io';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -18,9 +30,12 @@ import WebpackObfuscator from 'webpack-obfuscator';
 const require = createRequire(import.meta.url);
 const HTMLInlineCSSWebpackPlugin = require('html-inline-css-webpack-plugin').default;
 
+<<<<<<< HEAD
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+=======
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
 interface Config {
   port: number;
   entries: Entry[];
@@ -50,12 +65,22 @@ function common_path(lhs: string, rhs: string) {
 }
 
 function glob_script_files() {
+<<<<<<< HEAD
   const files: string[] = fs
     .globSync(`src/**/index.{ts,js}`)
     .filter(file => process.env.CI !== 'true' || !fs.readFileSync(path.join(__dirname, file)).includes('@no-ci'));
 
   const results: string[] = [];
   const handle = (file: string) => {
+=======
+  const results: string[] = [];
+
+  fs.globSync(`{示例,src}/**/index.{ts,tsx,js,jsx}`)
+    .filter(
+      file => process.env.CI !== 'true' || !fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci'),
+    )
+    .forEach(file => {
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
     const file_dirname = path.dirname(file);
     for (const [index, result] of results.entries()) {
       const result_dirname = path.dirname(result);
@@ -69,8 +94,13 @@ function glob_script_files() {
       }
     }
     results.push(file);
+<<<<<<< HEAD
   };
   files.forEach(handle);
+=======
+    });
+
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
   return results;
 }
 
@@ -80,21 +110,35 @@ const config: Config = {
 };
 
 let io: Server;
+<<<<<<< HEAD
 function watch_it(compiler: webpack.Compiler) {
+=======
+function watch_tavern_helper(compiler: webpack.Compiler) {
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
   if (compiler.options.watch) {
     if (!io) {
       const port = config.port ?? 6621;
       io = new Server(port, { cors: { origin: '*' } });
+<<<<<<< HEAD
       console.info(`[Listener] 已启动酒馆监听服务, 正在监听: http://0.0.0.0:${port}`);
       io.on('connect', socket => {
         console.info(`[Listener] 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
         socket.on('disconnect', reason => {
           console.info(`[Listener] 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+=======
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
+      io.on('connect', socket => {
+        console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
+        io.emit('iframe_updated');
+        socket.on('disconnect', reason => {
+          console.info(`\x1b[36m[tavern_helper]\x1b[0m 与酒馆网页 '${socket.id}' 断开连接: ${reason}`);
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
         });
       });
     }
 
+<<<<<<< HEAD
     compiler.hooks.done.tap('updater', () => {
       console.info('\n[Listener] 检测到完成编译, 推送更新事件...');
       io.emit('iframe_updated');
@@ -104,17 +148,110 @@ function watch_it(compiler: webpack.Compiler) {
 
 function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
   const should_obfuscate = fs.readFileSync(path.join(__dirname, entry.script), 'utf-8').includes('@obfuscate');
+=======
+    compiler.hooks.done.tap('watch_tavern_helper', () => {
+      console.info('\n\x1b[36m[tavern_helper]\x1b[0m 检测到完成编译, 推送更新事件...');
+      if (compiler.options.plugins.find(plugin => plugin instanceof HtmlWebpackPlugin)) {
+        io.emit('message_iframe_updated');
+      } else {
+        io.emit('script_iframe_updated');
+      }
+    });
+  }
+}
+
+let watcher: FSWatcher;
+const execute = () => {
+  exec('pnpm dump', { cwd: import.meta.dirname });
+  console.info('\x1b[36m[schema_dump]\x1b[0m 已将所有 schema.ts 转换为 schema.json');
+};
+const execute_debounced = _.debounce(execute, 500, { leading: true, trailing: false });
+function dump_schema(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    execute_debounced();
+  } else if (!watcher) {
+    watcher = watch('src', {
+      awaitWriteFinish: true,
+    }).on('all', (_event, path) => {
+      if (path.endsWith('schema.ts')) {
+        execute_debounced();
+      }
+    });
+  }
+}
+
+let child_process: ChildProcess;
+function watch_tavern_sync(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    return;
+  }
+  compiler.hooks.watchRun.tap('watch_tavern_sync', () => {
+    if (!child_process) {
+      child_process = spawn('pnpm', ['sync', 'watch', 'all', '-f'], {
+        shell: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        cwd: import.meta.dirname,
+        env: { ...process.env, FORCE_COLOR: '1' },
+      });
+      child_process.stdout?.on('data', (data: Buffer) => {
+        console.info(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.stderr?.on('data', (data: Buffer) => {
+        console.error(
+          data
+            .toString()
+            .trimEnd()
+            .split('\n')
+            .map(string => (/^\s*$/s.test(string) ? string : `\x1b[36m[tavern_sync]\x1b[0m ${string}`))
+            .join('\n'),
+        );
+      });
+      child_process.on('error', error => {
+        console.error(`\x1b[31m[tavern_sync]\x1b[0m Error: ${error.message}`);
+      });
+    }
+  });
+  compiler.hooks.watchClose.tap('watch_tavern_sync', () => {
+    child_process?.kill();
+  });
+  ['SIGINT', 'SIGTERM'].forEach(signal => {
+    process.on(signal, () => {
+      child_process?.kill();
+    });
+  });
+}
+
+function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Configuration {
+  const should_obfuscate = fs
+    .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
+    .includes('@obfuscate');
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
   const script_filepath = path.parse(entry.script);
 
   return (_env, argv) => ({
     experiments: {
+<<<<<<< HEAD
       outputModule: entry.html === undefined, // 仅在脚本项目中使用模块输出
+=======
+      outputModule: true,
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
     },
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     watchOptions: {
       ignored: ['**/dist', '**/node_modules'],
     },
+<<<<<<< HEAD
     entry: path.join(__dirname, entry.script),
+=======
+    entry: path.join(import.meta.dirname, entry.script),
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
     target: 'browserslist',
     output: {
       devtoolNamespace: 'tavern_helper_template',
@@ -129,16 +266,30 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return `${is_direct === true ? 'src' : 'webpack'}://${info.namespace}/${resource_path}${is_direct || is_vue_script ? '' : '?' + info.hash}`;
       },
       filename: `${script_filepath.name}.js`,
+<<<<<<< HEAD
       path: path.join(__dirname, 'dist', path.relative(path.join(__dirname, 'src'), script_filepath.dir)),
+=======
+      path: path.join(
+        import.meta.dirname,
+        'dist',
+        path.relative(import.meta.dirname, script_filepath.dir).replace(/^[^\\/]+[\\/]/, ''),
+      ),
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
       chunkFilename: `${script_filepath.name}.[contenthash].chunk.js`,
       asyncChunks: true,
       clean: true,
       publicPath: '',
+<<<<<<< HEAD
       library: entry.html === undefined
         ? {
             type: 'module',
           }
         : undefined, // 前端界面使用普通输出格式
+=======
+      library: {
+        type: 'module',
+      },
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
     },
     module: {
       rules: [
@@ -251,9 +402,25 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 },
               ],
             },
+<<<<<<< HEAD
           ].concat(
             entry.html === undefined
               ? <any[]>[
+=======
+            {
+              test: /\.ya?ml$/,
+              loader: 'yaml-loader',
+              options: { asStream: true },
+              resourceQuery: /stream/,
+            },
+            {
+              test: /\.ya?ml$/,
+              loader: 'yaml-loader',
+            },
+          ].concat(
+            entry.html === undefined
+              ? ([
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
                   {
                     test: /\.vue\.s(a|c)ss$/,
                     use: [
@@ -288,8 +455,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     use: ['style-loader', { loader: 'css-loader', options: { url: false } }, 'postcss-loader'],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ]
               : <any[]>[
+=======
+                ] as any[])
+              : ([
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
                   {
                     test: /\.s(a|c)ss$/,
                     use: [
@@ -309,7 +481,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                     ],
                     exclude: /node_modules/,
                   },
+<<<<<<< HEAD
                 ],
+=======
+                ] as any[]),
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
           ),
         },
       ],
@@ -319,7 +495,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       plugins: [
         new TsconfigPathsPlugin({
           extensions: ['.ts', '.js', '.tsx', '.jsx'],
+<<<<<<< HEAD
           configFile: path.join(__dirname, 'tsconfig.json'),
+=======
+          configFile: path.join(import.meta.dirname, 'tsconfig.json'),
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
         }),
       ],
       alias: {},
@@ -328,12 +508,19 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       ? [new MiniCssExtractPlugin()]
       : [
           new HtmlWebpackPlugin({
+<<<<<<< HEAD
             template: path.join(__dirname, entry.html),
             filename: path.parse(entry.html).base,
             scriptLoading: 'blocking',
             cache: false,
             inject: 'body', // 将脚本注入到 body 底部
             minify: false, // 完全禁用 HTML 压缩，避免 srcdoc 解析问题
+=======
+            template: path.join(import.meta.dirname, entry.html),
+            filename: path.parse(entry.html).base,
+            scriptLoading: 'module',
+            cache: false,
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
           }),
           new HtmlInlineScriptWebpackPlugin(),
           new MiniCssExtractPlugin(),
@@ -345,7 +532,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         ]
     )
       .concat(
+<<<<<<< HEAD
         { apply: watch_it },
+=======
+        { apply: watch_tavern_helper },
+        { apply: dump_schema },
+        { apply: watch_tavern_sync },
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
         new VueLoaderPlugin(),
         unpluginAutoImport({
           dts: true,
@@ -382,6 +575,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 selfDefending: true,
                 simplify: true,
                 splitStrings: true,
+<<<<<<< HEAD
+=======
+                seed: 1,
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
               }),
             ]
           : [],
@@ -389,6 +586,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     optimization: {
       minimize: true,
       minimizer: [
+<<<<<<< HEAD
         argv.mode === 'production' && entry.html === undefined // 仅对脚本项目压缩
           ? new TerserPlugin({
               parallel: false, // 禁用并行处理以减少内存占用
@@ -430,6 +628,18 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
                 keep_classnames: true,
                 keep_fnames: true,
                 ecma: 2020,
+=======
+        argv.mode === 'production'
+          ? new TerserPlugin({
+              terserOptions: { format: { quote_style: 1 }, mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z'] } },
+            })
+          : new TerserPlugin({
+              extractComments: false,
+              terserOptions: {
+                format: { beautify: true, indent_level: 2 },
+                compress: false,
+                mangle: false,
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
               },
             }),
       ],
@@ -465,6 +675,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         request.startsWith('/') ||
         request.startsWith('!') ||
         request.startsWith('http') ||
+<<<<<<< HEAD
+=======
+        request.startsWith('@/') ||
+        request.startsWith('@util/') ||
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
         path.isAbsolute(request) ||
         fs.existsSync(path.join(context, request)) ||
         fs.existsSync(request)
@@ -472,6 +687,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+<<<<<<< HEAD
       const builtin = ['vue3-pixi', 'vue-demi'];
       if (builtin.includes(request)) {
         return callback();
@@ -503,6 +719,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       }
       
       // 脚本项目：使用原有的 externals 配置
+=======
+      if (
+        ['vue', 'vue-router', 'pixi.js'].every(key => request !== key) &&
+        ['pixi', 'react', 'vue'].some(key => request.includes(key))
+      ) {
+        return callback();
+      }
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
       const global = {
         jquery: '$',
         lodash: '_',
@@ -513,18 +737,24 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         yaml: 'YAML',
         zod: 'z',
         'pixi.js': 'PIXI',
+<<<<<<< HEAD
         pinia: 'Pinia',
         gsap: 'gsap',
+=======
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
       }
+<<<<<<< HEAD
       
       // 将某些库打包到文件中而不是使用 CDN
       const bundled = ['klona', '@vueuse/core', '@vueuse/shared', 'dexie', 'dedent'];
       if (bundled.some(key => request === key || request.startsWith(key + '/'))) {
         return callback();
       }
+=======
+>>>>>>> ad6d1e8e5505fa75c59cbd79365fd12fe00a82eb
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
