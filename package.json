@@ -79,7 +79,7 @@
     "@vueuse/integrations": "^13.9.0",
     "@vueuse/shared": "^13.9.0",
     "dedent": "^1.7.2",
-    "dexie": "^4.4.1",
+    "dexie": "^4.4.2",
     "gsap": "^3.14.2",
     "jquery": "^3.7.1",
     "jqueryui": "^1.11.1",
